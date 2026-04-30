@@ -1,0 +1,32 @@
+# isorolling generated content
+content/characters/
+content/**/*.png
+content/**/*.jpg
+content/**/*.jpeg
+content/**/*.webp
+
+# Local ComfyUI exports and experiment bundles
+content/*.zip
+content/output/
+content/temp/
+
+# Keep generation source files versioned
+!content/iso-cli.py
+!content/iso-cli.bat
+!content/workflow_api.json
+!content/render_profiles/
+!content/render_profiles/*.json
+!content/workflows/
+!content/workflows/*.json
+
+# Python/runtime noise
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local machine configuration
+.env
+.env.*
+*.log

@@ -1,0 +1,18 @@
+{
+  "name": "props",
+  "upscale_model": "4x_foolhardy_Remacri.pth",
+  "scale": 2.0,
+  "refine": {
+    "enabled": true,
+    "steps": 8,
+    "cfg": 5.5,
+    "denoise": 0.25,
+    "sampler": "dpmpp_2m",
+    "scheduler": "karras"
+  },
+  "base": {
+    "steps": 24,
+    "cfg": 6.5,
+    "resolution": [512, 512]
+  }
+}

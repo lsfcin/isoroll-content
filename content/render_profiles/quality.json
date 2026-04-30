@@ -1,0 +1,19 @@
+{
+  "name": "quality",
+  "upscale_model": "4xUltrasharp_4xUltrasharpV10.pt",
+
+  "base": {
+    "steps": 28,
+    "cfg": 7.5,
+    "resolution": [512, 768]
+  },
+
+  "refine": {
+    "enabled": true,
+    "steps": 8,
+    "cfg": 6.0,
+    "denoise": 0.25,
+    "sampler": "dpmpp_2m",
+    "scheduler": "karras"
+  }
+}

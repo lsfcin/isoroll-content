@@ -1,0 +1,19 @@
+{
+  "name": "balanced",
+  "upscale_model": null,
+
+  "base": {
+    "steps": 28,
+    "cfg": 7.5,
+    "resolution": [512, 768]
+  },
+
+  "refine": {
+    "enabled": true,
+    "steps": 6,
+    "cfg": 6.0,
+    "denoise": 0.25,
+    "sampler": "dpmpp_2m",
+    "scheduler": "karras"
+  }
+}
