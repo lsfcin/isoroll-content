@@ -8,6 +8,10 @@ import shutil
 
 COMFY_URL = "http://127.0.0.1:8188/prompt"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONTENT_DIR = os.path.dirname(BASE_DIR)
+PROFILE_DIR = os.path.join(CONTENT_DIR, "profiles")
+WORKFLOW_DIR = os.path.join(BASE_DIR, "workflows")
+
 def get_comfy_dir():
     comfy_dir = os.environ.get("COMFY_DIR")
 
@@ -41,13 +45,13 @@ def apply_output_path(workflow, output_path):
             node["inputs"]["filename_prefix"] = output_path.replace("\\", "/")
 
 def load_profile(profile_name):
-    path = os.path.join(BASE_DIR, "render_profiles", f"{profile_name}.json")
+    path = os.path.join(PROFILE_DIR, f"{profile_name}.json")
 
     with open(path, "r") as f:
         return json.load(f)
 
 def load_workflow(prompt_text, profile_name):
-    workflow_path = os.path.join(BASE_DIR, "workflows", f"character_{profile_name}.json")
+    workflow_path = os.path.join(WORKFLOW_DIR, f"character_{profile_name}.json")
 
     with open(workflow_path, "r", encoding="utf-8") as f:
         workflow = json.load(f)

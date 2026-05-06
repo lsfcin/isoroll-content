@@ -4,6 +4,10 @@ content/**/*.png
 content/**/*.jpg
 content/**/*.jpeg
 content/**/*.webp
+!content/benchmark/images/*.png
+!content/benchmark/images/*.jpg
+!content/benchmark/images/*.jpeg
+!content/benchmark/images/*.webp
 
 # Local ComfyUI exports and experiment bundles
 content/*.zip
@@ -11,13 +15,12 @@ content/output/
 content/temp/
 
 # Keep generation source files versioned
-!content/iso-cli.py
-!content/iso-cli.bat
-!content/workflow_api.json
-!content/render_profiles/
-!content/render_profiles/*.json
-!content/workflows/
-!content/workflows/*.json
+!content/cli/
+!content/cli/**
+!content/profiles/
+!content/profiles/**
+!content/benchmark/
+!content/benchmark/**
 
 # Python/runtime noise
 __pycache__/
