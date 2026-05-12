@@ -73,6 +73,16 @@ isorolling/
   foundry/             # future Foundry VTT module
 ```
 
+## File Map
+
+- `content/cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows for character image generation; selects workflow by profile name
+- `content/cli/workflow_api.json` — default ComfyUI workflow (baseline reference)
+- `content/cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, `character_quality_x4`)
+- `content/profiles/` — render profile JSONs (fast, balanced, quality, character, props, environment, photos)
+- `content/benchmark/manifest.json` — metadata for curated benchmark outputs (prompt + profile per image)
+- `content/benchmark/images/` — tracked benchmark images (promoted from raw generation)
+- `foundry/` — reserved for future Foundry VTT module implementation (currently empty)
+
 ## Working Rules
 
 - Keep source files portable. Do not commit local absolute ComfyUI paths.
