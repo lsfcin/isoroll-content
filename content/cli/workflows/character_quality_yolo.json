@@ -1,0 +1,123 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "dreamshaperPixelart_v10.safetensors"
+    }
+  },
+
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "REPLACE_PROMPT, highly detailed, sharp focus, clean face, detailed eyes",
+      "clip": ["1", 1]
+    }
+  },
+
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality, bad anatomy, bad hands, extra fingers, deformed hands, bad eyes, glitch eyes, chromatic aberration, ghosting",
+      "clip": ["1", 1]
+    }
+  },
+
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 640,
+      "height": 960,
+      "batch_size": 1
+    }
+  },
+
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 36,
+      "cfg": 7.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["4", 0]
+    }
+  },
+
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["5", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "7": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["6", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 12,
+      "cfg": 6.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.20,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["7", 0]
+    }
+  },
+
+  "9": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["8", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "10": {
+    "class_type": "UltralyticsDetectorProvider",
+    "inputs": {
+      "model_name": "yolov8m-seg.pt"
+    }
+  },
+
+  "11": {
+    "class_type": "FaceDetailer",
+    "inputs": {
+      "image": ["9", 0],
+      "model": ["1", 0],
+      "clip": ["1", 1],
+      "vae": ["1", 2],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "bbox_detector": ["10", 0],
+      "steps": 18,
+      "cfg": 6.0,
+      "denoise": 0.30,
+      "feather": 6,
+      "noise_mask": true,
+      "force_inpaint": true
+    }
+  },
+
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["11", 0],
+      "filename_prefix": "character"
+    }
+  }
+}

@@ -45,14 +45,16 @@ Use `null` for unknown values such as seed. Keep the manifest human-readable and
 
 ## Runtime Requirements
 
-The current CLI assumes:
+See [`SETUP.md`](SETUP.md) for full environment setup: ComfyUI install, required models, extensions, and `COMFY_DIR` configuration.
 
-- ComfyUI is already running at `http://127.0.0.1:8188`.
-- Python can import `requests`.
-- `COMFY_DIR` is set to the local ComfyUI root.
-- The ComfyUI output directory is `${COMFY_DIR}/output`.
+Runtime expectations (enforced by code):
 
-Do not hardcode the local ComfyUI path in versioned files. If configuration needs to improve, prefer environment variables, a local ignored config file, or CLI flags.
+- ComfyUI running at `http://127.0.0.1:8188` (not yet configurable via flag — see M1)
+- `COMFY_DIR` env var pointing to local ComfyUI root
+- `requests` importable in Python
+- ComfyUI output dir: `${COMFY_DIR}/output`
+
+Do not hardcode local paths in versioned files — always use `COMFY_DIR` or CLI flags.
 
 ## CLI Entry Points
 
@@ -202,6 +204,8 @@ Likely model targets:
 - `bbox/hand_yolov8n.pt` or `bbox/hand_yolov8s.pt` for hand detail
 
 Do not add a workflow that depends on missing nodes without also adding a clear preflight check or error message.
+
+`character_quality_yolo.json` exists in `workflows/` as a **draft** — designed but never tested. Requires Impact Subpack and `yolov8m-seg.pt`. Verify YOLO nodes via `/object_info` before using it (see `SETUP.md §7`).
 
 ## Preferred Implementation Pattern
 
