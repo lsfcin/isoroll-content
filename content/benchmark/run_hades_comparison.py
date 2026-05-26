@@ -1,4 +1,4 @@
-# Hades-style model comparison: all 5 checkpoints through detailer pipeline
+# Model comparison: bare-hands anatomy test — dreamshaper, toonyou, lyriel
 import json, requests, uuid, time, glob, os, shutil
 
 COMFY_URL = "http://127.0.0.1:8188"
@@ -6,23 +6,28 @@ COMFY_DIR = os.environ.get("COMFY_DIR", os.path.expanduser("~/ComfyUI"))
 OUTPUT_DIR = os.path.join(COMFY_DIR, "output")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WORKFLOW_PATH = os.path.join(BASE_DIR, "../cli/workflows/character_quality_detailer.json")
-RESULTS_DIR = os.path.join(BASE_DIR, "hades-comparison")
+RESULTS_DIR = os.path.join(BASE_DIR, "anatomy-test-v5")
 
 PROMPT = (
-    "trickster demigod, full body, slim agile build, dark leather armor, "
-    "twin daggers sheathed at hips, confident stance, dark underworld caverns, "
-    "teal and gold accents, dramatic rim lighting, painterly dark fantasy concept art, "
-    "bold outlines, vibrant colors, highly detailed face and hands"
+    "young wandering monk, full body, simple rough linen robe with rope belt, "
+    "bare hands open at sides, bare feet, standing upright, frontal pose, facing viewer, "
+    "face forward, symmetrical stance, plain light gray background, "
+    "no items no weapons no accessories, "
+    "painterly dark fantasy illustration, bold outlines, dramatic lighting, "
+    "highly detailed face and hands and feet"
+)
+NEGATIVE_EXTRA = (
+    "shoes, boots, sandals, footwear, socks, gloves, gauntlets, "
+    "weapons, props, items, accessories, jewelry, bags, "
+    "background elements, scenery, environment, landscape, "
+    "armor, revealing clothing, nsfw"
 )
 SEED = 77
 
 CHECKPOINTS = [
     "dreamshaper_8.safetensors",
-    "ghostmix_v20Bakedvae.safetensors",
-    "cetusMix_Whalefall2.safetensors",
     "toonyou_beta6.safetensors",
     "lyriel_v16.safetensors",
-    "revAnimated_v2Rebirth.safetensors",
 ]
 
 
@@ -33,12 +38,14 @@ def load_workflow(ckpt):
         ct = node.get("class_type")
         if ct == "CheckpointLoaderSimple":
             node["inputs"]["ckpt_name"] = ckpt
-        elif ct in ("KSampler", "FaceDetailer"):
+        elif ct in ("KSampler", "FaceDetailer", "DetailerForEach"):
             node["inputs"]["seed"] = SEED
         elif ct == "CLIPTextEncode":
             text = node["inputs"].get("text", "")
             if "REPLACE_PROMPT" in text:
                 node["inputs"]["text"] = text.replace("REPLACE_PROMPT", PROMPT)
+            elif "embedding:" in text or "worst quality" in text:
+                node["inputs"]["text"] = text + ", " + NEGATIVE_EXTRA
     return w
 
 

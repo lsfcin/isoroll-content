@@ -7,6 +7,7 @@ BASE_DIR: Incomplete
 WORKFLOW_PATH: Incomplete
 RESULTS_DIR: Incomplete
 PROMPT: str
+NEGATIVE_EXTRA: str
 SEED: int
 CHECKPOINTS: Incomplete
 
