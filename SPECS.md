@@ -271,6 +271,39 @@ Each packed asset folder emits a `manifest.json` with this shape:
 
 ---
 
+## Tile Variant Naming Convention
+
+```
+content/outputs/tiles/{terrain}/
+  concept/
+    ...
+  atlas/
+    floor_{terrain}_inner.png
+    floor_{terrain}_edge_N.png      # open edge north (no neighbor to north)
+    floor_{terrain}_edge_E.png
+    floor_{terrain}_edge_S.png
+    floor_{terrain}_edge_W.png
+    floor_{terrain}_corner_NE.png   # convex open corner NE
+    floor_{terrain}_corner_NW.png
+    floor_{terrain}_corner_SE.png
+    floor_{terrain}_corner_SW.png
+    floor_{terrain}_corner_in_NE.png  # concave inner corner (v2)
+    floor_{terrainA}_x_{terrainB}_edge_N.png  # cross-type transition
+    wall_{type}_straight.png
+    wall_{type}_corner_in.png       # concave wall corner
+    wall_{type}_corner_out.png      # convex wall corner
+    wall_{type}_end_N.png           # wall end cap
+    wall_{type}_T.png               # T-junction
+```
+
+Seam strategy summary:
+- **Same-type seams**: Blender UV repeating texture eliminates seams geometrically. Make-seamless filter for 2D-only tiles.
+- **Cross-type transitions**: Pre-rendered blend tiles (8 per pair). Blender gradient UV mask between two terrain textures.
+- **Wall/floor junctions**: Z-sorting via 3D bounds + transparent wall base alpha. No blend texture needed.
+- **Autotile**: 4-bit bitmask → look up variant table. 9 variants per terrain covers ~90% layouts. See AP1-T in ROADMAP.
+
+---
+
 ## File Naming Convention
 
 ```

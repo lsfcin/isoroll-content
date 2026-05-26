@@ -225,6 +225,60 @@ After EXP-A, EXP-B, EXP-C:
 - [ ] Import into Foundry VTT manually — verify tile renders correctly at isometric angle.
 - [ ] Repeat for: wall segment, furniture piece (table or chair), plant/prop.
 
+### AP1-T — Tile Connectivity and Seamless Joins
+
+*Three sub-problems with different solutions. Tackle in order.*
+
+**T1 — Same-type seams (stone→stone, dirt→dirt):**
+- [ ] In Blender: UV-map tile plane with a repeating texture. Adjacent tiles in the same scene share texture coordinates — seam is mathematically invisible. No AI trick needed.
+- [ ] For 2D-only tiles (no Blender): apply make-seamless filter before SD style pass. Options:
+  - GIMP: Filters → Map → Make Seamless (offset-clone method)
+  - Python PIL: manual 50% offset + clone-stamp (add to `content/pipeline/make_seamless.py`)
+  - ComfyUI: `MakeImageTileable` custom node
+- [ ] During SD style pass: use ControlNet Tile at weight ≤ 0.5 so SD does not repaint edges inconsistently. The 3D structure is the seam guarantee.
+- [ ] Validate: place 4 same-type tiles in Foundry, zoom in on joins — no visible seam.
+
+**T2 — Cross-type transitions (stone floor → dirt floor, stone → grass):**
+- [ ] For each terrain type pair: pre-render 8 transition tile variants — 4 directional edges (N/E/S/W, one type on one side blending to the other) + 4 diagonal corners (NE/NW/SE/SW).
+- [ ] In Blender: same tile plane, UV-map with a two-texture blend using a gradient mask along the relevant axis. Render the blend at isometric angle. Blending is physically correct under consistent isometric lighting.
+- [ ] SD style pass on transition tiles: use both terrain type tokens in the prompt. ControlNet Tile weight low (≤ 0.4) — let the blend show through.
+- [ ] Naming: `floor_{typeA}_x_{typeB}_edge_{dir}.png` (e.g. `floor_stone_x_dirt_edge_N.png`)
+- [ ] With N terrain types: N×(N-1)/2 pairs × 8 variants each. For 4 floor types: 6 pairs × 8 = 48 transition tiles. Manageable in one batch session.
+
+**T3 — Wall/floor junctions:**
+- [ ] Walls sit on top of floor tiles — z-sorting (via 3D bounds in manifest) handles the overlap. No explicit blend texture needed.
+- [ ] Wall tile base must have a transparent bottom edge (alpha gradient ≥ 1 tile unit) so the floor beneath shows correctly.
+- [ ] Validate in Foundry: wall tile placed on floor tile, token walks "behind" wall — check occlusion and base transparency.
+
+**Tile variant naming convention (for autotile in M6+):**
+```
+floor_{terrain}_inner           ← fill tile, seamless in all directions
+floor_{terrain}_edge_N          ← open edge on north side
+floor_{terrain}_edge_E
+floor_{terrain}_edge_S
+floor_{terrain}_edge_W
+floor_{terrain}_corner_NE       ← open (convex) corner NE
+floor_{terrain}_corner_NW
+floor_{terrain}_corner_SE
+floor_{terrain}_corner_SW
+floor_{terrain}_corner_in_NE    ← concave inner corner NE (optional, v2)
+floor_{terrain}_x_{terrain2}_edge_{dir}  ← cross-type transition edge
+wall_{type}_straight            ← straight wall segment
+wall_{type}_corner_in           ← inner (concave) wall corner
+wall_{type}_corner_out          ← outer (convex) wall corner
+wall_{type}_end_N               ← wall end cap, north side
+wall_{type}_T                   ← T-junction
+```
+- 9 variants per terrain type (inner + 4 edges + 4 corners) covers ~90% of map layouts without inner concave corners.
+- Inner concave corners (needed for room interiors) = 4 more variants. Add in v2.
+
+**Autotile logic (implement in M6 Foundry module):**
+- On tile placement, check 4 orthogonal neighbors (or 8 for diagonal-aware).
+- Compute 4-bit or 8-bit bitmask from neighbor terrain types.
+- Look up correct variant from tile manifest table.
+- Swap tile image to correct variant automatically.
+- Reference: RPG Maker blob tileset bitmask algorithm (well-documented, maps 0–255 to 47 unique variants).
+
 ---
 
 ## AP2 — Character Base (Layer 2) — Core Character Pipeline
