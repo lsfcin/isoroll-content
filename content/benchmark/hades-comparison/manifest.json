@@ -1,0 +1,38 @@
+[
+  {
+    "model": "dreamshaper_8.safetensors",
+    "seed": 77,
+    "time_s": 78.1,
+    "file": "/mnt/workspace/Code/isoroll/content/benchmark/hades-comparison/dreamshaper_8.png"
+  },
+  {
+    "model": "ghostmix_v20Bakedvae.safetensors",
+    "seed": 77,
+    "time_s": 87.2,
+    "file": "/mnt/workspace/Code/isoroll/content/benchmark/hades-comparison/ghostmix_v20Bakedvae.png"
+  },
+  {
+    "model": "cetusMix_Whalefall2.safetensors",
+    "seed": 77,
+    "time_s": 87.1,
+    "file": "/mnt/workspace/Code/isoroll/content/benchmark/hades-comparison/cetusMix_Whalefall2.png"
+  },
+  {
+    "model": "toonyou_beta6.safetensors",
+    "seed": 77,
+    "time_s": 87.1,
+    "file": "/mnt/workspace/Code/isoroll/content/benchmark/hades-comparison/toonyou_beta6.png"
+  },
+  {
+    "model": "lyriel_v16.safetensors",
+    "seed": 77,
+    "time_s": 54.0,
+    "file": "/mnt/workspace/Code/isoroll/content/benchmark/hades-comparison/lyriel_v16.png"
+  },
+  {
+    "model": "revAnimated_v2Rebirth.safetensors",
+    "seed": 77,
+    "time_s": 63.1,
+    "file": "/mnt/workspace/Code/isoroll/content/benchmark/hades-comparison/revAnimated_v2Rebirth.png"
+  }
+]

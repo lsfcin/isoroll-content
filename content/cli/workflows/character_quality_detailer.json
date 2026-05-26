@@ -2,14 +2,14 @@
   "1": {
     "class_type": "CheckpointLoaderSimple",
     "inputs": {
-      "ckpt_name": "ghostmix_v20Bakedvae.safetensors"
+      "ckpt_name": "revAnimated_v2Rebirth.safetensors"
     }
   },
 
   "2": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "REPLACE_PROMPT, full body character, concept art, highly detailed, sharp focus, professional illustration, clean simple background",
+      "text": "REPLACE_PROMPT, full body character, athletic build, painterly concept art, dark fantasy illustration, bold outlines, dramatic lighting, highly detailed, clean dark background",
       "clip": ["1", 1]
     }
   },
@@ -17,7 +17,7 @@
   "3": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "(worst quality, low quality:1.4), bad anatomy, bad hands, missing fingers, extra digit, fewer digits, fused fingers, mutated hands, poorly drawn hands, badly drawn hands, malformed hands, deformed hands, bad eyes, glitch eyes, chromatic aberration, ghosting, duplicate, watermark, text, cropped, out of frame",
+      "text": "(embedding:bad_prompt_version2-neg:0.8), (embedding:BadNegAnatomyV1-neg:0.8), (embedding:bad-hands-5:0.8), (embedding:Duskfall_BadHands_Neg:0.6), (embedding:badIrisNeg:0.6), (worst quality, low quality:1.4), bad anatomy, bad hands, missing fingers, extra digit, fewer digits, fused fingers, mutated hands, poorly drawn hands, badly drawn hands, malformed hands, deformed hands, bad eyes, glitch eyes, chromatic aberration, ghosting, duplicate, watermark, text, cropped, out of frame, realistic photograph, 3d render, blurry, out of focus, (hyper muscular:1.2), bodybuilder, (exaggerated muscles:1.2), unrealistic proportions",
       "clip": ["1", 1]
     }
   },
@@ -87,6 +87,32 @@
     }
   },
 
+  "15": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+      "model_name": "4xUltrasharp_4xUltrasharpV10.pt"
+    }
+  },
+
+  "16": {
+    "class_type": "ImageUpscaleWithModel",
+    "inputs": {
+      "upscale_model": ["15", 0],
+      "image": ["9", 0]
+    }
+  },
+
+  "17": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["16", 0],
+      "upscale_method": "lanczos",
+      "width": 1280,
+      "height": 1920,
+      "crop": "disabled"
+    }
+  },
+
   "10": {
     "class_type": "UltralyticsDetectorProvider",
     "inputs": {
@@ -97,7 +123,7 @@
   "11": {
     "class_type": "FaceDetailer",
     "inputs": {
-      "image": ["9", 0],
+      "image": ["17", 0],
       "model": ["1", 0],
       "clip": ["1", 1],
       "vae": ["1", 2],
@@ -112,7 +138,7 @@
       "cfg": 6.0,
       "sampler_name": "dpmpp_2m",
       "scheduler": "karras",
-      "denoise": 0.15,
+      "denoise": 0.40,
       "feather": 8,
       "noise_mask": true,
       "force_inpaint": true,
@@ -148,15 +174,15 @@
       "positive": ["2", 0],
       "negative": ["3", 0],
       "bbox_detector": ["12", 0],
-      "guide_size": 384,
+      "guide_size": 512,
       "guide_size_for": true,
-      "max_size": 768,
+      "max_size": 1024,
       "seed": 0,
       "steps": 20,
       "cfg": 6.0,
       "sampler_name": "dpmpp_2m",
       "scheduler": "karras",
-      "denoise": 0.15,
+      "denoise": 0.45,
       "feather": 8,
       "noise_mask": true,
       "force_inpaint": true,
