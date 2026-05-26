@@ -302,7 +302,9 @@ Animation state labels: `idle`, `walk`, `attack_melee`, `attack_ranged`, `defend
 ## Blender Camera Rig Specification
 
 - **Projection:** Orthographic (not perspective)
-- **Primary elevation:** 30° (dimetric — matches Hades aesthetic). Alternative: 35.264° (true isometric).
+- **Primary elevation — 26.57°** (2:1 dimetric, Hades/Diablo standard). Tile diamond is 2× wide as tall in screen space. Camera is low — characters show mostly frontal view with slight overhead.
+- **Alternative elevation — 35.264°** (true isometric). Tile edges appear at 30° from horizontal in screen space (the "30°" commonly cited in isometric art discussions refers to this screen-space edge angle, NOT the camera elevation). Higher camera, more top surface visible, better tactical grid readability for VTT use.
+- **Note on the "30°" confusion:** 30° camera elevation is neither standard. 26.57° = 2:1 dimetric. 35.264° = true isometric. Pick one of these two.
 - **Azimuth rotations (8 directions):**
 
 | Label | Camera azimuth | Description |

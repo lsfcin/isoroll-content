@@ -111,7 +111,10 @@ This roadmap tracks the content pipeline and the future Foundry runtime. Keep ta
 - [ ] Install Blender (free, no VRAM cost for EEVEE renders).
 - [ ] Create test scene: one humanoid character, rough mesh (capsule body + limb cylinders acceptable for Path B; needs decent mesh for Path A).
 - [ ] Set up EEVEE toon shader: Principled BSDF with low roughness, Freestyle outline enabled, cel-shading via Color Ramp node on diffuse.
-- [ ] Set up isometric camera rig: orthographic projection, 30° elevation (dimetric — matches Hades) OR 35.264° (true isometric). 8 azimuth rotations: 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Label directions SE, E, NE, N, NW, W, SW, S (standard for most isometric games — SE = camera facing toward viewer).
+- [ ] Set up isometric camera rig: orthographic projection. Two candidate elevations — test both in EXP-A:
+  - **26.57°** (2:1 dimetric) — Hades/Diablo standard. Tile diamond is 2× wide as tall. Low camera, characters show mostly front face. "30° elevation" in the roadmap prior to this fix was wrong — this is the correct Hades angle.
+  - **35.264°** (true isometric) — Higher camera, tiles show more top surface, better grid readability for VTT. Tile edges appear at 30° from horizontal in screen space (this is what "30°" usually refers to in isometric art discussions — the screen-space edge angle, NOT the camera elevation).
+  - 8 azimuth rotations: 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°. Label directions SE, E, NE, N, NW, W, SW, S (SE = camera facing toward viewer, character faces viewer).
 - [ ] Add 9th camera: 90° elevation, 0° azimuth (overhead/top-down view).
 - [ ] Write Blender Python script: iterate cameras × animation frames × animation states, render each as PNG with alpha channel (`Film > Transparent` in EEVEE).
 - [ ] Install `control_v11f1e_sd15_tile.pth` (ControlNet Tile) and `control_v11p_sd15_depth.pth` (ControlNet Depth) in ComfyUI `models/ControlNet/`.
@@ -230,7 +233,7 @@ After EXP-A, EXP-B, EXP-C:
 
 **Blender setup:**
 - [ ] Write `content/pipeline/blender_iso_rig.py`: Blender Python script that:
-  - Creates 9 cameras (8 isometric at 30° elevation, 8 azimuth steps; 1 overhead at 90°)
+  - Creates 9 cameras (8 isometric at chosen elevation — 26.57° for Hades/dimetric or 35.264° for true isometric — across 8 azimuth steps; 1 overhead at 90°)
   - Accepts animation state name + frame range as arguments
   - Iterates all cameras × all frames
   - Renders each as PNG with alpha to `output/{character}/{state}/{direction}/frame_{n:04d}.png`
