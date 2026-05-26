@@ -1,3 +1,4 @@
+# CLI tool for generating isometric character images via ComfyUI workflow execution
 import sys
 import json
 import requests

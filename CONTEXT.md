@@ -1,4 +1,5 @@
 # isorolling Context
+> Foundry VTT isometric-play module and offline asset generation pipeline
 
 isorolling is a Foundry VTT isometric-play project with a separate content-generation pipeline. The long-term product is two things:
 
@@ -93,3 +94,16 @@ isorolling/
 - Treat `character_quality_x4.json` as a legacy reference: it produced good texture but was slow/heavy and still had hand problems.
 - Treat the current `character_quality.json` as the working quality baseline: higher base resolution plus light refine, no latent x2 upscale.
 - Before adding YOLO/detailers, verify ComfyUI actually exposes the required node classes through `/object_info`.
+
+<!-- routing:start -->
+## Routing
+
+| Subdirectory | Description |
+|--------------|-------------|
+| [`content/`](content/CONTEXT.md) | — |
+
+| File | Interface | API | Description |
+|------|-----------|-----|-------------|
+| [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
+| [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
+<!-- routing:end -->
