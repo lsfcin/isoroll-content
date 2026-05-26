@@ -414,3 +414,103 @@ Animation state labels: `idle`, `walk`, `attack_melee`, `attack_ranged`, `defend
 - SD version (SD1.5 / SDXL): TBD
 - Temporal consistency strategy: TBD
 - Frame rate target: TBD (current assumption: 12 fps)
+
+---
+
+## Concept Art Prompts (External Tools)
+
+Use these prompts in GPT Image, Nano Banana, MidJourney, or similar external generators.
+Do NOT specify camera angles in degrees — generators ignore them. Use visual descriptions and game references instead.
+
+### Dungeon Floor Tile
+
+```
+Single isometric dungeon floor tile, classic 2:1 isometric game projection,
+diamond shape twice as wide as it is tall, low camera angle showing the tile
+face with slight top surface visible, dark grey and charcoal stone cobblestone,
+subtle cracks and shallow worn grooves, faint teal-green moss in the crevices,
+rough hand-cut stone edges, painterly illustrated style with visible brushwork,
+strong clean silhouette, pure white background, no shadows cast onto the
+background, no characters, no furniture, no other objects in frame, square
+composition centered, dark fantasy game art, Diablo II isometric perspective,
+Hades video game aesthetic.
+```
+Format: PNG, square (1:1).
+
+### Character — Rogue/Assassin (first test character)
+
+```
+Full body character concept art, dark fantasy rogue assassin, front-facing
+view with very slight overhead angle matching classic 2:1 isometric game
+perspective, neutral relaxed standing pose with arms hanging slightly away
+from body at sides, complete figure visible from head to toe, dark hooded
+cloak with teal inner lining, light leather armor with gold metallic buckles
+and accents, two daggers sheathed at hip, dark teal and black color palette
+with gold highlights, face partially visible beneath hood, sharp intense eyes,
+strong readable silhouette, pure white background, no drop shadow on
+background, no environment, portrait orientation, digital illustration,
+painterly brushwork, Hades video game art aesthetic, game character reference
+art, full figure.
+```
+Format: PNG, portrait (2:3).
+
+---
+
+## Pipeline Current State (as of 2026-05-26)
+
+### What exists and works
+
+**`content/pipeline/preprocess.py`** — Step 1 of art pipeline.
+- Input: raw concept PNG from external tool
+- Removes background via rembg
+- Resizes with padding to canonical dimensions (512×512 tiles, 512×768 characters)
+- Saves `{name}_concept_raw.png` + `{name}_concept_clean.png` in `content/outputs/{type}s/{name}/concept/`
+- Usage: `python content/pipeline/preprocess.py --input image.png --type tile --name dungeon_floor`
+- Requires: `pip install "rembg[gpu]" Pillow`
+
+**`content/cli/iso-cli.py`** — CLI entry point. Commands:
+- `gen-character` — txt2img via ComfyUI (existing, now with REPLACE_PROMPT fixed)
+- `style-concept` — img2img style pass on preprocessed concept art (new)
+  - Uploads image to ComfyUI via `/upload/image` API
+  - Runs `concept_img2img.json` workflow (base + refine pass, lyriel_v16)
+  - Usage: `python iso-cli.py style-concept path/concept_clean.png --prompt "..." --denoise 0.55 --out path/styled`
+
+**`content/cli/comfy_client.py`** — ComfyUI API helpers (extracted from iso-cli.py for line-count reasons).
+
+**`content/cli/workflows/concept_img2img.json`** — img2img workflow. Checkpoint: lyriel_v16. Denoise overridden by CLI flag.
+
+### Known bugs fixed in this session
+- REPLACE_PROMPT injection: was using CLIP heuristic (dropped positive prompt suffix). Now literal substitution.
+- Double seed randomization: seeds were set twice. Fixed — single randomization.
+
+### Still pending from M1
+- `argparse` (still using manual index parsing)
+- `doctor` command
+- Output tracking via `/history` API instead of filesystem snapshot
+- Batch mode
+- Nonzero exit codes (partial)
+
+### Folder structure
+```
+content/
+  cli/
+    iso-cli.py
+    comfy_client.py
+    workflows/
+      character_fast.json
+      character_balanced.json
+      character_quality.json
+      character_quality_x4.json     (legacy)
+      character_quality_yolo.json   (draft, untested)
+      concept_img2img.json          (new — img2img style pass)
+  pipeline/
+    preprocess.py                   (new — rembg + resize)
+  profiles/
+    *.json
+  outputs/
+    benchmark/                      (moved from content/benchmark/)
+    characters/
+    tiles/
+    items/
+    effects/
+```

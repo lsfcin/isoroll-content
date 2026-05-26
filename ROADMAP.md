@@ -246,9 +246,40 @@ After EXP-A, EXP-B, EXP-C:
 - [ ] With N terrain types: N×(N-1)/2 pairs × 8 variants each. For 4 floor types: 6 pairs × 8 = 48 transition tiles. Manageable in one batch session.
 
 **T3 — Wall/floor junctions:**
-- [ ] Walls sit on top of floor tiles — z-sorting (via 3D bounds in manifest) handles the overlap. No explicit blend texture needed.
-- [ ] Wall tile base must have a transparent bottom edge (alpha gradient ≥ 1 tile unit) so the floor beneath shows correctly.
-- [ ] Validate in Foundry: wall tile placed on floor tile, token walks "behind" wall — check occlusion and base transparency.
+- Wall/floor is NOT an art problem — z-sorting via 3D bounds in manifest handles the overlap at runtime. Foundry module (M6) owns this. No blend texture needed.
+- Wall tile base must have transparent bottom alpha (≥ 1 tile unit) so floor shows correctly beneath.
+
+**T4 — Wall/wall junctions (same type):**
+- [ ] Model all wall pieces on same grid unit (e.g. 1×1×2 Blender units). Mathematical alignment = zero-gap join. No texture blending needed within same wall type.
+- [ ] Required modular wall piece set per wall type (all modeled in Blender as separate meshes, same camera/lighting for visual cohesion):
+  ```
+  wall_{type}_straight        ← base repeating module
+  wall_{type}_corner_in       ← concave corner (room interior corner)
+  wall_{type}_corner_out      ← convex corner (exterior protrusion)
+  wall_{type}_end_N/S/E/W    ← end cap (where wall terminates cleanly)
+  wall_{type}_T               ← T-junction (3-way intersection)
+  wall_{type}_cross           ← 4-way intersection
+  wall_{type}_door            ← wall segment with door-shaped opening (no door)
+  wall_{type}_window          ← wall segment with window opening (no window)
+  ```
+- [ ] Render each piece from same 8-direction isometric rig + overhead. Same SD style pass = visual cohesion guaranteed.
+- [ ] Columns/pillars placed at wall junctions intentionally cover joins — historically accurate and artistically convenient. Use column as a junction element at T/cross points when aesthetics allow.
+
+**T5 — Wall/wall junctions (different types):**
+- [ ] Design rule first: avoid same-scene different-type wall joins where possible (use columns or props to mark the boundary instead of a texture blend).
+- [ ] If unavoidable: same approach as T2 cross-type floor transitions — 8 blend variants per wall type pair generated in Blender with gradient UV mask.
+
+**T6 — Wall/door and wall/window junctions:**
+- [ ] `wall_{type}_door` piece has a clean opening. Door prop placed inside — use `door_{style}` as a separate object with correct 3D bounds so it occludes tokens correctly.
+- [ ] Door variants needed: `door_{style}_open`, `door_{style}_closed`, `door_{style}_broken`. Each is a standalone prop, not a wall variant.
+- [ ] Window: same. `wall_{type}_window` + `window_{style}` prop. Window does NOT need open/closed variants unless game mechanic requires it.
+- [ ] Alignment: all opening sizes standardized (1 grid unit wide) so any door prop fits any wall type's door opening.
+
+**T7 — Wall/column junctions:**
+- [ ] Column modeled as standalone prop: `column_{style}`. Placed at wall end or junction — visually covers the join.
+- [ ] Column has its own 3D bounds (height, width, depth) for occlusion sorting.
+- [ ] Wall end cap (`wall_{type}_end_{dir}`) designed to terminate cleanly at column face — no overlap artifact.
+- [ ] Optional: `wall_{type}_attached_column` variant where column is baked into the wall segment for tighter integration.
 
 **Tile variant naming convention (for autotile in M6+):**
 ```
