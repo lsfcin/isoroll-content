@@ -1,35 +1,49 @@
-# isorolling generated content
-content/characters/
-content/**/*.png
-content/**/*.jpg
-content/**/*.jpeg
-content/**/*.webp
-!content/benchmark/images/*.png
-!content/benchmark/images/*.jpg
-!content/benchmark/images/*.jpeg
-!content/benchmark/images/*.webp
+# ── Generated outputs (not versioned) ─────────────────────────────────────────
+# Raw generated images in every output subfolder
+content/outputs/**/*.png
+content/outputs/**/*.jpg
+content/outputs/**/*.jpeg
+content/outputs/**/*.webp
+content/outputs/**/*.mp4
+content/outputs/**/*.webm
+content/outputs/**/*.gif
 
-# Local ComfyUI exports and experiment bundles
-content/*.zip
+# Benchmark images ARE versioned (curated reference set)
+!content/outputs/benchmark/images/*.png
+!content/outputs/benchmark/images/*.jpg
+!content/outputs/benchmark/images/*.jpeg
+!content/outputs/benchmark/images/*.webp
+
+# Benchmark support scripts and manifests ARE versioned
+!content/outputs/benchmark/README.md
+!content/outputs/benchmark/manifest.json
+!content/outputs/benchmark/run_*.py
+!content/outputs/benchmark/run_*.pyi
+!content/outputs/benchmark/*/manifest.json
+!content/outputs/benchmark/*/EVALUATION.md
+
+# Legacy paths (pre-restructure) — keep in case anything still writes here
+content/characters/
 content/output/
 content/temp/
+content/*.zip
 
-# Keep generation source files versioned
+# ── Pipeline source files (versioned) ─────────────────────────────────────────
 !content/cli/
 !content/cli/**
 !content/profiles/
 !content/profiles/**
-!content/benchmark/
-!content/benchmark/**
+!content/pipeline/
+!content/pipeline/**
 
-# Python/runtime noise
+# ── Python / runtime noise ────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
 venv/
 
-# Local machine configuration
+# ── Local machine config ──────────────────────────────────────────────────────
 .env
 .env.*
 *.log

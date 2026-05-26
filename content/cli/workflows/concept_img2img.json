@@ -1,0 +1,106 @@
+{
+  "PIPELINE_NOTE": "img2img workflow — takes preprocessed concept art as init image. Uses VAEEncode instead of EmptyLatentImage. Set denoise 0.35-0.55 to preserve structure, 0.65-0.80 for heavy stylization. REPLACE_INPUT_IMAGE is substituted by iso-cli with the path copied to ComfyUI input/. REPLACE_PROMPT is substituted by iso-cli with the user prompt.",
+
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "lyriel_v16.safetensors"
+    }
+  },
+
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "REPLACE_PROMPT, highly detailed, sharp focus, clean edges, dark fantasy illustration",
+      "clip": ["1", 1]
+    }
+  },
+
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality, bad anatomy, deformed face, extra limbs, bad hands, extra fingers, missing fingers, fused fingers, deformed hands, nsfw, bad eyes, asymmetrical eyes, deformed eyes, chromatic aberration, jpeg artifacts, watermark, signature",
+      "clip": ["1", 1]
+    }
+  },
+
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "REPLACE_INPUT_IMAGE",
+      "upload": "image"
+    }
+  },
+
+  "5": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["4", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 28,
+      "cfg": 7.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.55,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["5", 0]
+    }
+  },
+
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["6", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "8": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["7", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "9": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 10,
+      "cfg": 6.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.20,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["8", 0]
+    }
+  },
+
+  "10": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["9", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["10", 0],
+      "filename_prefix": "concept_styled"
+    }
+  }
+}
