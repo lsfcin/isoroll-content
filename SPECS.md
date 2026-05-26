@@ -228,3 +228,154 @@ For major generation changes:
 - The CLI should use `argparse` or similar instead of manual index parsing.
 - Output tracking should ideally use ComfyUI `prompt_id` and `/history` instead of filesystem snapshots.
 - There are no automated tests.
+- All workflow JSONs still hardcode `dreamshaperPixelart_v10.safetensors` — update to `lyriel_v16.safetensors`.
+
+---
+
+## Asset Manifest Schema
+
+Each packed asset folder emits a `manifest.json` with this shape:
+
+```json
+{
+  "id": "warrior-base",
+  "type": "character",
+  "layer": 2,
+  "source_concept": "content/characters/warrior/concept/warrior_concept_01.png",
+  "source_workflow": "content/cli/workflows/character_quality.json",
+  "checkpoint": "lyriel_v16.safetensors",
+  "style_path": "A",
+  "dimensions": { "w": 256, "h": 384 },
+  "anchor": { "x": 0.5, "y": 0.9 },
+  "bounds_3d": { "width": 1.0, "depth": 1.0, "height": 2.0 },
+  "directions": ["SE", "E", "NE", "N", "NW", "W", "SW", "S", "TOP"],
+  "animations": {
+    "idle":         { "frames": 20, "fps": 12, "loop": true },
+    "walk":         { "frames": 24, "fps": 12, "loop": true },
+    "attack_melee": { "frames": 30, "fps": 12, "loop": false },
+    "attack_ranged":{ "frames": 28, "fps": 12, "loop": false },
+    "defend":       { "frames": 20, "fps": 12, "loop": false },
+    "hurt":         { "frames": 15, "fps": 12, "loop": false },
+    "cast":         { "frames": 30, "fps": 12, "loop": false },
+    "crouch":       { "frames": 15, "fps": 12, "loop": false },
+    "prone":        { "frames": 10, "fps": 12, "loop": false },
+    "death":        { "frames": 40, "fps": 12, "loop": false },
+    "fly_idle":     { "frames": 20, "fps": 12, "loop": true }
+  },
+  "equipment_slots": ["weapon_main", "weapon_off", "armor_chest", "armor_head"],
+  "tags": ["humanoid", "warrior", "dark-fantasy"],
+  "date": "2026-05-26",
+  "notes": ""
+}
+```
+
+---
+
+## File Naming Convention
+
+```
+content/characters/{name}/
+  concept/
+    {name}_concept_{n:02d}.png          # external tool concept art (source of truth)
+  blender/
+    {state}/{direction}/
+      frame_{n:04d}.png                 # raw Blender render (alpha PNG)
+      frame_{n:04d}_depth.png           # depth pass (Path A ControlNet)
+      frame_{n:04d}_lineart.png         # Freestyle lineart (Path A ControlNet)
+  styled/
+    {state}/{direction}/
+      frame_{n:04d}.png                 # after SD style pass + rembg
+  equipment/{slot}/
+    {state}/{direction}/
+      frame_{n:04d}.png                 # equipment overlay (alpha PNG)
+  atlas/
+    {name}_{direction}_{state}.png      # packed spritesheet per direction × state
+    manifest.json
+```
+
+Direction labels: `SE`, `E`, `NE`, `N`, `NW`, `W`, `SW`, `S`, `TOP`
+
+Animation state labels: `idle`, `walk`, `attack_melee`, `attack_ranged`, `defend`, `hurt`, `cast`, `crouch`, `prone`, `death`, `fly_idle`
+
+---
+
+## Blender Camera Rig Specification
+
+- **Projection:** Orthographic (not perspective)
+- **Primary elevation:** 30° (dimetric — matches Hades aesthetic). Alternative: 35.264° (true isometric).
+- **Azimuth rotations (8 directions):**
+
+| Label | Camera azimuth | Description |
+|-------|----------------|-------------|
+| SE    | 0°             | Camera facing NW, character faces viewer (front-facing view) |
+| E     | 45°            | |
+| NE    | 90°            | |
+| N     | 135°           | |
+| NW    | 180°           | |
+| W     | 225°           | |
+| SW    | 270°           | |
+| S     | 315°           | |
+| TOP   | 0° (elevation 90°) | Overhead orthographic |
+
+- **Orthographic scale:** ~2.5–3.5 units (adjust so character fills ~80% of frame)
+- **Output resolution per frame:** 256×384px for L1/L3 tiles/props; 256×384px for L2 characters at base; upscale to 512×768 after SD style pass.
+- **Alpha:** enable `Film > Transparent` in EEVEE render settings. Render to PNG with alpha.
+- **Blender script path:** `content/pipeline/blender_iso_rig.py`
+
+---
+
+## VRAM Budget — RTX 3050 6GB
+
+| Workload | Estimated VRAM | Fits? |
+|----------|----------------|-------|
+| Blender EEVEE render (toon) | ~1.5–2.5GB | Yes |
+| SD1.5 base generation | ~3.0–3.5GB | Yes |
+| SD1.5 + 1× ControlNet | ~3.8–4.5GB | Yes |
+| SD1.5 + IP-Adapter + 1× ControlNet | ~4.5–5.2GB | Yes (tight) |
+| SD1.5 + IP-Adapter + 2× ControlNet | ~5.2–5.8GB | Marginal — test with `--lowvram` |
+| SDXL base | ~5.5–6.5GB | Needs `--lowvram` + `--bf16-unet` |
+| SDXL + IP-Adapter | ~7.0GB+ | Likely OOM — test |
+| AnimateDiff SD1.5 (8 frames) | ~4.5–5.5GB | Tight — use small batch |
+| Wan 2.1 video model | ~14GB+ | Not viable on 3050 |
+| SVD (Stable Video Diffusion) | ~8–10GB | Not viable on 3050 |
+
+**Recommended batch strategy:** Blender renders everything first (low VRAM), then queue all SD jobs in ComfyUI overnight. SD jobs do not compete with Blender for VRAM.
+
+---
+
+## Style Path Summary
+
+**Path A — Blender-first:**
+- Blender toon render → ComfyUI img2img (denoise 0.65–0.80) + ControlNet Tile or Lineart
+- Temporal consistency: near-perfect (geometry is anchor)
+- Drawn-feel risk: medium — depends on shader + denoise strength
+- Equipment: separate Blender render pass, frame-aligned
+- Best for: if visual consistency across 1,600+ frames is paramount
+
+**Path B — IP-Adapter-first:**
+- External concept art → IP-Adapter (identity) + ControlNet OpenPose (pose) → SD from scratch
+- Temporal consistency: weaker — mitigate with seed locking + RIFE frame interpolation (generate keyframes, interpolate between)
+- Drawn-feel: guaranteed (SD does all rendering)
+- Equipment: harder — prompt-driven variant or separate Blender equipment render composited with Path B character
+- Best for: if drawn aesthetic is non-negotiable
+
+**Hybrid (possible outcome after experiments):**
+- Blender renders to extract OpenPose skeleton only (rough mesh fine)
+- SD generates from scratch using IP-Adapter (concept) + ControlNet OpenPose (skeleton)
+- Gives drawn feel of Path B + more geometric control than prompt-only
+- Equipment: Blender separate render for equipment overlay; character body from SD
+
+**Decision:** run EXP-A and EXP-B, compare results, document chosen path in `## Chosen Pipeline` below.
+
+---
+
+## Chosen Pipeline
+
+*(Fill in after EXP-A / EXP-B / EXP-C experiments are complete)*
+
+- Primary path: TBD
+- Primary checkpoint (dark-fantasy): TBD
+- Primary checkpoint (cartoon/illustrated): TBD
+- SD version (SD1.5 / SDXL): TBD
+- Temporal consistency strategy: TBD
+- Frame rate target: TBD (current assumption: 12 fps)
