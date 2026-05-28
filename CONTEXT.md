@@ -1,12 +1,11 @@
-# isorolling Context
-> Foundry VTT isometric-play module and offline asset generation pipeline
+# isoroll-content
+> Offline asset generation pipeline for the isoroll Foundry VTT module
 
-isorolling is a Foundry VTT isometric-play project with a separate content-generation pipeline. The long-term product is two things:
+isoroll-content is the art and pipeline side of the isoroll project. It produces 8-direction isometric sprites, tiles, and animations for the isoroll Foundry module.
 
-1. A Foundry module for Hades-like isometric play: 8-direction sprites, height, partial or total occlusion, and visual sorting from 3D-style bounds.
-2. An offline asset pipeline that can generate, refine, validate, and package characters, tiles, animations, spell effects, and metadata for Foundry.
-
-The current repository is still mostly the content-pipeline prototype. `foundry/` is reserved for the future Foundry module implementation.
+The long-term product is two things:
+1. A Foundry module for Hades-like isometric play: 8-direction sprites, height, partial or total occlusion, and visual sorting from 3D-style bounds. (→ see `isoroll-module` repo)
+2. This offline asset pipeline: generates, refines, validates, and packages characters, tiles, animations, spell effects, and metadata for Foundry.
 
 ## Read Order
 
@@ -17,7 +16,7 @@ The current repository is still mostly the content-pipeline prototype. `foundry/
 
 ## Current Focus
 
-The immediate work is `content/cli/iso-cli.py`, a small CLI that submits ComfyUI API workflows for character image generation.
+The immediate work is `cli/iso-cli.py`, a small CLI that submits ComfyUI API workflows for character image generation.
 
 The current generation baseline is:
 
@@ -25,10 +24,8 @@ The current generation baseline is:
 - `iso-cli.py` picks a workflow by profile name.
 - The workflow handles the real node graph.
 - Render profiles exist, but are currently mostly metadata and not applied as tunable parameters.
-- Generated PNGs are ignored by Git under `content/chars/`.
-- Tracked reference outputs belong in `content/benchmark/images/` with prompt/profile metadata in `content/benchmark/manifest.json`.
-
-The next technical goal is YOLO/detailer support for faces and hands without regressing the working quality workflow.
+- Generated PNGs are gitignored under `chars/`.
+- Tracked reference outputs belong in `outputs/benchmark/images/` with metadata in `outputs/benchmark/manifest.json`.
 
 ## Core Product Decisions
 
@@ -43,56 +40,56 @@ The next technical goal is YOLO/detailer support for faces and hands without reg
 ## Repository Shape
 
 ```text
-isorolling/
+isoroll-content/
   .gitignore
   CONTEXT.md
   SPECS.md
   ROADMAP.md
-  content/
-    outputs/benchmark/  # tracked benchmark images + manifests
-    cli/
-      iso-cli.py
-      iso-cli.bat
-      workflows/        # ComfyUI workflow JSONs
-      batch_rembg.sh
-      batch_stylize.sh
-      sprite_splitter.py
-    pipeline/           # art pipeline scripts
-      preprocess.py
-      sheet_to_tpose.py
-      generate_sheet_template.py
-      prompts/
-      [OBSOLETE-MESH]/  # triposr_mesh.py, blender_iso_rig.py, calibrate*.py etc.
-    profiles/           # generation quality profiles
-    chars/              # per-character outputs (gitignored)
-      {name}/
-        concept/
-        sheet/
-        stances/{state}/  # final sprites — frame_{n}_{dir}.png
-        _renders/{state}/ # intermediate renders (gitignored)
-    tiles/              # tile outputs
-  foundry/              # future Foundry VTT module
+  cli/
+    iso-cli.py
+    iso-cli.bat
+    workflows/        # ComfyUI workflow JSONs
+    batch_rembg.sh
+    batch_stylize.sh
+    sprite_splitter.py
+  pipeline/           # art pipeline scripts
+    preprocess.py
+    sheet_to_tpose.py
+    generate_sheet_template.py
+    prompts/
+  pipeline/           # mesh/3D scripts (may be obsolete)
+    triposr_mesh.py, blender_iso_rig.py, calibrate*.py
+  profiles/           # generation quality profiles
+  outputs/benchmark/  # tracked benchmark images + manifests
+  chars/              # per-character outputs (gitignored)
+    {name}/
+      concept/
+      sheet/
+      {name}_{stance}_{facing}.png  # final sprites
+      _renders/{stance}/            # intermediate renders (gitignored)
+  tiles/              # tile assets
+    {name}/
+      {name}_{facing}.png
 ```
 
 ## File Map
 
-- `content/cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows; selects workflow by profile name
-- `content/cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, etc.)
-- `content/cli/sprite_splitter.py` — splits external sprite sheets (GPT-4o, SpriteFlow) into per-direction flat files
-- `content/pipeline/preprocess.py` — background removal + resize for concept art → `content/chars/{name}/concept/`
-- `content/pipeline/sheet_to_tpose.py` — crop GPT character sheet → panels in `content/chars/{name}/sheet/`
-- `content/profiles/` — render profile JSONs (fast, balanced, quality, character, props, environment, photos)
-- `content/outputs/benchmark/manifest.json` — metadata for curated benchmark outputs
-- `content/outputs/benchmark/images/` — tracked benchmark images (promoted from raw generation)
-- `foundry/` — reserved for future Foundry VTT module implementation (currently empty)
+- `cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows; selects workflow by profile name
+- `cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, etc.)
+- `cli/sprite_splitter.py` — splits external sprite sheets into per-direction flat files
+- `pipeline/preprocess.py` — background removal + resize for concept art → `chars/{name}/concept/`
+- `pipeline/sheet_to_tpose.py` — crop GPT character sheet → panels in `chars/{name}/sheet/`
+- `profiles/` — render profile JSONs (fast, balanced, quality, character, props, environment, photos)
+- `outputs/benchmark/manifest.json` — metadata for curated benchmark outputs
+- `outputs/benchmark/images/` — tracked benchmark images (promoted from raw generation)
 
 ## Working Rules
 
 - Keep source files portable. Do not commit local absolute ComfyUI paths.
-- Use `COMFY_DIR` for the local ComfyUI root. `content/cli/iso-cli.py` expects it.
+- Use `COMFY_DIR` for the local ComfyUI root. `cli/iso-cli.py` expects it.
 - Workflow JSON defines the graph. Profiles should not pretend to enable nodes that the workflow does not contain.
 - Add new workflows beside the old ones when testing major pipeline changes.
-- Use `content/benchmark/` for curated visual comparisons. Do not promote raw generations without adding metadata.
+- Use `outputs/benchmark/` for curated visual comparisons. Do not promote raw generations without adding metadata.
 - Treat `character_quality_x4.json` as a legacy reference: it produced good texture but was slow/heavy and still had hand problems.
 - Treat the current `character_quality.json` as the working quality baseline: higher base resolution plus light refine, no latent x2 upscale.
 - Before adding YOLO/detailers, verify ComfyUI actually exposes the required node classes through `/object_info`.
@@ -100,12 +97,8 @@ isorolling/
 <!-- routing:start -->
 ## Routing
 
-| Subdirectory | Description |
-|--------------|-------------|
-| [`content/`](content/CONTEXT.md) | — |
-
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
-| [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
-| [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
+| [`ROADMAP.md`](ROADMAP.md) | — | — | isoroll-content Roadmap |
+| [`SPECS.md`](SPECS.md) | — | — | isoroll-content Specs |
 <!-- routing:end -->

@@ -1,39 +1,31 @@
 # ── Generated outputs (not versioned) ─────────────────────────────────────────
 # Raw generated images in every output subfolder
-content/outputs/**/*.png
-content/outputs/**/*.jpg
-content/outputs/**/*.jpeg
-content/outputs/**/*.webp
-content/outputs/**/*.mp4
-content/outputs/**/*.webm
-content/outputs/**/*.gif
+outputs/**/*.png
+outputs/**/*.jpg
+outputs/**/*.jpeg
+outputs/**/*.webp
+outputs/**/*.mp4
+outputs/**/*.webm
+outputs/**/*.gif
 
 # Benchmark images ARE versioned (curated reference set)
-!content/outputs/benchmark/images/*.png
-!content/outputs/benchmark/images/*.jpg
-!content/outputs/benchmark/images/*.jpeg
-!content/outputs/benchmark/images/*.webp
+!outputs/benchmark/images/*.png
+!outputs/benchmark/images/*.jpg
+!outputs/benchmark/images/*.jpeg
+!outputs/benchmark/images/*.webp
 
 # Benchmark support scripts and manifests ARE versioned
-!content/outputs/benchmark/README.md
-!content/outputs/benchmark/manifest.json
-!content/outputs/benchmark/run_*.py
-!content/outputs/benchmark/run_*.pyi
-!content/outputs/benchmark/*/manifest.json
-!content/outputs/benchmark/*/EVALUATION.md
+!outputs/benchmark/README.md
+!outputs/benchmark/manifest.json
+!outputs/benchmark/run_*.py
+!outputs/benchmark/run_*.pyi
+!outputs/benchmark/*/manifest.json
+!outputs/benchmark/*/EVALUATION.md
 
-content/chars/
-content/output/
-content/temp/
-content/*.zip
-
-# ── Pipeline source files (versioned) ─────────────────────────────────────────
-!content/cli/
-!content/cli/**
-!content/profiles/
-!content/profiles/**
-!content/pipeline/
-!content/pipeline/**
+chars/
+output/
+temp/
+*.zip
 
 # ── Python / runtime noise ────────────────────────────────────────────────────
 __pycache__/
