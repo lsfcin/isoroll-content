@@ -1,0 +1,145 @@
+{
+  "PIPELINE_NOTE": "Path A+B hybrid — IP-Adapter identity lock from concept art + ControlNet Tile structural anchor from Blender render. REPLACE_INPUT_IMAGE = uploaded Blender render PNG. REPLACE_CONCEPT_IMAGE = uploaded concept art PNG (used as IP-Adapter reference). REPLACE_PROMPT = character/asset description. Denoise 0.60-0.75: lower = more Blender structure, higher = more style freedom.",
+
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "lyriel_v16.safetensors"
+    }
+  },
+
+  "2": {
+    "class_type": "IPAdapterUnifiedLoader",
+    "inputs": {
+      "model": ["1", 0],
+      "preset": "PLUS (high strength)"
+    }
+  },
+
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "REPLACE_CONCEPT_IMAGE",
+      "upload": "image"
+    }
+  },
+
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "REPLACE_INPUT_IMAGE",
+      "upload": "image"
+    }
+  },
+
+  "5": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["4", 0],
+      "upscale_method": "lanczos",
+      "width": 512,
+      "height": 768,
+      "crop": "disabled"
+    }
+  },
+
+  "6": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": ["2", 0],
+      "ipadapter": ["2", 1],
+      "image": ["3", 0],
+      "weight": 0.6,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "embeds_scaling": "V only"
+    }
+  },
+
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "REPLACE_PROMPT, isometric game sprite, dark fantasy RPG, illustrated style, Hades game art, clean lineart, cel shaded, sharp focus",
+      "clip": ["1", 1]
+    }
+  },
+
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, photo-realistic, 3d render, nsfw, watermark, text, cropped, bad anatomy, extra limbs, deformed hands, fused fingers, distorted hood, asymmetrical hood, low quality",
+      "clip": ["1", 1]
+    }
+  },
+
+  "9": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "control_v11f1e_sd15_tile.pth"
+    }
+  },
+
+  "10": {
+    "class_type": "TilePreprocessor",
+    "inputs": {
+      "image": ["5", 0],
+      "pyrUp_iters": 3,
+      "resolution": 512
+    }
+  },
+
+  "11": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": ["7", 0],
+      "negative": ["8", 0],
+      "control_net": ["9", 0],
+      "image": ["10", 0],
+      "strength": 0.85,
+      "start_percent": 0.0,
+      "end_percent": 1.0
+    }
+  },
+
+  "12": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["5", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "13": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 25,
+      "cfg": 7.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.65,
+      "model": ["6", 0],
+      "positive": ["11", 0],
+      "negative": ["11", 1],
+      "latent_image": ["12", 0]
+    }
+  },
+
+  "14": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["13", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["14", 0],
+      "filename_prefix": "isoroll/pathAB"
+    }
+  }
+}

@@ -1,18 +1,10 @@
 """iso-cli — isoroll content pipeline CLI. Run with -h for usage."""
 
-import os
-import random
 import sys
 
-from comfy_client import (
-    copy_to_dir, load_workflow, send_prompt,
-    snapshot_pngs, upload_image, wait_for_new_png,
-)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONTENT_DIR = os.path.dirname(BASE_DIR)
-PROFILE_DIR = os.path.join(CONTENT_DIR, "profiles")
-WORKFLOW_DIR = os.path.join(BASE_DIR, "workflows")
+from blender_commands import blender_ipadapter, blender_stylize
+from gen_commands import gen_character, ipadapter_ref, style_concept
+from image_commands import detail_image, face_restore
 
 HELP = """
 iso-cli — isoroll content pipeline
@@ -27,119 +19,49 @@ Commands:
     --denoise  <0.0-1.0>             style strength    (default: 0.55)
     --out      <dir>                  copy result here
 
+  ipadapter-ref <image_path>  Path B — IP-Adapter identity lock from concept art
+    --prompt   <text>                 character/style description (required)
+    --weight   <0.0-1.0>             IP-Adapter strength         (default: 0.8)
+    --out      <dir>                  copy result here
+
+  blender-stylize <image_path>  Path A — ControlNet Tile stylization of Blender render
+    --prompt   <text>                 asset description (required)
+    --denoise  <0.0-1.0>             style strength    (default: 0.70)
+    --out      <dir>                  copy result here
+
+  blender-ipadapter <image_path>  Path A+B hybrid — IP-Adapter identity + ControlNet Tile structure
+    --concept  <concept_img>          concept art as IP-Adapter reference (required)
+    --prompt   <text>                 character description (required)
+    --denoise  <0.0-1.0>             style strength    (default: 0.65)
+    --weight   <0.0-1.0>             IP-Adapter weight (default: 0.6)
+    --out      <dir>                  copy result here
+
+  detail-image <image_path>    Pure upscale: 4xUltrasharp → target size, no SD, no pose drift
+    --size     character|tile         output size preset (default: character = 1024x1536, tile = 1024x1024)
+    --rembg                           also strip background (for Path B outputs)
+    --out      <dir>                  copy result here
+
+  face-restore <image_path>    Visible-face characters only: UltimateSDUpscale + CodeFormer
+    --prompt   <text>                 generation prompt for SD context in tiles (required)
+    --rembg                           also strip background
+    --out      <dir>                  copy result here
+
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
-  python iso-cli.py style-concept ../outputs/tiles/dungeon/concept/dungeon_concept_clean.png \\
-      --prompt "isometric dungeon floor tile, dark stone, dark fantasy" --denoise 0.50 \\
-      --out ../outputs/tiles/dungeon/styled
+  python iso-cli.py ipadapter-ref ../chars/rogue/concept/rogue_concept_clean.png \\
+      --prompt "dark fantasy rogue, hooded, teal cloak, SE isometric view" \\
+      --out ../chars/rogue/stances/neutral-idle
+  python iso-cli.py detail-image ../chars/rogue/stances/neutral-idle/pathB_00002_SE.png \\
+      --rembg --out ../chars/rogue/stances/neutral-idle
+  python iso-cli.py blender-stylize ../chars/rogue/_renders/neutral-idle/frame_0001_SE.png \\
+      --prompt "dark fantasy rogue, hooded assassin, teal cloak" \\
+      --out ../chars/rogue/stances/neutral-idle
+  python iso-cli.py blender-ipadapter ../chars/rogue/_renders/neutral-idle/frame_0001_SE.png \\
+      --concept ../chars/rogue/concept/rogue_concept_v2.png \\
+      --prompt "dark fantasy rogue, hooded assassin, teal-blue cloak, black leather armor, SE isometric view" \\
+      --out ../chars/rogue/stances/neutral-idle
 """
 
-
-# ── Workflow mutations ─────────────────────────────────────────────────────────
-
-def apply_random_seeds(workflow: dict) -> None:
-    seed = random.randint(0, 2**32 - 1)
-    for node in workflow.values():
-        if node.get("class_type") == "KSampler":
-            node["inputs"]["seed"] = seed
-
-
-def inject_prompt(workflow: dict, prompt_text: str) -> None:
-    for node in workflow.values():
-        if node.get("class_type") == "CLIPTextEncode":
-            text = node["inputs"].get("text", "")
-            if "REPLACE_PROMPT" in text:
-                node["inputs"]["text"] = text.replace("REPLACE_PROMPT", prompt_text)
-
-
-def inject_input_image(workflow: dict, comfy_filename: str) -> None:
-    for node in workflow.values():
-        if node.get("class_type") == "LoadImage":
-            if node["inputs"].get("image") == "REPLACE_INPUT_IMAGE":
-                node["inputs"]["image"] = comfy_filename
-
-
-def set_base_denoise(workflow: dict, denoise: float) -> None:
-    for node in workflow.values():
-        if node.get("class_type") == "KSampler":
-            node["inputs"]["denoise"] = denoise
-            return  # first sampler only; refine pass keeps its own value
-
-
-# ── Commands ───────────────────────────────────────────────────────────────────
-
-def gen_character(prompt: str, profile_name: str, output_path: str | None) -> None:
-    workflow_path = os.path.join(WORKFLOW_DIR, f"character_{profile_name}.json")
-    if not os.path.exists(workflow_path):
-        print(f"[FAIL] Workflow not found: {workflow_path}")
-        sys.exit(1)
-
-    print(f"[INFO] profile:  {profile_name}")
-    print(f"[INFO] prompt:   {prompt}")
-
-    workflow = load_workflow(workflow_path)
-    inject_prompt(workflow, prompt)
-    apply_random_seeds(workflow)
-
-    before = snapshot_pngs()
-    if not send_prompt(workflow):
-        sys.exit(1)
-
-    print("[INFO] Waiting for generation ...")
-    latest = wait_for_new_png(before)
-    if not latest:
-        print("[FAIL] Timeout.")
-        sys.exit(1)
-
-    print(f"[OK]   Generated: {latest}")
-    if output_path:
-        dest = copy_to_dir(latest, output_path)
-        print(f"[OK]   Saved to:  {dest}")
-
-
-def style_concept(
-    input_image: str, prompt: str, denoise: float, output_path: str | None
-) -> None:
-    if not os.path.exists(input_image):
-        print(f"[FAIL] Image not found: {input_image}")
-        sys.exit(1)
-
-    workflow_path = os.path.join(WORKFLOW_DIR, "concept_img2img.json")
-    if not os.path.exists(workflow_path):
-        print(f"[FAIL] Workflow not found: {workflow_path}")
-        sys.exit(1)
-
-    print(f"[INFO] input:    {input_image}")
-    print(f"[INFO] prompt:   {prompt}")
-    print(f"[INFO] denoise:  {denoise}")
-
-    print("[INFO] Uploading to ComfyUI ...")
-    comfy_filename = upload_image(input_image)
-    print(f"[INFO] Stored as: {comfy_filename}")
-
-    workflow = load_workflow(workflow_path)
-    inject_input_image(workflow, comfy_filename)
-    inject_prompt(workflow, prompt)
-    set_base_denoise(workflow, denoise)
-    apply_random_seeds(workflow)
-
-    before = snapshot_pngs()
-    if not send_prompt(workflow):
-        sys.exit(1)
-
-    print("[INFO] Waiting for generation ...")
-    latest = wait_for_new_png(before)
-    if not latest:
-        print("[FAIL] Timeout.")
-        sys.exit(1)
-
-    print(f"[OK]   Generated: {latest}")
-    if output_path:
-        dest = copy_to_dir(latest, output_path)
-        print(f"[OK]   Saved to:  {dest}")
-
-
-# ── Entry point ────────────────────────────────────────────────────────────────
 
 def get_arg(args: list[str], flag: str, default: str | None = None) -> str | None:
     if flag in args:
@@ -180,6 +102,83 @@ def main() -> None:
             input_image=args[1],
             prompt=prompt,
             denoise=float(get_arg(args, "--denoise", "0.55")),
+            output_path=get_arg(args, "--out"),
+        )
+
+    elif command == "ipadapter-ref":
+        if len(args) < 2:
+            print("[FAIL] ipadapter-ref requires an image path.")
+            sys.exit(1)
+        prompt = get_arg(args, "--prompt")
+        if not prompt:
+            print("[FAIL] ipadapter-ref requires --prompt.")
+            sys.exit(1)
+        ipadapter_ref(
+            input_image=args[1],
+            prompt=prompt,
+            weight=float(get_arg(args, "--weight", "0.6")),
+            output_path=get_arg(args, "--out"),
+        )
+
+    elif command == "detail-image":
+        if len(args) < 2:
+            print("[FAIL] detail-image requires an image path.")
+            sys.exit(1)
+        detail_image(
+            input_image=args[1],
+            size=get_arg(args, "--size", "character"),
+            run_rembg="--rembg" in args,
+            output_path=get_arg(args, "--out"),
+        )
+
+    elif command == "face-restore":
+        if len(args) < 2:
+            print("[FAIL] face-restore requires an image path.")
+            sys.exit(1)
+        prompt = get_arg(args, "--prompt")
+        if not prompt:
+            print("[FAIL] face-restore requires --prompt.")
+            sys.exit(1)
+        face_restore(
+            input_image=args[1],
+            prompt=prompt,
+            run_rembg="--rembg" in args,
+            output_path=get_arg(args, "--out"),
+        )
+
+    elif command == "blender-stylize":
+        if len(args) < 2:
+            print("[FAIL] blender-stylize requires an image path.")
+            sys.exit(1)
+        prompt = get_arg(args, "--prompt")
+        if not prompt:
+            print("[FAIL] blender-stylize requires --prompt.")
+            sys.exit(1)
+        blender_stylize(
+            input_image=args[1],
+            prompt=prompt,
+            denoise=float(get_arg(args, "--denoise", "0.70")),
+            output_path=get_arg(args, "--out"),
+        )
+
+    elif command == "blender-ipadapter":
+        if len(args) < 2:
+            print("[FAIL] blender-ipadapter requires an image path.")
+            sys.exit(1)
+        concept = get_arg(args, "--concept")
+        if not concept:
+            print("[FAIL] blender-ipadapter requires --concept <concept_img>.")
+            sys.exit(1)
+        prompt = get_arg(args, "--prompt")
+        if not prompt:
+            print("[FAIL] blender-ipadapter requires --prompt.")
+            sys.exit(1)
+        blender_ipadapter(
+            input_image=args[1],
+            concept_image=concept,
+            prompt=prompt,
+            denoise=float(get_arg(args, "--denoise", "0.65")),
+            weight=float(get_arg(args, "--weight", "0.6")),
             output_path=get_arg(args, "--out"),
         )
 

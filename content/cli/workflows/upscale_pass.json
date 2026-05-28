@@ -1,0 +1,45 @@
+{
+  "PIPELINE_NOTE": "Pure upscale pass — no SD diffusion, no pose drift. 4xUltrasharp (ESRGAN) → lanczos resize to 1024x1536. Safe for any character including masked/hooded. Use as default post-process after ipadapter_txt2img or blender_controlnet_tile. REPLACE_INPUT_IMAGE = generated image to upscale.",
+
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "REPLACE_INPUT_IMAGE",
+      "upload": "image"
+    }
+  },
+
+  "2": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+      "model_name": "4xUltrasharp_4xUltrasharpV10.pt"
+    }
+  },
+
+  "3": {
+    "class_type": "ImageUpscaleWithModel",
+    "inputs": {
+      "upscale_model": ["2", 0],
+      "image": ["1", 0]
+    }
+  },
+
+  "4": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["3", 0],
+      "upscale_method": "lanczos",
+      "width": "REPLACE_WIDTH",
+      "height": "REPLACE_HEIGHT",
+      "crop": "disabled"
+    }
+  },
+
+  "5": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["4", 0],
+      "filename_prefix": "isoroll/upscaled"
+    }
+  }
+}

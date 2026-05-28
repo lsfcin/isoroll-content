@@ -25,7 +25,7 @@ The current generation baseline is:
 - `iso-cli.py` picks a workflow by profile name.
 - The workflow handles the real node graph.
 - Render profiles exist, but are currently mostly metadata and not applied as tunable parameters.
-- Generated PNGs are ignored by Git under `content/characters/`.
+- Generated PNGs are ignored by Git under `content/chars/`.
 - Tracked reference outputs belong in `content/benchmark/images/` with prompt/profile metadata in `content/benchmark/manifest.json`.
 
 The next technical goal is YOLO/detailer support for faces and hands without regressing the working quality workflow.
@@ -49,39 +49,41 @@ isorolling/
   SPECS.md
   ROADMAP.md
   content/
-    benchmark/
-      README.md
-      manifest.json
-      images/         # tracked benchmark images only
+    outputs/benchmark/  # tracked benchmark images + manifests
     cli/
       iso-cli.py
       iso-cli.bat
-      workflow_api.json
-      workflows/
-        character_fast.json
-        character_balanced.json
-        character_quality.json
-        character_quality_x4.json
-    profiles/
-      fast.json
-      balanced.json
-      quality.json
-      character.json
-      props.json
-      environment.json
-      photos.json
-    characters/        # raw generated output, ignored
-  foundry/             # future Foundry VTT module
+      workflows/        # ComfyUI workflow JSONs
+      batch_rembg.sh
+      batch_stylize.sh
+      sprite_splitter.py
+    pipeline/           # art pipeline scripts
+      preprocess.py
+      sheet_to_tpose.py
+      generate_sheet_template.py
+      prompts/
+      [OBSOLETE-MESH]/  # triposr_mesh.py, blender_iso_rig.py, calibrate*.py etc.
+    profiles/           # generation quality profiles
+    chars/              # per-character outputs (gitignored)
+      {name}/
+        concept/
+        sheet/
+        stances/{state}/  # final sprites — frame_{n}_{dir}.png
+        _renders/{state}/ # intermediate renders (gitignored)
+    tiles/              # tile outputs
+  foundry/              # future Foundry VTT module
 ```
 
 ## File Map
 
-- `content/cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows for character image generation; selects workflow by profile name
-- `content/cli/workflow_api.json` — default ComfyUI workflow (baseline reference)
-- `content/cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, `character_quality_x4`)
+- `content/cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows; selects workflow by profile name
+- `content/cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, etc.)
+- `content/cli/sprite_splitter.py` — splits external sprite sheets (GPT-4o, SpriteFlow) into per-direction flat files
+- `content/pipeline/preprocess.py` — background removal + resize for concept art → `content/chars/{name}/concept/`
+- `content/pipeline/sheet_to_tpose.py` — crop GPT character sheet → panels in `content/chars/{name}/sheet/`
 - `content/profiles/` — render profile JSONs (fast, balanced, quality, character, props, environment, photos)
-- `content/benchmark/manifest.json` — metadata for curated benchmark outputs (prompt + profile per image)
-- `content/benchmark/images/` — tracked benchmark images (promoted from raw generation)
+- `content/outputs/benchmark/manifest.json` — metadata for curated benchmark outputs
+- `content/outputs/benchmark/images/` — tracked benchmark images (promoted from raw generation)
 - `foundry/` — reserved for future Foundry VTT module implementation (currently empty)
 
 ## Working Rules

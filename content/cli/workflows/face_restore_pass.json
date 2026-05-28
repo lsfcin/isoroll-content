@@ -1,0 +1,96 @@
+{
+  "PIPELINE_NOTE": "Face restore pass for VISIBLE-FACE characters only. Do NOT use on masked/hooded characters — CodeFormer expects human face anatomy. Pipeline: LoadImage → UltimateSDUpscale (denoise 0.06, tile-based, no composition change) → FaceRestoreCFWithModel (CodeFormer fidelity 0.8). REPLACE_INPUT_IMAGE = upscaled image (run upscale_pass first). REPLACE_PROMPT = generation prompt for SD context in UltimateSDUpscale tiles.",
+
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "lyriel_v16.safetensors"
+    }
+  },
+
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "REPLACE_PROMPT, sharp focus, clean lineart, dark fantasy illustrated style",
+      "clip": ["1", 1]
+    }
+  },
+
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality, artifact, jpeg artifacts, watermark",
+      "clip": ["1", 1]
+    }
+  },
+
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "REPLACE_INPUT_IMAGE",
+      "upload": "image"
+    }
+  },
+
+  "6": {
+    "class_type": "UltimateSDUpscale",
+    "inputs": {
+      "upscale_by": 1.0,
+      "seed": 0,
+      "steps": 20,
+      "cfg": 7.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 0.06,
+      "mode_type": "Linear",
+      "tile_width": 512,
+      "tile_height": 512,
+      "mask_blur": 8,
+      "tile_padding": 32,
+      "seam_fix_mode": "None",
+      "seam_fix_denoise": 0.0,
+      "seam_fix_width": 64,
+      "seam_fix_mask_blur": 8,
+      "seam_fix_padding": 16,
+      "force_uniform_tiles": true,
+      "tiled_decode": false,
+      "image": ["5", 0],
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "vae": ["1", 2],
+      "upscale_model": ["7", 0]
+    }
+  },
+
+  "7": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+      "model_name": "4xUltrasharp_4xUltrasharpV10.pt"
+    }
+  },
+
+  "8": {
+    "class_type": "FaceRestoreCFWithModel",
+    "inputs": {
+      "facerestore_model": ["9", 0],
+      "image": ["6", 0],
+      "fidelity": 0.8
+    }
+  },
+
+  "9": {
+    "class_type": "FaceRestoreModelLoader",
+    "inputs": {
+      "model_name": "codeformer.pth"
+    }
+  },
+
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["8", 0],
+      "filename_prefix": "isoroll/face_restored"
+    }
+  }
+}

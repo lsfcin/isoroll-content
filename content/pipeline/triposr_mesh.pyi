@@ -1,0 +1,6 @@
+from _typeshed import Incomplete
+
+TRIPOSR_DIR: Incomplete
+
+def parse_args(): ...
+def main() -> None: ...

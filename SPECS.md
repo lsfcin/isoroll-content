@@ -15,7 +15,7 @@ Versioned source should include:
 
 Generated or local-only artifacts should not be committed by default:
 
-- `content/characters/`
+- `content/chars/`
 - generated images under `content/**/*.png`, `content/**/*.jpg`, `content/**/*.jpeg`, `content/**/*.webp`
 - local experiment bundles such as `content/*.zip`
 - local ComfyUI outputs and temp folders
@@ -241,7 +241,7 @@ Each packed asset folder emits a `manifest.json` with this shape:
   "id": "warrior-base",
   "type": "character",
   "layer": 2,
-  "source_concept": "content/characters/warrior/concept/warrior_concept_01.png",
+  "source_concept": "content/chars/warrior/concept/warrior_concept_01.png",
   "source_workflow": "content/cli/workflows/character_quality.json",
   "checkpoint": "lyriel_v16.safetensors",
   "style_path": "A",
@@ -307,20 +307,23 @@ Seam strategy summary:
 ## File Naming Convention
 
 ```
-content/characters/{name}/
+content/chars/{name}/
   concept/
     {name}_concept_{n:02d}.png          # external tool concept art (source of truth)
-  blender/
-    {state}/{direction}/
-      frame_{n:04d}.png                 # raw Blender render (alpha PNG)
-      frame_{n:04d}_depth.png           # depth pass (Path A ControlNet)
-      frame_{n:04d}_lineart.png         # Freestyle lineart (Path A ControlNet)
-  styled/
-    {state}/{direction}/
-      frame_{n:04d}.png                 # after SD style pass + rembg
+  sheet/
+    tpose_front.png  tpose_back.png  front_full.png
+    view_3q.png      equipment.png    palette.png
+  _renders/
+    {state}/
+      frame_{n:04d}_{direction}.png         # raw Blender/intermediate render (RGBA)
+      frame_{n:04d}_depth_{direction}.png   # depth pass (ControlNet)
+  stances/
+    {state}/
+      frame_{n:04d}_{direction}.png         # final sprite after SD style pass + rembg
+      {prefix}_{n:05d}_{direction}.png      # sprites from external tools (S4 path)
   equipment/{slot}/
-    {state}/{direction}/
-      frame_{n:04d}.png                 # equipment overlay (alpha PNG)
+    {state}/
+      frame_{n:04d}_{direction}.png         # equipment overlay (alpha PNG)
   atlas/
     {name}_{direction}_{state}.png      # packed spritesheet per direction × state
     manifest.json

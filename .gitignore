@@ -22,8 +22,7 @@ content/outputs/**/*.gif
 !content/outputs/benchmark/*/manifest.json
 !content/outputs/benchmark/*/EVALUATION.md
 
-# Legacy paths (pre-restructure) — keep in case anything still writes here
-content/characters/
+content/chars/
 content/output/
 content/temp/
 content/*.zip

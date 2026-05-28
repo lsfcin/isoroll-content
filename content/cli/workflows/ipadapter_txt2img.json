@@ -1,0 +1,98 @@
+{
+  "PIPELINE_NOTE": "Path B — IP-Adapter identity lock. Takes concept art as reference; generates character with matching visual identity from text prompt. REPLACE_INPUT_IMAGE = uploaded concept art (RGBA clean). REPLACE_PROMPT = style/pose description. Preset PLUS (high strength) requires ip-adapter-plus_sd15.bin + CLIP-ViT-H-14 in models/clip_vision/.",
+
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "lyriel_v16.safetensors"
+    }
+  },
+
+  "2": {
+    "class_type": "IPAdapterUnifiedLoader",
+    "inputs": {
+      "model": ["1", 0],
+      "preset": "PLUS (high strength)"
+    }
+  },
+
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "REPLACE_INPUT_IMAGE",
+      "upload": "image"
+    }
+  },
+
+  "4": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": ["2", 0],
+      "ipadapter": ["2", 1],
+      "image": ["3", 0],
+      "weight": 0.6,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "embeds_scaling": "V only"
+    }
+  },
+
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "REPLACE_PROMPT, isometric game sprite, dark fantasy RPG, illustrated style, Hades game art, clean lineart, cel shaded, full body character, white background",
+      "clip": ["1", 1]
+    }
+  },
+
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, photo-realistic, 3d render, nsfw, watermark, text, cropped, bad anatomy, extra limbs, deformed hands, fused fingers, horn, spike, pointy artifact, distorted hood, asymmetrical hood",
+      "clip": ["1", 1]
+    }
+  },
+
+  "7": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 512,
+      "height": 768,
+      "batch_size": 1
+    }
+  },
+
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 25,
+      "cfg": 7.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["4", 0],
+      "positive": ["5", 0],
+      "negative": ["6", 0],
+      "latent_image": ["7", 0]
+    }
+  },
+
+  "9": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["8", 0],
+      "vae": ["1", 2]
+    }
+  },
+
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["9", 0],
+      "filename_prefix": "isoroll/pathB"
+    }
+  }
+}

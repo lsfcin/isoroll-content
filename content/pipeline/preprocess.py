@@ -10,11 +10,11 @@ Usage:
     python preprocess.py --input path/to/image.png --type character --name rogue
 
 Output structure:
-    content/outputs/tiles/{name}/concept/
+    content/tiles/{name}/concept/
         {name}_concept_raw.png      # original, untouched
         {name}_concept_clean.png    # background removed, resized
 
-    content/outputs/characters/{name}/concept/
+    content/chars/{name}/concept/
         {name}_concept_raw.png
         {name}_concept_clean.png
 
@@ -45,7 +45,7 @@ VALID_TYPES = list(TARGET_SIZES.keys())
 # Plural folder name per type
 FOLDER_NAMES = {
     "tile":      "tiles",
-    "character": "characters",
+    "character": "chars",
     "item":      "items",
     "effect":    "effects",
 }
@@ -117,7 +117,7 @@ def main() -> None:
 
     repo_root = find_content_root(Path.cwd())
     folder = FOLDER_NAMES[args.type]
-    concept_dir = repo_root / "content" / "outputs" / folder / args.name / "concept"
+    concept_dir = repo_root / "content" / folder / args.name / "concept"
     concept_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Copy raw original (never modify the source)

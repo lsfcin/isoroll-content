@@ -1,0 +1,6 @@
+from _typeshed import Incomplete
+
+WORKFLOW_DIR: Incomplete
+
+def blender_stylize(input_image: str, prompt: str, denoise: float, output_path: str | None) -> None: ...
+def blender_ipadapter(input_image: str, concept_image: str, prompt: str, denoise: float, weight: float, output_path: str | None) -> None: ...
