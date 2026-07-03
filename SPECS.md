@@ -436,9 +436,12 @@ exterior). Guide schematic colors are face IDs, bound in the prompt:
 
 **Grid layout: 6-cell, 3×2 aspect ratio** (confirmed: NB can generate 3×2
 directly). Top row `NW | NE | TOP`, bottom row `SW | SE | caption`. The
-caption cell (bottom-right) carries the color-key legend / any non-essential
-text — that's the cell NB stamps its watermark on, so essential art never
-lands there.
+caption cell (bottom-right) is the one NB stamps its watermark on, so
+essential art never lands there. It carries only a small dimension tag
+(`W5 H4 D1`) for human/QC tracking — deliberately NOT the color→face
+legend. That binding lives in the text prompt (S0-E2) only; baking it into
+the guide image risks NB treating rendered legend text as content to
+reproduce or extend elsewhere in the output.
 
 **Steps:**
 1. **Hero view** — NB generates one best single view (SE-style) from text prompt.
