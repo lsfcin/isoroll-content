@@ -25,7 +25,7 @@ The current generation baseline is:
 - The workflow handles the real node graph.
 - Render profiles exist, but are currently mostly metadata and not applied as tunable parameters.
 - Generated PNGs are gitignored under `chars/`.
-- Tracked reference outputs belong in `outputs/benchmark/images/` with metadata in `outputs/benchmark/manifest.json`.
+- Tracked reference outputs belong in `benchmarks/images/` with metadata in `benchmarks/manifest.json`.
 
 ## Core Product Decisions
 
@@ -60,7 +60,7 @@ isoroll-content/
   pipeline/           # mesh/3D scripts (may be obsolete)
     triposr_mesh.py, blender_iso_rig.py, calibrate*.py
   profiles/           # generation quality profiles
-  outputs/benchmark/  # tracked benchmark images + manifests
+  benchmarks/         # tracked benchmark images + manifests
   chars/              # per-character outputs (gitignored)
     {name}/
       concept/
@@ -80,8 +80,8 @@ isoroll-content/
 - `pipeline/preprocess.py` — background removal + resize for concept art → `chars/{name}/concept/`
 - `pipeline/sheet_to_tpose.py` — crop GPT character sheet → panels in `chars/{name}/sheet/`
 - `profiles/` — render profile JSONs (fast, balanced, quality, character, props, environment, photos)
-- `outputs/benchmark/manifest.json` — metadata for curated benchmark outputs
-- `outputs/benchmark/images/` — tracked benchmark images (promoted from raw generation)
+- `benchmarks/manifest.json` — metadata for curated benchmark outputs
+- `benchmarks/images/` — tracked benchmark images (promoted from raw generation)
 
 ## Working Rules
 
@@ -89,7 +89,7 @@ isoroll-content/
 - Use `COMFY_DIR` for the local ComfyUI root. `cli/iso-cli.py` expects it.
 - Workflow JSON defines the graph. Profiles should not pretend to enable nodes that the workflow does not contain.
 - Add new workflows beside the old ones when testing major pipeline changes.
-- Use `outputs/benchmark/` for curated visual comparisons. Do not promote raw generations without adding metadata.
+- Use `benchmarks/` for curated visual comparisons. Do not promote raw generations without adding metadata.
 - Treat `character_quality_x4.json` as a legacy reference: it produced good texture but was slow/heavy and still had hand problems.
 - Treat the current `character_quality.json` as the working quality baseline: higher base resolution plus light refine, no latent x2 upscale.
 - Before adding YOLO/detailers, verify ComfyUI actually exposes the required node classes through `/object_info`.
@@ -97,8 +97,16 @@ isoroll-content/
 <!-- routing:start -->
 ## Routing
 
+| Subdirectory | Description |
+|--------------|-------------|
+| [`benchmarks/`](benchmarks/CONTEXT.md) | — |
+| [`cli/`](cli/CONTEXT.md) | — |
+| [`pipeline/`](pipeline/CONTEXT.md) | — |
+
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
-| [`ROADMAP.md`](ROADMAP.md) | — | — | isoroll-content Roadmap |
-| [`SPECS.md`](SPECS.md) | — | — | isoroll-content Specs |
+| [`HISTORY.md`](HISTORY.md) | — | — | History |
+| [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
+| [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
+| [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
 <!-- routing:end -->

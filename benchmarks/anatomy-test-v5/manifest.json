@@ -1,0 +1,20 @@
+[
+  {
+    "model": "dreamshaper_8.safetensors",
+    "seed": 77,
+    "time_s": 90.1,
+    "file": "/mnt/workspace/code/isoroll/content/benchmark/anatomy-test-v5/dreamshaper_8.png"
+  },
+  {
+    "model": "toonyou_beta6.safetensors",
+    "seed": 77,
+    "time_s": 87.1,
+    "file": "/mnt/workspace/code/isoroll/content/benchmark/anatomy-test-v5/toonyou_beta6.png"
+  },
+  {
+    "model": "lyriel_v16.safetensors",
+    "seed": 77,
+    "time_s": 66.1,
+    "file": "/mnt/workspace/code/isoroll/content/benchmark/anatomy-test-v5/lyriel_v16.png"
+  }
+]

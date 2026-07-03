@@ -409,11 +409,67 @@ Animation state labels: `idle`, `walk`, `attack_melee`, `attack_ranged`, `defend
 
 ## Chosen Pipeline
 
-*(Fill in after EXP-A / EXP-B / EXP-C experiments are complete)*
+### Tiles (L1) — decided 2026-07-03 (S0 design session)
 
-- Primary path: TBD
+**Route: NB-5G — Nano Banana guided 5-view grid.** Nano Banana is the primary
+generator because it is the only route accessible to every user tier (essential /
+important / desired). Local 3D-lift and Blender routes are fallback only.
+Paid cloud GPU is not acceptable; NB via free Gemini access is.
+
+**View count: 4+1.** The module camera is fixed (or rotates in 90° steps), so
+grid-aligned walls only ever appear as `NW`, `NE`, `SW`, `SE` + `TOP`. The
+cardinal views (N/S/E/W) — NB's systematic failure mode (panels collapse to flat
+orthographic elevation, top face dropped) — are excluded by design, not worked
+around. Tokens still need 8 facings; token pipeline is a separate decision
+(next design session).
+
+**Two-faced walls.** Walls have distinct faces (e.g. decorated interior vs plain
+exterior). Guide schematic colors are face IDs, bound in the prompt:
+
+| Color | Meaning |
+|-------|---------|
+| red | top surface |
+| green | face A (e.g. decorated/interior) — visible in SW, SE |
+| gray | face B (e.g. plain/exterior) — visible in NW, NE |
+| blue | west end cap |
+| purple | east end cap |
+
+**Steps:**
+1. **Hero view** — NB generates one best single view (SE-style) from text prompt.
+   Human approves. This image is the identity anchor for everything after.
+2. **Guide** — script-generated 5-panel schematic grid (colored blocks at correct
+   26.57° dimetric proportions for the wall's L×H×T grid units).
+3. **Grid call** — NB input: hero image + guide + prompt template binding
+   colors→face descriptions. Output: filled 5-panel grid.
+4. **Split** — `cli/sprite_splitter.py` (extended) → `tiles/{name}/{name}_{facing}.png`,
+   facing ∈ {NW, NE, SW, SE, TOP}.
+5. **QC + regen** — human checklist: top surface visible in all diagonals; face IDs
+   correct; component counts (pillars, niches) match hero; no sticker border.
+   Failed view → per-view regen (hero + that panel's schematic), max 2 per view.
+
+**Reliability gate (go/no-go):** benchmark of 10 varied wall assets. Pass =
+≥8/10 assets fully accepted within ≤2 per-view regens. Fail → activate fallback:
+Blender parametric wall kit (box geometry + NB texture projection,
+`pipeline/blender_iso_rig.py` as base) — consistency and seamless joins by
+construction, but breaks the important/desired tiers.
+
+**Floors:** flat — no multiview problem. One iso-diamond view (+ optional TOP).
+Rotation variants derivable from texture rotation later.
+
+**Props/furniture (irregular L1):** same NB-5G route. TripoSR lift (local, fits
+6GB) stays as fallback for shapes NB can't keep consistent.
+
+**Modular join sets (AP1-T4 corner/T/end pieces):** NB-only first; joins masked by
+columns at junctions (T4 trick). Blender kit only if the benchmark fails.
+
+**Desired-tier deliverable (v1):** recipe only — guide PNG template + copy-paste
+prompt + short instructions shipped with module/docs. No API integration in module yet.
+
+### Characters (L2) — TBD (next design session)
+
+- Primary path: TBD (S3 3D-lift vs NB-based — token facings are 8, so NB's
+  cardinal-view weakness returns; decide separately)
 - Primary checkpoint (dark-fantasy): TBD
-- Primary checkpoint (cartoon/illustrated): TBD
 - SD version (SD1.5 / SDXL): TBD
 - Temporal consistency strategy: TBD
 - Frame rate target: TBD (current assumption: 12 fps)

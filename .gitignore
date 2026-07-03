@@ -1,26 +1,5 @@
-# ── Generated outputs (not versioned) ─────────────────────────────────────────
-# Raw generated images in every output subfolder
-outputs/**/*.png
-outputs/**/*.jpg
-outputs/**/*.jpeg
-outputs/**/*.webp
-outputs/**/*.mp4
-outputs/**/*.webm
-outputs/**/*.gif
-
-# Benchmark images ARE versioned (curated reference set)
-!outputs/benchmark/images/*.png
-!outputs/benchmark/images/*.jpg
-!outputs/benchmark/images/*.jpeg
-!outputs/benchmark/images/*.webp
-
-# Benchmark support scripts and manifests ARE versioned
-!outputs/benchmark/README.md
-!outputs/benchmark/manifest.json
-!outputs/benchmark/run_*.py
-!outputs/benchmark/run_*.pyi
-!outputs/benchmark/*/manifest.json
-!outputs/benchmark/*/EVALUATION.md
+# ── Curated reference set — fully versioned, no exceptions needed ────────────
+# benchmarks/ (top-level) holds curated comparison images + manifests.
 
 chars/
 output/

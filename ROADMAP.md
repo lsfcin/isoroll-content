@@ -64,9 +64,6 @@ GPT takes approved concept + blank grid template → 6-panel character sheet. Pr
 - `content/pipeline/sheet_to_tpose.py` — crops GPT output into individual panels, copies T-pose to canonical location
 
 **Steps:**
-- [x] Generate `sheet_template.png` (blank, for GPT upload) and `sheet_template_guide.png` (labeled, human reference)
-- [x] Write `concept_art_prompt.md` — copy-paste ready, includes rogue example
-- [x] Write `sheet_prompt.md` — copy-paste ready, includes rogue example
 - [ ] Phase C1: GPT concept session → approved concept PNG for new character
 - [ ] Phase C2: GPT sheet session → upload `sheet_template.png` + concept → get sheet PNG
 - [ ] Run `sheet_to_tpose.py` → verify panel crops (use `--debug`)
@@ -87,6 +84,25 @@ The style pass is therefore load-bearing — it's what makes the base body rende
 **Root problem:** SD 1.5 + ControlNet Tile is architecturally wrong for viewpoint consistency. It is a 2D model; it cannot infer "NW = back of character" from a Blender render. This is not fixable by tuning denoise or ControlNet strength.
 
 **Four strategies — attempt in the order listed. First one that produces acceptable quality wins. If multiple work, the pipeline will support all via dispatch.**
+
+---
+
+### S0 — Multiview Pipeline Decision ✓ DECIDED for tiles (2026-07-03)
+
+**Decision (full spec: `SPECS.md → ## Chosen Pipeline`):**
+- [x] Tile view count: **4+1** (NW/NE/SW/SE + TOP). Module camera is fixed / 90°-step — cardinal views never shown for grid-aligned tiles. NB's worst views excluded by design.
+- [x] Route: **NB-5G** — Nano Banana guided 5-view grid. Hero view (approved) + script-generated color-coded schematic guide + color→face-binding prompt → 5-panel grid → split → QC with ≤2 per-view regens. NB primary because accessible to all user tiers; paid cloud GPU rejected.
+- [x] 3D-lift evaluated: TripoSR/Hunyuan demoted to fallback. For boxy walls, Blender parametric kit + texture projection beats mesh reconstruction anyway — but activates only if NB benchmark fails, since it breaks the non-technical tiers.
+- [x] Walls are two-faced; guide colors are face IDs (red top, green face-A, gray face-B, blue W end, purple E end).
+- [x] Reliability gate: 10-asset benchmark, pass = ≥8/10 accepted within ≤2 per-view regens.
+- [ ] Tokens (8 facings) — separate design session; NB cardinal weakness returns there.
+
+**Execution tasks (cheaper-model sessions, in order):**
+- [ ] S0-E1 `pipeline/make_tile_guide.py` — generate 5-panel schematic guide PNG from params (wall L×H×T grid units, face-ID colors, 26.57° dimetric proportions). Two layout variants for A/B: (a) 3×3 grid corners+center, (b) compact 5-cell row/cross.
+- [ ] S0-E2 `pipeline/prompts/tile_multiview_prompt.md` — prompt template: color→face bindings, dimetric camera language, negatives (no sticker/white border, no flat elevation, top surface must show in diagonals).
+- [ ] S0-E3 extend `cli/sprite_splitter.py` — 5-panel layouts → `tiles/{name}/{name}_{facing}.png` (NW/NE/SW/SE/TOP) + rembg.
+- [ ] S0-E4 benchmark: 10 varied wall assets (lengths, decorated/plain, door/window). First 2 assets A/B the guide layouts. User runs NB calls (free Gemini), session prepares inputs + records per-view pass/fail in `benchmarks/multiview-nb/manifest.json`.
+- [ ] S0-E5 go/no-go writeup. Pass → NB-5G confirmed, write desired-tier recipe (guide PNG + prompt + instructions). Fail → design session for Blender parametric wall kit (base: `pipeline/blender_iso_rig.py`).
 
 ---
 
@@ -120,8 +136,7 @@ wget -O /home/lucas/ComfyUI/models/checkpoints/stable_zero123.ckpt \
 
 **Steps:**
 - [ ] Install StableZero123-comfyui node (ComfyUI Manager → search "zero123" → StableZero123-comfyui)
-- [x] Download stable_zero123.ckpt — at `/mnt/workspace/Downloads/stable_zero123.ckpt` (8 GB)
-      → copy to `/home/lucas/ComfyUI/models/checkpoints/stable_zero123.ckpt`
+- [ ] Copy downloaded `stable_zero123.ckpt` from `/mnt/workspace/Downloads/` (8 GB) to `/home/lucas/ComfyUI/models/checkpoints/`
 - [ ] Create `content/cli/workflows/zero123_8views.json` ComfyUI workflow
 - [ ] Test with rogue concept art (`characters/rogue/concept/rogue_concept_clean.png`)
 - [ ] Evaluate: are all 8 views distinct and consistent?
@@ -160,7 +175,7 @@ wget -O /home/lucas/ComfyUI/models/checkpoints/stable_zero123.ckpt \
 
 **Input note:** Phase C `front_tpose_sheet.png` is the preferred TripoSR input over ad-hoc T-pose images. Use Phase C output for all new characters. For the rogue mesh: existing `mesh.obj` was generated from ad-hoc T-pose; re-generate after Phase C produces a cleaner rogue T-pose.
 
-**Mixamo orientation fix (Phase A — in progress):**
+**Mixamo orientation fix (Phase A — complete, values kept for reference):**
 - `rotate_mesh.py`: supports `--rotate-x/y/z` (applied in X→Y→Z order)
 - `triposr_mesh.py`: `--mesh-rotate-x/y/z` flags, currently default Y=-90, X=0, Z=0
 - **Correct rotation confirmed 2026-05-27:** raw TripoSR output needs Z=+90° to arrive correctly oriented in Mixamo.
@@ -192,12 +207,6 @@ bash content/pipeline/s3_batch.sh {character} {state} --no-triposr
 - TripoSR requires `/home/lucas/TripoSR` (scikit-image marching cubes fallback, ViT key remapper for transformers 5.x)
 
 **Steps:**
-- [x] Implement `triposr_mesh.py`
-- [x] Implement `s3_batch.sh`
-- [x] Fix TripoSR ViT key remapping (`_remap_vit_keys` in `/home/lucas/TripoSR/tsr/system.py`)
-- [x] Fix Blender FBX axis conversion (`axis_up='Y'` in `_FBXOperatorStub` + load call)
-- [x] Fix Blender transparent renders (`_apply_solid_material` for `--no-materials` mode)
-- [x] Generate rogue T-pose images and T-pose mesh
 - [ ] Get first Mixamo FBX with real animation (idle, ~60 frames)
 - [ ] Verify Blender renders show character correctly after axis fix
 - [ ] Run full `s3_batch.sh` end-to-end
@@ -227,7 +236,6 @@ python content/cli/sprite_splitter.py sheet.png \
 Splits grid → rembg → saves to `extern_00001_{direction}.png`.
 
 **Steps:**
-- [x] Implement `content/cli/sprite_splitter.py` (split + rembg + save)
 - [ ] Generate test sheet with GPT-4o (user)
 - [ ] Run sprite_splitter.py, evaluate per-direction quality
 - [ ] Try SpriteFlow.io or PixelLab.ai as alternative generators
@@ -237,23 +245,19 @@ Splits grid → rembg → saves to `extern_00001_{direction}.png`.
 
 ### Strategy Order
 
+**Tiles: DECIDED (S0) — NB-5G, an S4-family external route. Order below now applies to characters/tokens only (next design session).**
+
 | Order | Strategy | Why |
 |-------|----------|-----|
-| **1st** | S4 External | Zero setup. User already proved GPT-4o works. Can test today. |
+| **1st** | S4 External | Zero setup. NB-5G won for tiles; token variant unproven (8 facings — cardinal weakness returns). |
 | **2nd** | S3 Blender+UV | Best animation ceiling. User provides 2 images, Blender handles viewpoints. |
 | **3rd** | S1 Zero123++ | 30-min install, designed for this problem. Quick local experiment. |
 | **4th** | S2 Flux FP8 | 8 GB download, most setup. Try if S1–S3 all fall short. |
 
 ---
 
-## M0 — Repository Baseline ✓
+## M0 — Repository Baseline ✓ (completed items → HISTORY.md)
 
-- [x] Create project-local `.gitignore`.
-- [x] Keep generated character images out of Git.
-- [x] Add `CONTEXT.md`, `SPECS.md`, and `ROADMAP.md`.
-- [x] Create `content/benchmark/` for tracked reference images plus prompt/profile metadata.
-- [x] Create `content/cli/`, `content/profiles/`, and `foundry/` top-level areas.
-- [x] Benchmark model comparison done: lyriel_v16 recommended for dark-fantasy style.
 - [ ] Add a short `README.md` once the CLI contract stabilizes.
 
 ---
