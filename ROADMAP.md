@@ -98,7 +98,8 @@ The style pass is therefore load-bearing — it's what makes the base body rende
 - [ ] Tokens (8 facings) — separate design session; NB cardinal weakness returns there.
 
 **Execution tasks (cheaper-model sessions, in order):**
-- [ ] S0-E1 `pipeline/make_tile_guide.py` — generate 5-panel schematic guide PNG from params (wall L×H×T grid units, face-ID colors, 26.57° dimetric proportions). Two layout variants for A/B: (a) 3×3 grid corners+center, (b) compact 5-cell row/cross.
+- [x] S0-E1a layout decided (2026-07-03, hand-drawn refs): 6-cell grid, 3×2 aspect ratio, top row `NW|NE|TOP`, bottom row `SW|SE|caption` (caption cell absorbs NB's watermark). Confirmed NB accepts 3×2 output.
+- [x] S0-E1 `pipeline/make_tile_guide.py` (+ `pipeline/tile_guide_render.py`) — generates the schematic guide PNG from L×H×D params, 26.57° dimetric box faces, face-ID colors. Supports `--layout 6cell` (NB production input) and `--layout 9panel` (dev/QC reference, matches the hand-drawn prototype deck at `pipeline/prompts/reference/isometric_images.pdf`). Verified against 2x3 and 5x4 dimension pairs from the reference deck.
 - [ ] S0-E2 `pipeline/prompts/tile_multiview_prompt.md` — prompt template: color→face bindings, dimetric camera language, negatives (no sticker/white border, no flat elevation, top surface must show in diagonals).
 - [ ] S0-E3 extend `cli/sprite_splitter.py` — 5-panel layouts → `tiles/{name}/{name}_{facing}.png` (NW/NE/SW/SE/TOP) + rembg.
 - [ ] S0-E4 benchmark: 10 varied wall assets (lengths, decorated/plain, door/window). First 2 assets A/B the guide layouts. User runs NB calls (free Gemini), session prepares inputs + records per-view pass/fail in `benchmarks/multiview-nb/manifest.json`.

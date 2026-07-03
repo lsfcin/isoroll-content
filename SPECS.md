@@ -434,15 +434,22 @@ exterior). Guide schematic colors are face IDs, bound in the prompt:
 | blue | west end cap |
 | purple | east end cap |
 
+**Grid layout: 6-cell, 3×2 aspect ratio** (confirmed: NB can generate 3×2
+directly). Top row `NW | NE | TOP`, bottom row `SW | SE | caption`. The
+caption cell (bottom-right) carries the color-key legend / any non-essential
+text — that's the cell NB stamps its watermark on, so essential art never
+lands there.
+
 **Steps:**
 1. **Hero view** — NB generates one best single view (SE-style) from text prompt.
    Human approves. This image is the identity anchor for everything after.
-2. **Guide** — script-generated 5-panel schematic grid (colored blocks at correct
-   26.57° dimetric proportions for the wall's L×H×T grid units).
+2. **Guide** — script-generated 6-cell schematic grid, 3×2, per the layout above
+   (colored blocks at correct 26.57° dimetric proportions for the wall's
+   L×H×T grid units).
 3. **Grid call** — NB input: hero image + guide + prompt template binding
-   colors→face descriptions. Output: filled 5-panel grid.
+   colors→face descriptions. Output: filled 6-cell grid.
 4. **Split** — `cli/sprite_splitter.py` (extended) → `tiles/{name}/{name}_{facing}.png`,
-   facing ∈ {NW, NE, SW, SE, TOP}.
+   facing ∈ {NW, NE, SW, SE, TOP} (caption cell discarded on split).
 5. **QC + regen** — human checklist: top surface visible in all diagonals; face IDs
    correct; component counts (pillars, niches) match hero; no sticker border.
    Failed view → per-view regen (hero + that panel's schematic), max 2 per view.
