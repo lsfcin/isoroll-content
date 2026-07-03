@@ -38,9 +38,9 @@ LAYOUTS = {
 }
 
 
-def _draw_panel(draw, kind, w, d, h, box):
+def _draw_panel(img, draw, kind, w, d, h, box):
     if kind in ("NW", "NE", "SW", "SE"):
-        draw_iso_panel(draw, w, d, h, kind, box)
+        draw_iso_panel(img, w, d, h, kind, box)
     elif kind == "N":
         draw_flat_grid(draw, w, d + h, BACK_GRAY, d, box)
     elif kind == "S":
@@ -78,7 +78,7 @@ def generate(w, d, h, layout, out_path: Path):
             if kind == "CAPTION":
                 _draw_caption(draw, box, font, w, d, h)
             else:
-                _draw_panel(draw, kind, w, d, h, box)
+                _draw_panel(img, draw, kind, w, d, h, box)
             draw.text((box[0] + 6, box[1] + 4), _panel_label(r, c, kind), font=font, fill=MAGENTA)
 
     for c in range(1, cols):

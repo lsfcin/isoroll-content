@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """tile_guide_render.py — dimetric box-face geometry and single-panel drawing for tile guides."""
 
+from PIL import Image, ImageDraw
+
 TOP_RED     = (230, 30, 30)
 BACK_GRAY   = (150, 150, 150)
 FRONT_GREEN = (40, 200, 60)
@@ -12,30 +14,16 @@ SIL_WIDTH   = 5
 GRID_WIDTH  = 2
 
 # Unit-scale corner offsets (2:1 dimetric — 26.57°). Real pixels = these * s.
-# uz = 2*uy on purpose (standard "full tile height" convention) — this is only
-# safe because draw_iso_panel mirrors u/v per view (see _view_axes); the naive
-# single-quadrant formula makes opposite box corners coincide otherwise.
 _UX, _UY, _UZ = 1.0, 0.5, 1.0
+# Folded-top row height, relative to a body row: a D- or W-unit folds flat
+# using the same _UY that governs it in the iso views, vs. a body row's _UZ.
+TOP_FOLD_RATIO = _UY / _UZ
 
 
 def _corner(u, v, z):
     x = (u - v) * _UX
     y = (u + v) * _UY - z * _UZ
     return x, y
-
-
-def _view_axes(view, l, d):
-    """Mirror u/v per diagonal view so the visible side faces always sit at
-    the 'max' end of their local axis — the only configuration this
-    projection renders without the two side faces overlapping (verified
-    numerically: north+east is clean, the other 3 raw combos are not)."""
-    flip_u = "W" in view
-    flip_v = "S" in view
-
-    def tr(u, v):
-        return (l - u if flip_u else u), (d - v if flip_v else v)
-
-    return tr
 
 
 def _bbox(l, d, h):
@@ -59,8 +47,8 @@ def _origin_for_cell(l, d, h, cell_box, pad):
     avail_w, avail_h = cw - 2 * pad, ch - 2 * pad
     s = fit_scale(l, d, h, avail_w, avail_h)
     minx, maxx, miny, maxy = _bbox(l, d, h)
-    ox = cx + pad - minx * s + (avail_w - (maxx - minx) * s) / 2
-    oy = cy + pad - miny * s + (avail_h - (maxy - miny) * s) / 2
+    ox = pad - minx * s + (avail_w - (maxx - minx) * s) / 2
+    oy = pad - miny * s + (avail_h - (maxy - miny) * s) / 2
     return s, ox, oy
 
 
@@ -79,52 +67,67 @@ def _quad_grid(draw, uvz_fn, steps_a, steps_b, color, s, ox, oy):
         draw.line([scr(0, b), scr(steps_a, b)], fill=GRID_LINE, width=GRID_WIDTH)
 
 
-def draw_iso_panel(draw, l, d, h, view, cell_box, pad=18):
-    """One 3-face dimetric box view. view in {NW, NE, SW, SE}."""
-    s, ox, oy = _origin_for_cell(l, d, h, cell_box, pad)
-    tr = _view_axes(view, l, d)
-    north = view in ("NW", "NE")
-    west = view in ("NW", "SW")
-    ns_color = BACK_GRAY if north else FRONT_GREEN
-    ew_color = WEST_BLUE if west else EAST_PURPLE
-    ns_v = d if north else 0
-    ew_u = 0 if west else l
+def draw_iso_panel(img, l, d, h, view, cell_box, pad=18):
+    """One 3-face dimetric box view. view in {NW, NE, SW, SE}.
 
-    def ns_uvz(a, b):
-        u, v = tr(a, ns_v)
-        return u, v, b
+    The raw formula only tiles into a non-overlapping hexagon for one fixed
+    corner (long face at v=d, cap at u=l) — verified numerically (shapely,
+    zero pairwise intersection) and against the reference deck. NE and SW
+    use that geometry directly (recolored — NE:gray+purple, SW:green+blue,
+    same footprint). NW and SE need the mirror image of it (recolored
+    gray+blue / green+purple) — done by rendering to a scratch cell and
+    flipping, never by re-deriving the geometry, since a horizontal mirror
+    of a valid hexagon is always still valid.
+    """
+    is_north = "N" in view
+    is_east = "E" in view
+    needs_mirror = is_north != is_east
+    long_color = BACK_GRAY if is_north else FRONT_GREEN
+    cap_color = EAST_PURPLE if is_east else WEST_BLUE
 
-    def ew_uvz(a, b):
-        u, v = tr(ew_u, a)
-        return u, v, b
+    cx, cy, cw, ch = cell_box
+    scratch = Image.new("RGB", (cw, ch), (0, 0, 0))
+    sdraw = ImageDraw.Draw(scratch)
+    s, ox, oy = _origin_for_cell(l, d, h, (0, 0, cw, ch), pad)
 
-    def top_uvz(a, b):
-        u, v = tr(a, b)
-        return u, v, h
+    _quad_grid(sdraw, lambda a, b: (a, d, b), l, h, long_color, s, ox, oy)
+    _quad_grid(sdraw, lambda a, b: (l, a, b), d, h, cap_color, s, ox, oy)
+    _quad_grid(sdraw, lambda a, b: (a, b, h), l, d, TOP_RED, s, ox, oy)
 
-    _quad_grid(draw, ns_uvz, l, h, ns_color, s, ox, oy)
-    _quad_grid(draw, ew_uvz, d, h, ew_color, s, ox, oy)
-    _quad_grid(draw, top_uvz, l, d, TOP_RED, s, ox, oy)
+    if needs_mirror:
+        scratch = scratch.transpose(Image.FLIP_LEFT_RIGHT)
+    img.paste(scratch, (cx, cy))
 
 
 def draw_flat_grid(draw, cols, rows, body_color, top_rows, cell_box, pad=18):
     """Orthographic elevation, unfolded-net style: cols x rows cells, the top
-    `top_rows` rows are the TOP face folded flat above the body (TOP_RED)."""
+    `top_rows` rows are the TOP face folded flat above the body (TOP_RED),
+    drawn shorter than a body row by TOP_FOLD_RATIO (matches the iso views'
+    own D/W-unit vs H-unit proportions)."""
     cx, cy, cw, ch = cell_box
     avail_w, avail_h = cw - 2 * pad, ch - 2 * pad
-    cell_s = min(avail_w / cols, avail_h / rows)
-    grid_w, grid_h = cols * cell_s, rows * cell_s
+    body_rows = rows - top_rows
+    units = cols
+    row_units = body_rows + top_rows * TOP_FOLD_RATIO
+    cell_s = min(avail_w / units, avail_h / row_units)
+    top_row_h = cell_s * TOP_FOLD_RATIO
+    grid_w = cols * cell_s
+    grid_h = top_rows * top_row_h + body_rows * cell_s
     ox, oy = cx + (cw - grid_w) / 2, cy + (ch - grid_h) / 2
 
+    def row_y(r):
+        return oy + (r * top_row_h if r <= top_rows else top_rows * top_row_h + (r - top_rows) * cell_s)
+
     for r in range(rows):
+        y0, y1 = row_y(r), row_y(r + 1)
         for c in range(cols):
-            x0, y0 = ox + c * cell_s, oy + r * cell_s
+            x0 = ox + c * cell_s
             fill = TOP_RED if r < top_rows else body_color
-            draw.rectangle([x0, y0, x0 + cell_s, y0 + cell_s], fill=fill)
+            draw.rectangle([x0, y0, x0 + cell_s, y1], fill=fill)
     for c in range(cols + 1):
         x = ox + c * cell_s
         draw.line([(x, oy), (x, oy + grid_h)], fill=GRID_LINE, width=GRID_WIDTH)
     for r in range(rows + 1):
-        y = oy + r * cell_s
+        y = row_y(r)
         draw.line([(ox, y), (ox + grid_w, y)], fill=GRID_LINE, width=GRID_WIDTH)
     draw.rectangle([ox, oy, ox + grid_w, oy + grid_h], outline=SILHOUETTE, width=SIL_WIDTH)
