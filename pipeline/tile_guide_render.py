@@ -153,4 +153,7 @@ def draw_flat_grid(draw, cols, rows, body_color, top_rows, cell_box, pad=18):
     for r in range(rows + 1):
         y = row_y(r)
         draw.line([(ox, y), (ox + grid_w, y)], fill=GRID_LINE, width=GRID_WIDTH)
+    if 0 < top_rows < rows:
+        y = row_y(top_rows)
+        draw.line([(ox, y), (ox + grid_w, y)], fill=SILHOUETTE, width=SIL_WIDTH)
     draw.rectangle([ox, oy, ox + grid_w, oy + grid_h], outline=SILHOUETTE, width=SIL_WIDTH)
