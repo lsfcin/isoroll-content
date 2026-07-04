@@ -443,6 +443,19 @@ legend. That binding lives in the text prompt (S0-E2) only; baking it into
 the guide image risks NB treating rendered legend text as content to
 reproduce or extend elsewhere in the output.
 
+**Simplified layouts, for assets that don't need all 5 views** (same caption-cell
+watermark trick, just fewer content cells — `make_tile_guide.py --layout`):
+- `2cell` — `S | N | caption`, one row, 3×1. Flat front/back only, for assets
+  where the end caps don't matter (e.g. a wall whose thickness faces are
+  irrelevant to the design).
+- `1cell` — `SW | caption`, one row, 2×1. Fully symmetric content (identical
+  front/back **and** identical west/east caps) — one iso view + its own cap
+  implies everything else.
+
+Which layout applies is a per-asset judgment call (does this wall's back face
+differ from its front? do its end caps differ from each other?), not a fixed
+rule — `6cell` is the default/safe choice when unsure.
+
 **Steps:**
 1. **Hero view** — NB generates one best single view (SE-style) from text prompt.
    Human approves. This image is the identity anchor for everything after.

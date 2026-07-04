@@ -5,9 +5,14 @@ make_tile_guide.py — Generate the color-coded multiview schematic guide for a 
 Face-ID colors (bound to these meanings in the NB prompt, see SPECS.md → Chosen Pipeline):
   red = top · gray = north/back · green = south/front · blue = west end · purple = east end
 
-Two layouts:
+Layouts:
   9panel — all cardinal + diagonal + TOP, dev/QC reference (matches hand-drawn prototype deck)
-  6cell  — NW/NE/TOP over SW/SE/caption, 3x2 aspect — the actual Nano Banana input format
+  6cell  — NW/NE/TOP over SW/SE/caption, 3x2 aspect — the full NB input format
+  2cell  — S/N/caption, one row, 3x1 — front+back only, for assets where the end
+           caps (blue/purple) don't matter (e.g. symmetric-thickness walls)
+  1cell  — SW/caption, one row, 2x1 — simplest case: symmetric content where one
+           face + one cap fully implies the rest (e.g. a wall with identical
+           front/back and identical west/east end caps)
 
 Cardinal (N/S/W/E) panels are drawn "unfolded-net" style: the TOP face is folded
 flat above the body, so N/S panels are W cols x (D+H) rows and W/E panels are
@@ -35,6 +40,8 @@ CELL_PX = 320
 LAYOUTS = {
     "9panel": [["NW", "N", "NE"], ["W", "TOP", "E"], ["SW", "S", "SE"]],
     "6cell": [["NW", "NE", "TOP"], ["SW", "SE", "CAPTION"]],
+    "2cell": [["S", "N", "CAPTION"]],
+    "1cell": [["SW", "CAPTION"]],
 }
 
 
@@ -58,8 +65,8 @@ def _draw_caption(draw, box, font, w, d, h):
     draw.text((cx + cw / 2 - 40, cy + ch / 2 - 8), f"W{w} H{h} D{d}", font=font, fill=MAGENTA)
 
 
-def _panel_label(row, col, kind):
-    index = row * 3 + col + 1
+def _panel_label(row, col, cols, kind):
+    index = row * cols + col + 1
     suffix = " ▼" if kind == "TOP" else ""
     return f"{index} {kind}{suffix}"
 
@@ -79,7 +86,7 @@ def generate(w, d, h, layout, out_path: Path):
                 _draw_caption(draw, box, font, w, d, h)
             else:
                 _draw_panel(img, draw, kind, w, d, h, box)
-            draw.text((box[0] + 6, box[1] + 4), _panel_label(r, c, kind), font=font, fill=MAGENTA)
+            draw.text((box[0] + 6, box[1] + 4), _panel_label(r, c, cols, kind), font=font, fill=MAGENTA)
 
     for c in range(1, cols):
         x = c * CELL_PX
