@@ -25,7 +25,7 @@ from PIL import Image, ImageDraw
 from generate_sheet_template import load_font
 from tile_guide_render import (
     TOP_RED, BACK_GRAY, FRONT_GREEN, WEST_BLUE, EAST_PURPLE,
-    draw_iso_panel, draw_flat_grid,
+    draw_iso_panel, draw_flat_grid, draw_square_grid,
 )
 
 BG = (0, 0, 0)
@@ -50,7 +50,7 @@ def _draw_panel(img, draw, kind, w, d, h, box):
     elif kind == "E":
         draw_flat_grid(draw, d, w + h, EAST_PURPLE, w, box)
     elif kind == "TOP":
-        draw_flat_grid(draw, w, d, TOP_RED, d, box)
+        draw_square_grid(draw, w, d, TOP_RED, box)
 
 
 def _draw_caption(draw, box, font, w, d, h):

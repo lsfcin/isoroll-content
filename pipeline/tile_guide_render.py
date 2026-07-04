@@ -99,6 +99,29 @@ def draw_iso_panel(img, l, d, h, view, cell_box, pad=18):
     img.paste(scratch, (cx, cy))
 
 
+def draw_square_grid(draw, cols, rows, color, cell_box, pad=18):
+    """True orthographic plan view (TOP, looking straight down): both axes
+    are equally real-scale, so every cell is a perfect square — no fold
+    ratio, no dimetric skew."""
+    cx, cy, cw, ch = cell_box
+    avail_w, avail_h = cw - 2 * pad, ch - 2 * pad
+    cell_s = min(avail_w / cols, avail_h / rows)
+    grid_w, grid_h = cols * cell_s, rows * cell_s
+    ox, oy = cx + (cw - grid_w) / 2, cy + (ch - grid_h) / 2
+
+    for r in range(rows):
+        for c in range(cols):
+            x0, y0 = ox + c * cell_s, oy + r * cell_s
+            draw.rectangle([x0, y0, x0 + cell_s, y0 + cell_s], fill=color)
+    for c in range(cols + 1):
+        x = ox + c * cell_s
+        draw.line([(x, oy), (x, oy + grid_h)], fill=GRID_LINE, width=GRID_WIDTH)
+    for r in range(rows + 1):
+        y = oy + r * cell_s
+        draw.line([(ox, y), (ox + grid_w, y)], fill=GRID_LINE, width=GRID_WIDTH)
+    draw.rectangle([ox, oy, ox + grid_w, oy + grid_h], outline=SILHOUETTE, width=SIL_WIDTH)
+
+
 def draw_flat_grid(draw, cols, rows, body_color, top_rows, cell_box, pad=18):
     """Orthographic elevation, unfolded-net style: cols x rows cells, the top
     `top_rows` rows are the TOP face folded flat above the body (TOP_RED),
