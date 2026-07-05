@@ -2,6 +2,19 @@
 
 Archive of completed work and resolved issues.
 
+## Completed — 2026-07-05
+
+### M1 — Stabilize `iso-cli`
+- [x] Normalize CLI encoding and messages — no mojibake or Portuguese strings remain (resolved by the `iso-cli.py` module split; verified clean ASCII + intentional Unicode across all `src/cli/*.py`).
+- [x] Replace prompt-injection heuristic with literal `REPLACE_PROMPT` substitution — `workflow_ops.py::inject_prompt()`.
+- [x] Remove duplicate seed randomization — `apply_random_seeds()` is called exactly once per command.
+- [x] Make `COMFY_URL` configurable via env var — `comfy_client.py::COMFY_BASE_URL = os.environ.get("COMFY_URL", ...)`.
+- [x] Validate `COMFY_DIR` and workflow path before submitting — `get_comfy_dir()` raises if unset; each command checks its workflow path exists before running.
+- [x] Return nonzero exit code on generation failure — `sys.exit(1)` on missing workflow, submit failure, and generation timeout.
+
+### M2 — Workflow and Profile Contract
+- [x] Decided whether profiles are active configuration or metadata: metadata-only, never wired to workflow nodes. Deleted `profiles/` outright rather than building the application layer — confirmed zero code references before removal.
+
 ## Completed — 2026-07-03
 
 ### M0 — Repository Baseline

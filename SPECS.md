@@ -6,42 +6,49 @@ This file documents the current code and source structure so future agents can m
 
 Versioned source should include:
 
-- CLI code: `content/cli/iso-cli.py`, `content/cli/iso-cli.bat`
-- ComfyUI API workflows: `content/cli/workflows/*.json`
-- Render/profile metadata: `content/profiles/*.json`
-- Curated benchmark references: `content/benchmark/README.md`, `content/benchmark/manifest.json`, and selected images under `content/benchmark/images/`
+- CLI code: `src/cli/iso-cli.py`, `src/cli/iso-cli.bat`
+- ComfyUI API workflows: `src/cli/workflows/*.json`
+- Pipeline scripts: `src/pipeline/*.py`
+- Curated benchmark references: `benchmarks/README.md` and each `benchmarks/{comparison-name}/` folder (images + its own `manifest.json`)
+- Tracked tile art: `assets/tiles/`
 - Future Foundry module code under `foundry/`
 - Project docs: `CONTEXT.md`, `SPECS.md`, `ROADMAP.md`
 
 Generated or local-only artifacts should not be committed by default:
 
-- `content/chars/`
-- generated images under `content/**/*.png`, `content/**/*.jpg`, `content/**/*.jpeg`, `content/**/*.webp`
-- local experiment bundles such as `content/*.zip`
+- `assets/chars/`
+- generated images under `assets/**/*.png`, `assets/**/*.jpg`, `assets/**/*.jpeg`, `assets/**/*.webp`
+- local experiment bundles such as `*.zip`
 - local ComfyUI outputs and temp folders
 - `.env`, logs, Python caches, virtualenvs
 
-Benchmark images are the only generated images intended to be tracked in this repository. They are manually promoted from raw outputs and must have metadata in `content/benchmark/manifest.json`.
+Note: `profiles/` (render profile JSONs) existed but was deleted — confirmed zero
+references from any code (`grep` across `src/`). If profile-driven generation is
+revisited, recreate it under `src/profiles/` and wire it into `gen_commands.py`
+rather than reintroducing inert metadata.
+
+Benchmark images are the only generated images intended to be tracked in this repository. They are manually promoted from raw outputs and must have metadata in that folder's own `manifest.json`.
 
 ## Benchmark Manifest
 
-`content/benchmark/manifest.json` is the index for tracked reference outputs. Each sample should use this shape:
+Each `benchmarks/{comparison-name}/` folder carries its own `manifest.json` —
+a flat list, one entry per image, using this shape (actual convention as
+practiced, not a single root index — see `benchmarks/README.md`):
 
 ```json
-{
-  "id": "short-stable-id",
-  "file": "content/benchmark/images/example.png",
-  "prompt": "prompt used to generate the image",
-  "profile": "quality",
-  "workflow": "content/cli/workflows/character_quality.json",
-  "seed": 123456,
-  "date": "2026-04-30",
-  "purpose": "why this image is useful as a benchmark",
-  "notes": "optional observations, including known defects"
-}
+[
+  {
+    "model": "lyriel_v16.safetensors",
+    "prompt": "medieval rogue character, full body, standing pose, ...",
+    "seed": 77,
+    "time_s": 90.1,
+    "file": "benchmarks/hades-comparison/lyriel_v16.png"
+  }
+]
 ```
 
-Use `null` for unknown values such as seed. Keep the manifest human-readable and sorted by sample id once there are multiple entries.
+`prompt` is optional when every image in the folder shares one prompt (state
+it once in the folder's own notes instead). `file` is repo-root-relative.
 
 ## Runtime Requirements
 
@@ -61,81 +68,50 @@ Do not hardcode local paths in versioned files — always use `COMFY_DIR` or CLI
 From the repository root:
 
 ```powershell
-.\content\cli\iso-cli.bat gen-character "medieval rogue with red cloak" --profile quality --out content\characters\rogue-test
+.\src\cli\iso-cli.bat gen-character "medieval rogue with red cloak" --profile quality --out assets\chars\rogue-test
 ```
 
-From inside `content/cli/`:
+From inside `src/cli/`:
 
 ```powershell
-.\iso-cli.bat gen-character "medieval rogue with red cloak" --profile quality --out ..\characters\rogue-test
+.\iso-cli.bat gen-character "medieval rogue with red cloak" --profile quality --out ..\..\assets\chars\rogue-test
 ```
 
-## `content/cli/iso-cli.py`
+## `src/cli/` module layout
 
-Current constants:
+`iso-cli.py` was split into focused modules (each under the 200-line hook
+limit) — this replaces the old single-file description. Current shape:
 
-- `COMFY_URL`: fixed as `http://127.0.0.1:8188/prompt`
-- `BASE_DIR`: directory containing `iso-cli.py`
-- `CONTENT_DIR`: parent content directory
-- `PROFILE_DIR`: `content/profiles`
-- `WORKFLOW_DIR`: `content/cli/workflows`
+- `iso-cli.py` — argument parsing + command dispatch (`gen-character`,
+  `style-concept`, `ipadapter-ref`, `detail-image`, `face-restore`,
+  `blender-stylize`, `blender-ipadapter`). No business logic lives here.
+- `comfy_client.py` — ComfyUI API primitives: `get_comfy_dir()`,
+  `get_output_dir()`, `upload_image()`, `send_prompt()`, `snapshot_pngs()` /
+  `wait_for_new_png()` (before/after snapshot — the actual output-tracking
+  mechanism; `/history`+`prompt_id` from M1 was never implemented),
+  `load_workflow()`, `copy_to_dir()`.
+- `workflow_ops.py` — workflow-JSON mutation helpers: `apply_random_seeds()`,
+  `inject_prompt()`, `inject_input_image()`, `inject_concept_image()`,
+  `set_base_denoise()`, `set_ipadapter_weight()`, `inject_output_size()`.
+- `gen_commands.py` — `gen_character()`, `style_concept()`, `ipadapter_ref()`.
+- `image_commands.py` — `detail_image()`, `face_restore()`.
+- `blender_commands.py` — `blender_stylize()`, `blender_ipadapter()`.
 
-Current functions:
-
-- `get_comfy_dir()`
-  - Reads `COMFY_DIR`.
-  - Raises if missing.
-
-- `get_output_dir()`
-  - Returns `${COMFY_DIR}/output`.
-
-- `copy_to_destination(src, dst)`
-  - Creates the destination parent directory and copies one generated file.
-
-- `get_latest_image(output_dir=None)`
-  - Returns newest PNG under the output directory.
-  - Legacy helper. Current generation uses a before/after snapshot instead.
-
-- `apply_output_path(workflow, output_path)`
-  - Sets `SaveImage.filename_prefix` in a workflow.
-  - Currently unused by `gen_character()`.
-
-- `load_profile(profile_name)`
-  - Reads `content/profiles/{profile_name}.json`.
-  - Current limitation: the returned profile object is loaded but not applied to workflow parameters.
-
-- `load_workflow(prompt_text, profile_name)`
-  - Reads `content/cli/workflows/character_{profile_name}.json`.
-  - Randomizes every `KSampler.seed`.
-  - Replaces positive `CLIPTextEncode` text using a heuristic: any CLIP text that does not contain `low quality` is replaced by the user prompt.
-  - Current limitation: this heuristic drops any positive prompt suffix stored in workflow JSON, such as `highly detailed` or `clean edges`. Prefer future replacement of the literal `REPLACE_PROMPT` token.
-
-- `send_prompt(workflow)`
-  - POSTs `{"prompt": workflow, "client_id": uuid}` to ComfyUI.
-  - Prints debug HTTP status and response text.
-  - Returns parsed JSON or `None`.
-
-- `gen_character(prompt, profile_name, output_path)`
-  - Loads the profile and workflow.
-  - Snapshots existing ComfyUI output PNGs.
-  - Randomizes every `KSampler.seed` again. The second randomization wins.
-  - Submits the prompt.
-  - Polls up to 600 seconds for new PNGs.
-  - Copies the newest new PNG to `--out` when provided.
-
-- `main()`
-  - Minimal argument parser.
-  - Supports `gen-character`, `--profile`, and `--out`.
+There is no `PROFILE_DIR` / `load_profile()` anymore — `profiles/` was
+deleted (confirmed zero references from any code before removal). Workflow
+selection is purely by filename: `character_{profile_name}.json`.
 
 ## Current Workflow Contract
 
 Workflow file names must follow:
 
 ```text
-content/cli/workflows/character_{profile}.json
+src/cli/workflows/character_{profile}.json
 ```
 
-The profile selected on the CLI currently selects the workflow file. It does not reliably tune the workflow from `content/profiles/{profile}.json`.
+The profile selected on the CLI selects the workflow file by name only. There
+is no profile-JSON tuning layer (see `## Render Profiles` below — that layer
+was deleted as dead weight).
 
 Current workflows:
 
@@ -165,12 +141,14 @@ Current workflows:
 
 ## Render Profiles
 
-Files in `content/profiles/` describe intended settings for asset categories or quality levels. They currently serve as metadata and naming references more than active configuration.
+`profiles/*.json` (fast/balanced/quality/character/environment/photos/props)
+existed as intended per-category settings metadata but had zero references
+from any CLI code — confirmed by grep, then deleted (2026-07-04). Workflow
+selection is entirely by filename (`character_{profile_name}.json`); there is
+no profile-to-node parameter application layer.
 
-Do not add profile fields unless the CLI either:
-
-- applies them to workflow nodes, or
-- documents them as inactive metadata.
+If profile-driven tuning is revisited: only add it back once the CLI actually
+applies fields to workflow nodes. Don't reintroduce inert metadata.
 
 ## ComfyUI and Detailer Status
 
@@ -221,9 +199,6 @@ For major generation changes:
 ## Known Technical Debt
 
 - CLI strings show mojibake in Portuguese messages. Normalize file encoding and messages later.
-- `load_profile()` is currently underused.
-- Prompt injection should replace `REPLACE_PROMPT` specifically.
-- Seeds are randomized twice.
 - `COMFY_URL` is not configurable.
 - The CLI should use `argparse` or similar instead of manual index parsing.
 - Output tracking should ideally use ComfyUI `prompt_id` and `/history` instead of filesystem snapshots.
@@ -241,8 +216,8 @@ Each packed asset folder emits a `manifest.json` with this shape:
   "id": "warrior-base",
   "type": "character",
   "layer": 2,
-  "source_concept": "content/chars/warrior/concept/warrior_concept_01.png",
-  "source_workflow": "content/cli/workflows/character_quality.json",
+  "source_concept": "assets/chars/warrior/concept/warrior_concept_01.png",
+  "source_workflow": "src/cli/workflows/character_quality.json",
   "checkpoint": "lyriel_v16.safetensors",
   "style_path": "A",
   "dimensions": { "w": 256, "h": 384 },
@@ -273,8 +248,13 @@ Each packed asset folder emits a `manifest.json` with this shape:
 
 ## Tile Variant Naming Convention
 
+Aspirational — not yet implemented. Current `assets/tiles/{name}/` holds a
+flat `{name}_{facing}.png` set (see root `CONTEXT.md` Repository Shape); the
+autotile bitmask variants below are a future v2 addition, not the current
+shape.
+
 ```
-content/outputs/tiles/{terrain}/
+assets/tiles/{terrain}/
   concept/
     ...
   atlas/
@@ -307,7 +287,7 @@ Seam strategy summary:
 ## File Naming Convention
 
 ```
-content/chars/{name}/
+assets/chars/{name}/
   concept/
     {name}_concept_{n:02d}.png          # external tool concept art (source of truth)
   sheet/
@@ -358,7 +338,7 @@ Animation state labels: `idle`, `walk`, `attack_melee`, `attack_ranged`, `defend
 - **Orthographic scale:** ~2.5–3.5 units (adjust so character fills ~80% of frame)
 - **Output resolution per frame:** 256×384px for L1/L3 tiles/props; 256×384px for L2 characters at base; upscale to 512×768 after SD style pass.
 - **Alpha:** enable `Film > Transparent` in EEVEE render settings. Render to PNG with alpha.
-- **Blender script path:** `content/pipeline/blender_iso_rig.py`
+- **Blender script path:** `src/pipeline/blender_iso_rig.py`
 
 ---
 
@@ -538,61 +518,14 @@ Format: PNG, portrait (2:3).
 
 ---
 
-## Pipeline Current State (as of 2026-05-26)
+## Folder structure
 
-### What exists and works
+See root `CONTEXT.md` → `## Repository Shape` for the authoritative current
+tree (`src/`, `assets/`, `benchmarks/`). The `outputs/{benchmark,characters,
+tiles,items,effects}/` nesting once proposed here (2026-05-26) was never
+built — real layout is flat `assets/{chars,tiles}/` and top-level
+`benchmarks/`, kept in one place to avoid two competing diagrams drifting
+apart again.
 
-**`content/pipeline/preprocess.py`** — Step 1 of art pipeline.
-- Input: raw concept PNG from external tool
-- Removes background via rembg
-- Resizes with padding to canonical dimensions (512×512 tiles, 512×768 characters)
-- Saves `{name}_concept_raw.png` + `{name}_concept_clean.png` in `content/outputs/{type}s/{name}/concept/`
-- Usage: `python content/pipeline/preprocess.py --input image.png --type tile --name dungeon_floor`
-- Requires: `pip install "rembg[gpu]" Pillow`
-
-**`content/cli/iso-cli.py`** — CLI entry point. Commands:
-- `gen-character` — txt2img via ComfyUI (existing, now with REPLACE_PROMPT fixed)
-- `style-concept` — img2img style pass on preprocessed concept art (new)
-  - Uploads image to ComfyUI via `/upload/image` API
-  - Runs `concept_img2img.json` workflow (base + refine pass, lyriel_v16)
-  - Usage: `python iso-cli.py style-concept path/concept_clean.png --prompt "..." --denoise 0.55 --out path/styled`
-
-**`content/cli/comfy_client.py`** — ComfyUI API helpers (extracted from iso-cli.py for line-count reasons).
-
-**`content/cli/workflows/concept_img2img.json`** — img2img workflow. Checkpoint: lyriel_v16. Denoise overridden by CLI flag.
-
-### Known bugs fixed in this session
-- REPLACE_PROMPT injection: was using CLIP heuristic (dropped positive prompt suffix). Now literal substitution.
-- Double seed randomization: seeds were set twice. Fixed — single randomization.
-
-### Still pending from M1
-- `argparse` (still using manual index parsing)
-- `doctor` command
-- Output tracking via `/history` API instead of filesystem snapshot
-- Batch mode
-- Nonzero exit codes (partial)
-
-### Folder structure
-```
-content/
-  cli/
-    iso-cli.py
-    comfy_client.py
-    workflows/
-      character_fast.json
-      character_balanced.json
-      character_quality.json
-      character_quality_x4.json     (legacy)
-      character_quality_yolo.json   (draft, untested)
-      concept_img2img.json          (new — img2img style pass)
-  pipeline/
-    preprocess.py                   (new — rembg + resize)
-  profiles/
-    *.json
-  outputs/
-    benchmark/                      (moved from content/benchmark/)
-    characters/
-    tiles/
-    items/
-    effects/
-```
+Still pending from M1 (see ROADMAP.md): `argparse`, `doctor` command,
+`/history`-based output tracking, batch mode, nonzero exit codes.

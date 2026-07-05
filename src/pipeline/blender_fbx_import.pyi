@@ -1,0 +1,6 @@
+class _FBXOperatorStub:
+    axis_forward: str
+    axis_up: str
+    def report(self, level, msg) -> None: ...
+
+def import_fbx(fbx_path: str, args) -> tuple[int, int, float]: ...

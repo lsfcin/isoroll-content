@@ -4,34 +4,34 @@
     "prompt": "medieval rogue character, full body, standing pose, dark cloak, detailed face, highly detailed, clean simple dark background, isometric game asset style",
     "seed": 42,
     "time_s": 28.0,
-    "file": "/mnt/workspace/code/isoroll/content/benchmark/model-comparison/dreamshaper_8.png"
+    "file": "benchmarks/model-comparison/dreamshaper_8.png"
   },
   {
     "model": "ghostmix_v20Bakedvae.safetensors",
     "prompt": "medieval rogue character, full body, standing pose, dark cloak, detailed face, highly detailed, clean simple dark background, isometric game asset style",
     "seed": 42,
     "time_s": 26.0,
-    "file": "/mnt/workspace/code/isoroll/content/benchmark/model-comparison/ghostmix_v20Bakedvae.png"
+    "file": "benchmarks/model-comparison/ghostmix_v20Bakedvae.png"
   },
   {
     "model": "cetusMix_Whalefall2.safetensors",
     "prompt": "medieval rogue character, full body, standing pose, dark cloak, detailed face, highly detailed, clean simple dark background, isometric game asset style",
     "seed": 42,
     "time_s": 26.0,
-    "file": "/mnt/workspace/code/isoroll/content/benchmark/model-comparison/cetusMix_Whalefall2.png"
+    "file": "benchmarks/model-comparison/cetusMix_Whalefall2.png"
   },
   {
     "model": "toonyou_beta6.safetensors",
     "prompt": "medieval rogue character, full body, standing pose, dark cloak, detailed face, highly detailed, clean simple dark background, isometric game asset style",
     "seed": 42,
     "time_s": 26.0,
-    "file": "/mnt/workspace/code/isoroll/content/benchmark/model-comparison/toonyou_beta6.png"
+    "file": "benchmarks/model-comparison/toonyou_beta6.png"
   },
   {
     "model": "lyriel_v16.safetensors",
     "prompt": "medieval rogue character, full body, standing pose, dark cloak, detailed face, highly detailed, clean simple dark background, isometric game asset style",
     "seed": 42,
     "time_s": 26.0,
-    "file": "/mnt/workspace/code/isoroll/content/benchmark/model-comparison/lyriel_v16.png"
+    "file": "benchmarks/model-comparison/lyriel_v16.png"
   }
 ]

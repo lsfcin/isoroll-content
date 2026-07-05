@@ -16,16 +16,15 @@ The long-term product is two things:
 
 ## Current Focus
 
-The immediate work is `cli/iso-cli.py`, a small CLI that submits ComfyUI API workflows for character image generation.
+The immediate work is `src/cli/iso-cli.py`, a small CLI that submits ComfyUI API workflows for character image generation.
 
 The current generation baseline is:
 
 - ComfyUI receives a workflow JSON through `/prompt`.
-- `iso-cli.py` picks a workflow by profile name.
+- `iso-cli.py` picks a workflow by profile name — filename selection only, no profile-JSON tuning layer (see SPECS.md `## Render Profiles`).
 - The workflow handles the real node graph.
-- Render profiles exist, but are currently mostly metadata and not applied as tunable parameters.
-- Generated PNGs are gitignored under `chars/`.
-- Tracked reference outputs belong in `benchmarks/images/` with metadata in `benchmarks/manifest.json`.
+- Generated PNGs are gitignored under `assets/chars/`.
+- Tracked reference outputs live directly in per-comparison folders under `benchmarks/` (each with its own `manifest.json` — see SPECS.md).
 
 ## Core Product Decisions
 
@@ -45,48 +44,53 @@ isoroll-content/
   CONTEXT.md
   SPECS.md
   ROADMAP.md
-  cli/
-    iso-cli.py
-    iso-cli.bat
-    workflows/        # ComfyUI workflow JSONs
-    batch_rembg.sh
-    batch_stylize.sh
-    sprite_splitter.py
-  pipeline/           # art pipeline scripts
-    preprocess.py
-    sheet_to_tpose.py
-    generate_sheet_template.py
-    prompts/
-  pipeline/           # mesh/3D scripts (may be obsolete)
-    triposr_mesh.py, blender_iso_rig.py, calibrate*.py
-  profiles/           # generation quality profiles
-  benchmarks/         # tracked benchmark images + manifests
-  chars/              # per-character outputs (gitignored)
-    {name}/
-      concept/
-      sheet/
-      {name}_{stance}_{facing}.png  # final sprites
-      _renders/{stance}/            # intermediate renders (gitignored)
-  tiles/              # tile assets
-    {name}/
-      {name}_{facing}.png
+  src/
+    cli/
+      iso-cli.py            # entry point — argument parsing + dispatch only
+      iso-cli.bat
+      comfy_client.py       # ComfyUI API primitives
+      workflow_ops.py       # workflow-JSON mutation helpers
+      gen_commands.py       # gen-character, style-concept, ipadapter-ref
+      image_commands.py     # detail-image, face-restore
+      blender_commands.py   # blender-stylize, blender-ipadapter
+      sprite_splitter.py    # split external sprite sheets into per-direction files
+      workflows/            # ComfyUI workflow JSONs
+      batch_rembg.sh
+      batch_stylize.sh
+    pipeline/
+      preprocess.py, sheet_to_tpose.py, generate_sheet_template.py  # concept/sheet intake
+      make_tile_guide.py, tile_guide_render.py                      # S0 tile multiview guide (active)
+      triposr_mesh.py, blender_iso_rig.py, rotate_mesh.py,
+      calibrate2/3/4.py, calibrate_camera.py, s3_batch.sh           # S3 mesh pipeline — several
+                                                                     # self-tagged [OBSOLETE-MESH],
+                                                                     # not yet consolidated (see ROADMAP S3)
+      prompts/
+  assets/                # generated art output — see assets/CONTEXT.md
+    chars/               # per-character outputs (gitignored)
+      {name}/
+        concept/
+        sheet/
+        {name}_{stance}_{facing}.png  # final sprites
+        _renders/{stance}/            # intermediate renders (gitignored)
+    tiles/               # tracked tile assets
+      {name}/
+        {name}_{facing}.png
+  benchmarks/            # curated comparisons + tile-guide QC sweeps — see benchmarks/CONTEXT.md
 ```
 
 ## File Map
 
-- `cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows; selects workflow by profile name
-- `cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, etc.)
-- `cli/sprite_splitter.py` — splits external sprite sheets into per-direction flat files
-- `pipeline/preprocess.py` — background removal + resize for concept art → `chars/{name}/concept/`
-- `pipeline/sheet_to_tpose.py` — crop GPT character sheet → panels in `chars/{name}/sheet/`
-- `profiles/` — render profile JSONs (fast, balanced, quality, character, props, environment, photos)
-- `benchmarks/manifest.json` — metadata for curated benchmark outputs
-- `benchmarks/images/` — tracked benchmark images (promoted from raw generation)
+- `src/cli/iso-cli.py` — CLI entry point; submits ComfyUI API workflows; selects workflow by profile name
+- `src/cli/workflows/` — named workflow variants (`character_fast`, `character_balanced`, `character_quality`, etc.)
+- `src/cli/sprite_splitter.py` — splits external sprite sheets into per-direction flat files
+- `src/pipeline/preprocess.py` — background removal + resize for concept art → `assets/{chars,tiles}/{name}/concept/`
+- `src/pipeline/sheet_to_tpose.py` — crop GPT character sheet → panels in `assets/chars/{name}/sheet/`
+- `benchmarks/` — each comparison folder carries its own `manifest.json` (see SPECS.md `## Benchmark Manifest`)
 
 ## Working Rules
 
 - Keep source files portable. Do not commit local absolute ComfyUI paths.
-- Use `COMFY_DIR` for the local ComfyUI root. `cli/iso-cli.py` expects it.
+- Use `COMFY_DIR` for the local ComfyUI root. `src/cli/iso-cli.py` expects it.
 - Workflow JSON defines the graph. Profiles should not pretend to enable nodes that the workflow does not contain.
 - Add new workflows beside the old ones when testing major pipeline changes.
 - Use `benchmarks/` for curated visual comparisons. Do not promote raw generations without adding metadata.
@@ -99,9 +103,10 @@ isoroll-content/
 
 | Subdirectory | Description |
 |--------------|-------------|
-| [`benchmarks/`](benchmarks/CONTEXT.md) | — |
-| [`cli/`](cli/CONTEXT.md) | — |
-| [`pipeline/`](pipeline/CONTEXT.md) | — |
+| [`assets/`](assets/CONTEXT.md) | Generated art output — characters and tiles. Not curated reference material (see |
+| [`benchmarks/`](benchmarks/CONTEXT.md) | Curated, tracked comparison images (checkpoint/anatomy/model tests) and QC dev o |
+| [`refs/`](refs/CONTEXT.md) | Captured references for isoroll-content — tier-1 links in [REFS.md](REFS.md); pr |
+| [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts. G |
 
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|

@@ -1,7 +1,7 @@
 # ── Curated reference set — fully versioned, no exceptions needed ────────────
 # benchmarks/ (top-level) holds curated comparison images + manifests.
 
-chars/
+assets/chars/
 output/
 temp/
 *.zip
@@ -10,6 +10,7 @@ temp/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.mypy_cache/
 .venv/
 venv/
 

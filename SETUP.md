@@ -182,7 +182,7 @@ blender --version   # verify available from command line
 
 Blender batch rendering (headless):
 ```bash
-blender --background scene.blend --python content/pipeline/blender_iso_rig.py
+blender --background scene.blend --python src/pipeline/blender_iso_rig.py
 ```
 
 No additional pip installs needed inside Blender — the rig script uses only Blender's built-in Python API (`bpy`).
@@ -208,7 +208,7 @@ ls "$COMFY_DIR/models/ControlNet/"
 ls "$COMFY_DIR/models/ipadapter/"
 
 # Test generation (fast profile — ~30 seconds)
-cd /path/to/isoroll/content/cli
+cd /path/to/isoroll-content/src/cli
 python iso-cli.py gen-character "test warrior" --profile fast
 
 # Verify rembg
