@@ -1,5 +1,6 @@
 # isoroll-content
 > Offline asset generation pipeline for the isoroll Foundry VTT module
+> goal: [rpg-isoroll](../../brain/goals/rpg-isoroll.md)
 
 isoroll-content is the art and pipeline side of the isoroll project. It produces 8-direction isometric sprites, tiles, and animations for the isoroll Foundry module.
 
