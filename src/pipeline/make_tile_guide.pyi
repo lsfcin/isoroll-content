@@ -1,8 +1,6 @@
 from _typeshed import Incomplete
 from pathlib import Path
 
-BG: Incomplete
-MAGENTA: Incomplete
 CELL_PX: int
 LAYOUTS: Incomplete
 

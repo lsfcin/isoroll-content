@@ -425,12 +425,18 @@ reproduce or extend elsewhere in the output.
 
 **Simplified layouts, for assets that don't need all 5 views** (same caption-cell
 watermark trick, just fewer content cells — `make_tile_guide.py --layout`):
-- `2cell` — `S | N | caption`, one row, 3×1. Flat front/back only, for assets
-  where the end caps don't matter (e.g. a wall whose thickness faces are
-  irrelevant to the design).
-- `1cell` — `SW | caption`, one row, 2×1. Fully symmetric content (identical
-  front/back **and** identical west/east caps) — one iso view + its own cap
-  implies everything else.
+- `2cell` — `SW | NE | TOP | caption`, one row, 4×1. One corner view per long
+  face (green via SW, gray via NE), for assets where the end caps don't
+  matter — SW stands in for SE and NE stands in for NW since the cap color is
+  ignored. Cardinal N/S/E/W panels are never used standalone; the module only
+  ever renders corner views (see "View count: 4+1" above). TOP is always
+  included even here — isoroll's top-down view mode needs a real top
+  reference on every asset, not just the oblique-implicit sliver in the
+  SW/NE panels.
+- `1cell` — `SW | TOP | caption`, one row, 3×1. Fully symmetric content
+  (identical front/back **and** identical west/east caps) — one iso view +
+  its own cap implies everything else. TOP still included for the same
+  top-down-view-mode reason as `2cell`.
 
 Which layout applies is a per-asset judgment call (does this wall's back face
 differ from its front? do its end caps differ from each other?), not a fixed

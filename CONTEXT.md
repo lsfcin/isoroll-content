@@ -60,7 +60,7 @@ isoroll-content/
       batch_stylize.sh
     pipeline/
       preprocess.py, sheet_to_tpose.py, generate_sheet_template.py  # concept/sheet intake
-      make_tile_guide.py, tile_guide_render.py                      # S0 tile multiview guide (active)
+      make_tile_guide.py, tile_guide_render.py, tile_guide_matrix.py # S0 tile multiview guide (active)
       triposr_mesh.py, blender_iso_rig.py, rotate_mesh.py,
       calibrate2/3/4.py, calibrate_camera.py, s3_batch.sh           # S3 mesh pipeline — several
                                                                      # self-tagged [OBSOLETE-MESH],

@@ -8,15 +8,25 @@ Face-ID colors (bound to these meanings in the NB prompt, see SPECS.md → Chose
 Layouts:
   9panel — all cardinal + diagonal + TOP, dev/QC reference (matches hand-drawn prototype deck)
   6cell  — NW/NE/TOP over SW/SE/caption, 3x2 aspect — the full NB input format
-  2cell  — S/N/caption, one row, 3x1 — front+back only, for assets where the end
-           caps (blue/purple) don't matter (e.g. symmetric-thickness walls)
-  1cell  — SW/caption, one row, 2x1 — simplest case: symmetric content where one
-           face + one cap fully implies the rest (e.g. a wall with identical
-           front/back and identical west/east end caps)
+  2cell  — SW/NE/TOP/caption, one row, 4x1 — one corner per long face, for
+           assets where the end caps (blue/purple) don't matter: SW already
+           implies SE (same green face, cap ignored) and NE implies NW (same
+           gray face, cap ignored). Cardinal N/S panels are never used
+           standalone — the module only ever renders corner views (see
+           SPECS.md "View count: 4+1"). TOP is always included even here —
+           isoroll's top-down view mode needs a real top reference on every
+           asset, not just the oblique-implicit sliver in the SW/NE panels.
+  1cell  — SW/TOP/caption, one row, 3x1 — simplest case: symmetric content
+           where one face + one cap fully implies the rest (e.g. a wall with
+           identical front/back and identical west/east end caps). TOP is
+           still included for the same top-down-view-mode reason as 2cell.
 
 Cardinal (N/S/W/E) panels are drawn "unfolded-net" style: the TOP face is folded
 flat above the body, so N/S panels are W cols x (D+H) rows and W/E panels are
 D cols x (W+H) rows — verified against the reference deck (pipeline/prompts/reference).
+
+Thin wrapper over tile_guide_matrix.py: expresses each fixed LAYOUTS layout as a
+cells-list (shared W/H/D, per-cell orientation) and delegates rendering to it.
 
 Usage:
   python pipeline/make_tile_guide.py --width 5 --height 4 --layout 6cell --output out.png
@@ -25,44 +35,16 @@ Usage:
 import argparse
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+import tile_guide_matrix
 
-from generate_sheet_template import load_font
-from tile_guide_render import (
-    TOP_RED, BACK_GRAY, FRONT_GREEN, WEST_BLUE, EAST_PURPLE,
-    draw_iso_panel, draw_flat_grid, draw_square_grid,
-)
-
-BG = (0, 0, 0)
-MAGENTA = (255, 0, 255)
 CELL_PX = 320
 
 LAYOUTS = {
     "9panel": [["NW", "N", "NE"], ["W", "TOP", "E"], ["SW", "S", "SE"]],
     "6cell": [["NW", "NE", "TOP"], ["SW", "SE", "CAPTION"]],
-    "2cell": [["S", "N", "CAPTION"]],
-    "1cell": [["SW", "CAPTION"]],
+    "2cell": [["SW", "NE", "TOP", "CAPTION"]],
+    "1cell": [["SW", "TOP", "CAPTION"]],
 }
-
-
-def _draw_panel(img, draw, kind, w, d, h, box):
-    if kind in ("NW", "NE", "SW", "SE"):
-        draw_iso_panel(img, w, d, h, kind, box)
-    elif kind == "N":
-        draw_flat_grid(draw, w, d + h, BACK_GRAY, d, box)
-    elif kind == "S":
-        draw_flat_grid(draw, w, d + h, FRONT_GREEN, d, box)
-    elif kind == "W":
-        draw_flat_grid(draw, d, w + h, WEST_BLUE, w, box)
-    elif kind == "E":
-        draw_flat_grid(draw, d, w + h, EAST_PURPLE, w, box)
-    elif kind == "TOP":
-        draw_square_grid(draw, w, d, TOP_RED, box)
-
-
-def _draw_caption(draw, box, font, w, d, h):
-    cx, cy, cw, ch = box
-    draw.text((cx + cw / 2 - 40, cy + ch / 2 - 8), f"W{w} H{h} D{d}", font=font, fill=MAGENTA)
 
 
 def _panel_label(row, col, cols, kind):
@@ -71,33 +53,24 @@ def _panel_label(row, col, cols, kind):
     return f"{index} {kind}{suffix}"
 
 
-def generate(w, d, h, layout, out_path: Path):
-    rows = LAYOUTS[layout]
-    cols = len(rows[0])
-    img_w, img_h = cols * CELL_PX, len(rows) * CELL_PX
-    img = Image.new("RGB", (img_w, img_h), BG)
-    draw = ImageDraw.Draw(img)
-    font = load_font(16)
-
-    for r, row_kinds in enumerate(rows):
+def _layout_to_spec(w, d, h, layout):
+    rows_kinds = LAYOUTS[layout]
+    cols = len(rows_kinds[0])
+    cells = []
+    for r, row_kinds in enumerate(rows_kinds):
         for c, kind in enumerate(row_kinds):
-            box = (c * CELL_PX, r * CELL_PX, CELL_PX, CELL_PX)
-            if kind == "CAPTION":
-                _draw_caption(draw, box, font, w, d, h)
-            else:
-                _draw_panel(img, draw, kind, w, d, h, box)
-            draw.text((box[0] + 6, box[1] + 4), _panel_label(r, c, cols, kind), font=font, fill=MAGENTA)
+            label = f"W{w} H{h} D{d}" if kind == "CAPTION" else _panel_label(r, c, cols, kind)
+            cells.append({"row": r, "col": c, "orientation": kind, "w": w, "h": h, "d": d, "label": label})
+    return {"rows": len(rows_kinds), "cols": cols, "cells": cells}
 
-    for c in range(1, cols):
-        x = c * CELL_PX
-        draw.line([(x, 0), (x, img_h)], fill=MAGENTA, width=2)
-    for r in range(1, len(rows)):
-        y = r * CELL_PX
-        draw.line([(0, y), (img_w, y)], fill=MAGENTA, width=2)
 
+def generate(w, d, h, layout, out_path: Path):
+    spec = _layout_to_spec(w, d, h, layout)
+    rows, cols, grid = tile_guide_matrix.parse_spec(spec)
+    img = tile_guide_matrix.render_cells(rows, cols, grid, CELL_PX)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
-    print(f"Saved: {out_path}  ({img_w}x{img_h} px, {layout}, W{w}xH{h}xD{d})")
+    print(f"Saved: {out_path}  ({cols * CELL_PX}x{rows * CELL_PX} px, {layout}, W{w}xH{h}xD{d})")
 
 
 if __name__ == "__main__":
