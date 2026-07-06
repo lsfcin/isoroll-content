@@ -1,14 +1,14 @@
 from _typeshed import Incomplete
 
-TOP_RED: Incomplete
-BACK_GRAY: Incomplete
-FRONT_GREEN: Incomplete
-WEST_BLUE: Incomplete
-EAST_PURPLE: Incomplete
-SILHOUETTE: Incomplete
-GRID_LINE: Incomplete
+FACE_TOP: Incomplete
+FACE_LONG: Incomplete
+FACE_CAP: Incomplete
+MAGENTA: Incomplete
+SILHOUETTE = MAGENTA
+GRID_LINE = MAGENTA
 SIL_WIDTH: int
 GRID_WIDTH: int
+MIN_THICK: float
 TOP_FOLD_RATIO: Incomplete
 
 def fit_scale(l, d, h, avail_w, avail_h): ...

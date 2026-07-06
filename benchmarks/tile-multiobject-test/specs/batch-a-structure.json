@@ -1,0 +1,16 @@
+{
+  "rows": 3, "cols": 3,
+  "cells": [
+    {"row":0,"col":0,"orientation":"SW","w":3,"h":3,"d":1,"label":"WALL-STRAIGHT SW"},
+    {"row":0,"col":1,"orientation":"TOP","w":3,"h":3,"d":1,"label":"WALL-STRAIGHT TOP"},
+    {"row":0,"col":2,"orientation":"CAPTION","w":3,"h":3,"d":1,"label":"WALL-STRAIGHT — W3 H3 D1"},
+
+    {"row":1,"col":0,"orientation":"SW","w":1,"h":3,"d":1,"label":"PILLAR SW"},
+    {"row":1,"col":1,"orientation":"TOP","w":1,"h":3,"d":1,"label":"PILLAR TOP"},
+    {"row":1,"col":2,"orientation":"CAPTION","w":1,"h":3,"d":1,"label":"PILLAR — W1 H3 D1"},
+
+    {"row":2,"col":0,"orientation":"SW","w":1,"h":1,"d":1,"label":"LINTEL SW"},
+    {"row":2,"col":1,"orientation":"TOP","w":1,"h":1,"d":1,"label":"LINTEL TOP"},
+    {"row":2,"col":2,"orientation":"CAPTION","w":1,"h":1,"d":1,"label":"LINTEL — W1 H1 D1"}
+  ]
+}

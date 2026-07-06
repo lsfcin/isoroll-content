@@ -1,0 +1,16 @@
+{
+  "rows": 3, "cols": 4,
+  "cells": [
+    {"row":0,"col":0,"orientation":"SW","w":2,"h":3,"d":2,"label":"STAIRS-VERTICAL SW"},
+    {"row":0,"col":1,"orientation":"NE","w":2,"h":3,"d":2,"label":"STAIRS-VERTICAL NE"},
+    {"row":0,"col":2,"orientation":"TOP","w":2,"h":3,"d":2,"label":"STAIRS-VERTICAL TOP"},
+    {"row":0,"col":3,"orientation":"CAPTION","w":2,"h":3,"d":2,"label":"STAIRS-VERTICAL — W2 H3 D2"},
+
+    {"row":1,"col":0,"orientation":"NW","w":2,"h":3,"d":2,"label":"STAIRS-DIAGONAL NW"},
+    {"row":1,"col":1,"orientation":"NE","w":2,"h":3,"d":2,"label":"STAIRS-DIAGONAL NE"},
+    {"row":1,"col":2,"orientation":"TOP","w":2,"h":3,"d":2,"label":"STAIRS-DIAGONAL TOP"},
+    {"row":2,"col":0,"orientation":"SW","w":2,"h":3,"d":2,"label":"STAIRS-DIAGONAL SW"},
+    {"row":2,"col":1,"orientation":"SE","w":2,"h":3,"d":2,"label":"STAIRS-DIAGONAL SE"},
+    {"row":2,"col":2,"orientation":"CAPTION","w":2,"h":3,"d":2,"label":"STAIRS-DIAGONAL — W2 H3 D2"}
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "rows": 4, "cols": 4,
+  "cells": [
+    {"row":0,"col":0,"orientation":"SW","w":2,"h":1,"d":2,"label":"TABLE SW"},
+    {"row":0,"col":1,"orientation":"TOP","w":2,"h":1,"d":2,"label":"TABLE TOP"},
+    {"row":0,"col":2,"orientation":"CAPTION","w":2,"h":1,"d":2,"label":"TABLE — W2 H1 D2"},
+
+    {"row":1,"col":0,"orientation":"SW","w":1,"h":1,"d":1,"label":"CHAIR SW"},
+    {"row":1,"col":1,"orientation":"NE","w":1,"h":1,"d":1,"label":"CHAIR NE"},
+    {"row":1,"col":2,"orientation":"TOP","w":1,"h":1,"d":1,"label":"CHAIR TOP"},
+    {"row":1,"col":3,"orientation":"CAPTION","w":1,"h":1,"d":1,"label":"CHAIR — W1 H1 D1"},
+
+    {"row":2,"col":0,"orientation":"SW","w":1,"h":2,"d":1,"label":"CABINET SW"},
+    {"row":2,"col":1,"orientation":"NE","w":1,"h":2,"d":1,"label":"CABINET NE"},
+    {"row":2,"col":2,"orientation":"TOP","w":1,"h":2,"d":1,"label":"CABINET TOP"},
+    {"row":2,"col":3,"orientation":"CAPTION","w":1,"h":2,"d":1,"label":"CABINET — W1 H2 D1"},
+
+    {"row":3,"col":0,"orientation":"SW","w":1,"h":1,"d":1,"label":"CHEST SW"},
+    {"row":3,"col":1,"orientation":"NE","w":1,"h":1,"d":1,"label":"CHEST NE"},
+    {"row":3,"col":2,"orientation":"TOP","w":1,"h":1,"d":1,"label":"CHEST TOP"},
+    {"row":3,"col":3,"orientation":"CAPTION","w":1,"h":1,"d":1,"label":"CHEST — W1 H1 D1"}
+  ]
+}

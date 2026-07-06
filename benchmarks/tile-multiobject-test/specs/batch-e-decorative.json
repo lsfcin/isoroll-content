@@ -1,0 +1,19 @@
+{
+  "rows": 4, "cols": 3,
+  "cells": [
+    {"row":0,"col":0,"orientation":"SW","w":2,"h":1,"d":3,"label":"CARPET SW"},
+    {"row":0,"col":1,"orientation":"TOP","w":2,"h":1,"d":3,"label":"CARPET TOP"},
+    {"row":0,"col":2,"orientation":"CAPTION","w":2,"h":1,"d":3,"label":"CARPET — W2 H1 D3"},
+
+    {"row":1,"col":0,"orientation":"SW","w":1,"h":2,"d":1,"label":"PAINTING SW"},
+    {"row":1,"col":1,"orientation":"CAPTION","w":1,"h":2,"d":1,"label":"PAINTING — W1 H2 D1"},
+
+    {"row":2,"col":0,"orientation":"SW","w":1,"h":1,"d":1,"label":"CANDLE SW"},
+    {"row":2,"col":1,"orientation":"TOP","w":1,"h":1,"d":1,"label":"CANDLE TOP"},
+    {"row":2,"col":2,"orientation":"CAPTION","w":1,"h":1,"d":1,"label":"CANDLE — W1 H1 D1"},
+
+    {"row":3,"col":0,"orientation":"SW","w":1,"h":1,"d":1,"label":"TORCH SW"},
+    {"row":3,"col":1,"orientation":"TOP","w":1,"h":1,"d":1,"label":"TORCH TOP"},
+    {"row":3,"col":2,"orientation":"CAPTION","w":1,"h":1,"d":1,"label":"TORCH — W1 H1 D1"}
+  ]
+}

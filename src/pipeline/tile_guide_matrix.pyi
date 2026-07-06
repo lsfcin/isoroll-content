@@ -5,6 +5,7 @@ from pathlib import Path
 BG: Incomplete
 MAGENTA: Incomplete
 ORIENTATIONS: Incomplete
+OBLIQUE: Incomplete
 REQUIRED_KEYS: Incomplete
 
 @dataclass

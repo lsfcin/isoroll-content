@@ -21,13 +21,14 @@ from PIL import Image, ImageDraw
 
 from generate_sheet_template import load_font
 from tile_guide_render import (
-    TOP_RED, BACK_GRAY, FRONT_GREEN, WEST_BLUE, EAST_PURPLE,
+    FACE_TOP, FACE_LONG, FACE_CAP,
     draw_iso_panel, draw_flat_grid, draw_square_grid,
 )
 
 BG = (0, 0, 0)
 MAGENTA = (255, 0, 255)
 ORIENTATIONS = {"N", "S", "E", "W", "NE", "NW", "SE", "SW", "TOP", "CAPTION"}
+OBLIQUE = {"NW", "NE", "SW", "SE"}
 REQUIRED_KEYS = ("row", "col", "orientation", "w", "h", "d")
 
 
@@ -45,21 +46,30 @@ class CellSpec:
 def draw_panel(img, draw, orientation, w, d, h, box):
     if orientation in ("NW", "NE", "SW", "SE"):
         draw_iso_panel(img, w, d, h, orientation, box)
-    elif orientation == "N":
-        draw_flat_grid(draw, w, d + h, BACK_GRAY, d, box)
-    elif orientation == "S":
-        draw_flat_grid(draw, w, d + h, FRONT_GREEN, d, box)
-    elif orientation == "W":
-        draw_flat_grid(draw, d, w + h, WEST_BLUE, w, box)
-    elif orientation == "E":
-        draw_flat_grid(draw, d, w + h, EAST_PURPLE, w, box)
+    elif orientation in ("N", "S"):
+        draw_flat_grid(draw, w, d + h, FACE_LONG, d, box)
+    elif orientation in ("W", "E"):
+        draw_flat_grid(draw, d, w + h, FACE_CAP, w, box)
     elif orientation == "TOP":
-        draw_square_grid(draw, w, d, TOP_RED, box)
+        draw_square_grid(draw, w, d, FACE_TOP, box)
 
 
 def draw_caption(draw, box, font, label):
     cx, cy, cw, ch = box
     draw.text((cx + cw / 2 - 40, cy + ch / 2 - 8), label, font=font, fill=MAGENTA)
+
+
+def _validate_dims(index, orientation, w, h, d):
+    dims = (w, h, d)
+    for key, val in zip(("w", "h", "d"), dims):
+        if not isinstance(val, int) or val < 0:
+            raise ValueError(f"cells[{index}]: {key} must be a non-negative int, got {val!r}")
+    zeros = [v for v in dims if v == 0]
+    allow_one_zero = orientation in OBLIQUE or orientation == "TOP"
+    if allow_one_zero and len(zeros) > 1:
+        raise ValueError(f"cells[{index}]: {orientation} may have at most one zero dim (flat), got {dims}")
+    if not allow_one_zero and orientation != "CAPTION" and zeros:
+        raise ValueError(f"cells[{index}]: {orientation} panel needs w/h/d all positive, got {dims}")
 
 
 def _validate_cell(raw, index, rows, cols, seen):
@@ -76,9 +86,7 @@ def _validate_cell(raw, index, rows, cols, seen):
     orientation = raw["orientation"]
     if orientation not in ORIENTATIONS:
         raise ValueError(f"cells[{index}]: invalid orientation {orientation!r}, must be one of {sorted(ORIENTATIONS)}")
-    for key in ("w", "h", "d"):
-        if not isinstance(raw[key], int) or raw[key] <= 0:
-            raise ValueError(f"cells[{index}]: {key} must be a positive int, got {raw[key]!r}")
+    _validate_dims(index, orientation, raw["w"], raw["h"], raw["d"])
     seen.add((row, col))
     return CellSpec(row, col, orientation, raw["w"], raw["h"], raw["d"], raw.get("label", ""))
 
