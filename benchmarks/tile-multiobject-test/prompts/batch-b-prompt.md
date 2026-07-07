@@ -43,9 +43,10 @@ Per-object notes:
 - DOOR-LEAF: a tall flat wooden door leaf — aged oak planks, two horizontal iron reinforcing bands
   with rivets. FRONT (SW/SE) also has a black iron ring handle and visible strap hinges; BACK
   (NW/NE) is the same planks and bands with no handle.
-  HANDEDNESS — this is ONE consistent door. Place the pivot (strap-hinge) side and the ring-handle
-  side EXACTLY as specified for each panel below, regardless of how that panel leans. Never
-  mirror-flip the door.
+  HANDEDNESS — the guide marks the pivot side: each door panel has a DARK BAND along one vertical
+  edge. Put the strap hinges on that BANDED edge and the iron ring handle on the opposite, plain
+  edge — in every panel, regardless of how it leans. Never mirror-flip the door. The band lands as
+  specified below:
     · DOOR-LEAF SW (front): pivot / strap hinges on the LEFT edge, iron ring handle on the RIGHT.
     · DOOR-LEAF SE (front): pivot / strap hinges on the LEFT edge, iron ring handle on the RIGHT.
     · DOOR-LEAF NE (back):  pivot / strap hinges on the RIGHT edge, iron ring handle on the LEFT.
