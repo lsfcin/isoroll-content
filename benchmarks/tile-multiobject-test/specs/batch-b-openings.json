@@ -1,11 +1,11 @@
 {
   "rows": 4, "cols": 3,
   "cells": [
-    {"row":0,"col":0,"orientation":"NW","w":1,"h":2,"d":0,"label":"DOOR-LEAF NW"},
-    {"row":0,"col":1,"orientation":"NE","w":1,"h":2,"d":0,"label":"DOOR-LEAF NE"},
+    {"row":0,"col":0,"orientation":"NW","w":1,"h":2,"d":0,"mark":true,"label":"DOOR-LEAF NW"},
+    {"row":0,"col":1,"orientation":"NE","w":1,"h":2,"d":0,"mark":true,"label":"DOOR-LEAF NE"},
     {"row":0,"col":2,"orientation":"TOP","w":1,"h":2,"d":0,"label":"DOOR-LEAF TOP"},
-    {"row":1,"col":0,"orientation":"SW","w":1,"h":2,"d":0,"label":"DOOR-LEAF SW"},
-    {"row":1,"col":1,"orientation":"SE","w":1,"h":2,"d":0,"label":"DOOR-LEAF SE"},
+    {"row":1,"col":0,"orientation":"SW","w":1,"h":2,"d":0,"mark":true,"label":"DOOR-LEAF SW"},
+    {"row":1,"col":1,"orientation":"SE","w":1,"h":2,"d":0,"mark":true,"label":"DOOR-LEAF SE"},
     {"row":1,"col":2,"orientation":"CAPTION","w":1,"h":2,"d":0,"label":"DOOR-LEAF — W1 H2 D0 (flat)"},
 
     {"row":2,"col":0,"orientation":"NW","w":1,"h":1,"d":0,"label":"WINDOW NW"},

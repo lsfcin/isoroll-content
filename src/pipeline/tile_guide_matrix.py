@@ -41,11 +41,12 @@ class CellSpec:
     h: int
     d: int
     label: str = ""
+    mark: bool = False
 
 
-def draw_panel(img, draw, orientation, w, d, h, box):
+def draw_panel(img, draw, orientation, w, d, h, box, mark=False):
     if orientation in ("NW", "NE", "SW", "SE"):
-        draw_iso_panel(img, w, d, h, orientation, box)
+        draw_iso_panel(img, w, d, h, orientation, box, mark_edge=mark)
     elif orientation in ("N", "S"):
         draw_flat_grid(draw, w, d + h, FACE_LONG, d, box)
     elif orientation in ("W", "E"):
@@ -88,7 +89,7 @@ def _validate_cell(raw, index, rows, cols, seen):
         raise ValueError(f"cells[{index}]: invalid orientation {orientation!r}, must be one of {sorted(ORIENTATIONS)}")
     _validate_dims(index, orientation, raw["w"], raw["h"], raw["d"])
     seen.add((row, col))
-    return CellSpec(row, col, orientation, raw["w"], raw["h"], raw["d"], raw.get("label", ""))
+    return CellSpec(row, col, orientation, raw["w"], raw["h"], raw["d"], raw.get("label", ""), bool(raw.get("mark", False)))
 
 
 def parse_spec(spec):
@@ -120,7 +121,7 @@ def render_cells(rows, cols, grid, cell_px=320):
             if cell.orientation == "CAPTION":
                 draw_caption(draw, box, font, cell.label)
             else:
-                draw_panel(img, draw, cell.orientation, cell.w, cell.d, cell.h, box)
+                draw_panel(img, draw, cell.orientation, cell.w, cell.d, cell.h, box, cell.mark)
             if cell.label and cell.orientation != "CAPTION":
                 draw.text((box[0] + 6, box[1] + 4), cell.label, font=font, fill=MAGENTA)
     for c in range(1, cols):

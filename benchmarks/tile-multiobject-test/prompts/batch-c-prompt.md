@@ -37,7 +37,10 @@ Per-object notes:
   stand-in only; do not render a straight or symmetric block. Render the true diagonal
   construction: treads angling/curving across the footprint, and each of the four panels a
   genuinely different view of that SAME single diagonal structure — not four different objects, not
-  a straight staircase recolored four ways.
+  a straight staircase recolored four ways. The DARK BAND along one vertical edge in each panel
+  marks the newel/base-post corner — it is the SAME physical corner of the staircase in every view,
+  so keep the diagonal spiralling the same way (do NOT mirror-flip it); render a stone newel post
+  at that banded corner.
 
 Render every object in the following style, applied identically across both objects:
 
