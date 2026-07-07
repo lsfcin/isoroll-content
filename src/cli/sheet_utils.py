@@ -81,30 +81,40 @@ def load_image(path: Path) -> Image.Image:
 # ---------------------------------------------------------------------------
 
 
-def split_grid(img: Image.Image, rows: int, cols: int, *, padding: int = 0) -> list[Image.Image]:
-    """Split image into rows × cols cells and return in reading order.
+def split_cells(
+    img: Image.Image,
+    xs: list[int],
+    ys: list[int],
+    *,
+    padding: int = 0,
+) -> list[Image.Image]:
+    """Split along explicit boundary positions, in reading order.
 
     Parameters:
         img: source image
-        rows: number of grid rows
-        cols: number of grid columns
+        xs: column boundary positions, len = cols + 1
+        ys: row boundary positions, len = rows + 1
         padding: pixels to trim from each cell edge
-
-    Returns:
-        List of PIL Images (one per cell)
     """
-    w, h = img.size
-    cell_w = w // cols
-    cell_h = h // rows
     cells = []
-    for row in range(rows):
-        for col in range(cols):
-            x1 = col * cell_w + padding
-            y1 = row * cell_h + padding
-            x2 = (col + 1) * cell_w - padding
-            y2 = (row + 1) * cell_h - padding
-            cells.append(img.crop((x1, y1, x2, y2)))
+    for y1, y2 in zip(ys, ys[1:]):
+        for x1, x2 in zip(xs, xs[1:]):
+            box = (x1 + padding, y1 + padding, x2 - padding, y2 - padding)
+            cells.append(img.crop(box))
     return cells
+
+
+def even_boundaries(size: int, count: int) -> list[int]:
+    """Evenly divided boundary positions (0 .. size), remainder distributed."""
+    return [round(size * k / count) for k in range(count + 1)]
+
+
+def split_grid(img: Image.Image, rows: int, cols: int, *, padding: int = 0) -> list[Image.Image]:
+    """Split image into rows × cols equal cells, in reading order."""
+    w, h = img.size
+    xs = even_boundaries(w, cols)
+    ys = even_boundaries(h, rows)
+    return split_cells(img, xs, ys, padding=padding)
 
 
 # ---------------------------------------------------------------------------
