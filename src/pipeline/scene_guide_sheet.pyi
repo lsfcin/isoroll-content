@@ -1,0 +1,6 @@
+from _typeshed import Incomplete
+
+SHEET_ROWS: Incomplete
+
+def compose_sheet(layout, cell_px: int = 640, marks=None): ...
+def main() -> None: ...
