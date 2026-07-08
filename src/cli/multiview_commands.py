@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""nb_commands.py — nb-tile / nb-scene / nb-restyle verbs: render guide, fill prompt template, call NB or stage manual."""
+"""multiview_commands.py — mv-tile / mv-scene / mv-restyle verbs: render guide, fill prompt template, call the image provider or stage manual."""
 
 import argparse
 import subprocess
 import sys
 from pathlib import Path
 
-import nb_client
+import imagegen_client
 
 _PIPELINE = Path(__file__).resolve().parents[1] / "pipeline"
 _PROMPTS = _PIPELINE / "prompts"
-_GUIDES_DIR = nb_client.OUTPUT_DIR / "guides"
+_GUIDES_DIR = imagegen_client.OUTPUT_DIR / "guides"
 
 
 def _run_pipeline(script, script_args):
@@ -33,17 +33,17 @@ def _fill_prompt(template_name, description, style):
 def _dispatch(args, guide_path, prompt, stem):
     result = None
     if args.manual:
-        result = nb_client.drop_manual(stem, prompt, guide_path)
+        result = imagegen_client.drop_manual(stem, prompt, guide_path)
     else:
-        out_path = nb_client.OUTBOX / f"{stem}.png"
-        result = nb_client.generate(prompt, out_path, guide_path=guide_path, alias=args.model)
+        out_path = imagegen_client.OUTBOX / f"{stem}.png"
+        result = imagegen_client.generate(prompt, out_path, guide_path=guide_path, alias=args.model)
     return result
 
 
 def _add_common(parser):
     parser.add_argument("--desc", required=True, help="subject description for the prompt")
     parser.add_argument("--style", default="painterly isometric RPG asset")
-    parser.add_argument("--model", choices=list(nb_client.MODELS), default="nb")
+    parser.add_argument("--model", choices=list(imagegen_client.MODELS), default="nb")
     parser.add_argument("--manual", action="store_true", help="stage guide+prompt for the web app instead of calling the API")
     parser.add_argument("--marks", action="store_true", help="apply registration marks to the guide")
     parser.add_argument("--scheme", choices=["columns", "varied"], default="columns")
@@ -61,7 +61,7 @@ def _cmd_tile(args):
     if args.marks:
         mark_args = ["--input", str(guide), "--output", str(guide), "--layout", "6cell"] + _marks_args(args)
         _run_pipeline("guide_marks.py", mark_args)
-    prompt = _fill_prompt("nb_tile_v2.txt", args.desc, args.style)
+    prompt = _fill_prompt("multiview_tile_v2.txt", args.desc, args.style)
     return _dispatch(args, guide, prompt, stem)
 
 
@@ -74,37 +74,37 @@ def _cmd_scene(args):
     if args.marks:
         scene_args = scene_args + ["--marks"] + _marks_args(args)
     _run_pipeline("scene_guide_sheet.py", scene_args)
-    prompt = _fill_prompt("nb_scene_v2.txt", args.desc, args.style)
+    prompt = _fill_prompt("multiview_scene_v2.txt", args.desc, args.style)
     return _dispatch(args, guide, prompt, stem)
 
 
 def _cmd_restyle(args):
     sheet = Path(args.input).resolve()
     stem = f"restyle_{sheet.stem}"
-    prompt = _fill_prompt("nb_tile_v2.txt", args.desc, args.style)
+    prompt = _fill_prompt("multiview_tile_v2.txt", args.desc, args.style)
     return _dispatch(args, sheet, prompt, stem)
 
 
-def run_nb_command(command, argv):
-    """Entry used by iso-cli.py for any command starting with nb-."""
+def run_mv_command(command, argv):
+    """Entry used by iso-cli.py for any command starting with mv-."""
     parser = argparse.ArgumentParser(prog=f"iso-cli.py {command}")
-    if command == "nb-tile":
+    if command == "mv-tile":
         parser.add_argument("name", help="asset name (files become tile_<name>_*)")
         parser.add_argument("--width", type=int, required=True)
         parser.add_argument("--height", type=int, required=True)
         parser.add_argument("--depth", type=int, default=1)
         _add_common(parser)
         handler = _cmd_tile
-    elif command == "nb-scene":
+    elif command == "mv-scene":
         parser.add_argument("layout", help="layout DSL file (see pipeline/layouts/)")
         parser.add_argument("--cell-px", type=int, default=640)
         _add_common(parser)
         handler = _cmd_scene
-    elif command == "nb-restyle":
+    elif command == "mv-restyle":
         parser.add_argument("input", help="existing multiview sheet to restyle")
         _add_common(parser)
         handler = _cmd_restyle
     else:
-        raise SystemExit(f"[FAIL] unknown nb command: {command} (nb-tile | nb-scene | nb-restyle)")
+        raise SystemExit(f"[FAIL] unknown mv command: {command} (mv-tile | mv-scene | mv-restyle)")
     args = parser.parse_args(argv)
     handler(args)

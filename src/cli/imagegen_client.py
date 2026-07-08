@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""nb_client.py — Nano Banana (Gemini image) client: API call, daily ledger, manual web-app fallback contract."""
+"""imagegen_client.py — Nano Banana (Gemini image) client: API call, daily ledger, manual web-app fallback contract."""
 
 import base64
 import json
@@ -18,9 +18,9 @@ MODELS = {
 SOFT_CAP = {"nb": 450, "nb2": 15, "nb-lite": 450}
 _ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_DIR = _ROOT / "output"
-LEDGER_PATH = OUTPUT_DIR / "nb-ledger.json"
-INBOX = OUTPUT_DIR / "nb-inbox"  # guides + prompts waiting for a manual web run
-OUTBOX = OUTPUT_DIR / "nb-outbox"  # NB results (API or manual) — postproc reads here
+LEDGER_PATH = OUTPUT_DIR / "gen-ledger.json"
+INBOX = OUTPUT_DIR / "gen-inbox"  # guides + prompts waiting for a manual web run
+OUTBOX = OUTPUT_DIR / "gen-outbox"  # NB results (API or manual) — postproc reads here
 _ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
 
 

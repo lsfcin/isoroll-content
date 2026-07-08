@@ -46,7 +46,7 @@ Commands:
     --rembg                           also strip background
     --out      <dir>                  copy result here
 
-  nb-tile | nb-scene | nb-restyle   Nano Banana multiview via guides + registration marks (each has -h)
+  mv-tile | mv-scene | mv-restyle   multiview generation via guides + registration marks (each has -h)
 
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
@@ -184,9 +184,9 @@ def main() -> None:
             output_path=get_arg(args, "--out"),
         )
 
-    elif command.startswith("nb-"):
-        from nb_commands import run_nb_command
-        run_nb_command(command, args[1:])
+    elif command.startswith("mv-"):
+        from multiview_commands import run_mv_command
+        run_mv_command(command, args[1:])
 
     else:
         print(f"[FAIL] Unknown command: {command}")

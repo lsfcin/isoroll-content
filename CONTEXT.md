@@ -112,6 +112,7 @@ isoroll-content/
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
 | [`HISTORY.md`](HISTORY.md) | — | — | History |
+| [`ROADMAP-content-gen.md`](ROADMAP-content-gen.md) | — | — | ROADMAP — content-gen: F1 procedural + espinha multiview |
 | [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
