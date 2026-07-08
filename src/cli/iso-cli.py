@@ -46,6 +46,8 @@ Commands:
     --rembg                           also strip background
     --out      <dir>                  copy result here
 
+  nb-tile | nb-scene | nb-restyle   Nano Banana multiview via guides + registration marks (each has -h)
+
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
   python iso-cli.py ipadapter-ref ../../assets/chars/rogue/concept/rogue_concept_clean.png \\
@@ -181,6 +183,10 @@ def main() -> None:
             weight=float(get_arg(args, "--weight", "0.6")),
             output_path=get_arg(args, "--out"),
         )
+
+    elif command.startswith("nb-"):
+        from nb_commands import run_nb_command
+        run_nb_command(command, args[1:])
 
     else:
         print(f"[FAIL] Unknown command: {command}")

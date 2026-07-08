@@ -1,0 +1,14 @@
+TASK: Repaint the schematic guide as a finished isometric game asset. Same object, every panel.
+
+READ THE GUIDE (never draw guide elements):
+- 3x2 grid of panels split by magenta lines; labels "1 NW", "2 NE", "3 TOP", "4 SW", "5 SE"; panel 6 = caption (ignore it).
+- All panels show the SAME object from different fixed cameras. 4 -> 5 is the SAME object rotating on its base; nothing is mirrored.
+- Grayscale faces encode light: light gray = top face, mid gray = long faces, dark gray = end caps. Keep this lighting direction.
+- CYAN symbols are registration marks: the same symbol = the same physical spot across panels. Use them to align features; NEVER draw them.
+- Dark recesses outlined in magenta are doors or windows: render them at exactly those spots, same spots in every panel.
+
+SUBJECT: {description}
+STYLE: {style}; crisp silhouette; identical palette and materials in ALL panels; neutral top-left daylight.
+
+OUTPUT: same 3x2 grid, same panel geometry and scale, pure black background inside panels.
+NEGATIVE: no cyan symbols, no magenta lines, no text or labels, no extra objects, no ground shadows, no perspective (dimetric only), no mirrored panels.
