@@ -19,6 +19,6 @@ criteria-result:
   C4 — PASS. `/mnt/workspace/Models/diffusion/{checkpoints,embeddings,loras}` are empty; no SD checkpoint downloaded.
 diff-scope: clean | extras: none (SETUP.md troubleshooting note + ROADMAP.md backlog line + .loop/ trail — all in-scope per Carry scope-files)
 roadmap: updated /mnt/workspace/code/isoroll-content/ROADMAP.md (Backlog / Ideas — "Env utility repair (2026-07-08, padaria, done)")
-commit: 30a6f78 pushed: no — repo has no configured remote (`git remote -v` empty); recorded here per task instructions instead of failing.
+commit: ead36e2 pushed: yes — origin (https://github.com/lsfcin/isoroll-content.git) had a remote configured; pushed `feature/env-utility-repair` to origin (new branch, not merged — merge is the user's call).
 leftovers: none. Real-world side effects outside the repo (not part of any commit): created `/mnt/workspace/Models/diffusion/{checkpoints,embeddings,loras,upscale_models}` and placed `4xUltrasharp_4xUltrasharpV10.pt` (66,961,958 B) in `upscale_models`. Worktree at `/tmp/claude-1000/-mnt-workspace/bb9b9715-4ea6-4628-9115-ce47ee08dba4/scratchpad/wt-env-utility-repair` (branch `feature/env-utility-repair`, base `develop`) is left in place — not merged, merge is the user's call, `.loop/<slug>/` kept per `keep-trail: yes`.
 executor: loop-medium model=sonnet tier=medium
