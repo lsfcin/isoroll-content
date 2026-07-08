@@ -10,8 +10,10 @@ Build híbrido: **Fable inline** construiu o que tinha decisão arquitetural viv
 - [x] Gitflow: `develop` + `feature/f1-procedural-spine` (content); module já tem `develop`.
 - [x] F1 core inline: `layout_parse.py` + `layout_massing.py` + `guide_marks.py` + `scene_guide_render.py` + `scene_guide_sheet.py` — l-room renderizado nas 4 rotações + plan + marks (painter por célula; runs mesclados ficam pro manifest).
 - [x] Smoke test chave Gemini: key VÁLIDA, lista `gemini-2.5-flash-image`/`3.1-flash-image`/`3.1-flash-lite-image`; geração 429 (quota free do DIA esgotada em todos os buckets — reseta meia-noite Pacific ≈ 4h Recife). Test-to-kill pronto pra disparar pós-reset ou via web app.
-- [ ] Test-to-kill F1 (guia cena → NB ≤2 chamadas) — artefatos prontos em `output/scene-guides/`
-- [ ] Loops disparados: `env-utility-repair`, `postproc-tests`
+- [ ] Test-to-kill F1 (guia cena → NB ≤2 chamadas) — pacote pronto em `output/gen-inbox/` (`scene_l-room_guide.png` + prompt); rodar via web app OU `mv-scene` sem `--manual` pós-reset da quota
+- [x] Loop `env-utility-repair` (padaria): SHIPPED `feature/env-utility-repair` (ead36e2) — symlinks resolvem, 4xUltrasharp 64MB baixado, SD ckpts fora de escopo. Verificado no filesystem.
+- [x] Loop `postproc-tests` (standard): SHIPPED `feature/postproc-tests` (331d184→f2a9cbe, empilhada em feature/f1-procedural-spine) — `src/cli/sheet_qc.py` (IoU silhueta + resíduo), pytest 8/8 verde, e2e guia→marks→output-sujo→split+QC ok. Roteamento auditado: opus×2, sonnet×3, haiku×2, zero max-tier.
+- [ ] Merges em develop: aguardando eyeball do usuário (gitflow) — ordem: f1-procedural-spine → postproc-tests → env-utility-repair; tag `pre-<slug>` antes de cada merge
 
 ## Papéis de ferramenta (verificado web 2026-07)
 
