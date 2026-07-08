@@ -71,6 +71,8 @@ OUTPUT: same 3x2 grid, same panel geometry and scale, pure black background insi
 NEGATIVE: no cyan symbols, no magenta lines, no text or labels, no extra objects, no ground shadows, no perspective (dimetric only), no mirrored panels.
 ```
 
+Skills: loops do isoroll-module devem invocar `/foundry` (router de referência v14) antes de tocar código; sessões futuras: considerar importar skills externas da comunidade (ComfyUI/imagem) pra `core/skills/`.
+
 ## Delegação /loops (todas `base: develop` no Carry; ver gitflow abaixo)
 
 | slug | repo | tier | escopo | depende de |
