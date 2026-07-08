@@ -22,3 +22,16 @@ criticality: low tolerance: partial OK — any download that fails after 2 attem
 innovation: none
 verdict: padaria
 keep-trail: yes
+
+## Micro-plan (padaria)
+- T1: mkdir -p target dirs under /mnt/workspace/Models/diffusion/{checkpoints,embeddings,loras,upscale_models} so all 4 symlinks resolve (C1).
+- T2: download 4xUltrasharp_4xUltrasharpV10.pt into resolved upscale_models dir; SETUP.md §3 names source "Civitai / OpenModelDB" but gives no literal URL — resolved via web search to a verified HF mirror, max 2 attempts (C2).
+- T3: curl localhost:8188/object_info if ComfyUI already running; do not start it (C3). No SD checkpoint downloaded (C4).
+- T4: run `make verify-fast` in worktree; optional one-line SETUP.md note.
+executor: loop-medium model=sonnet tier=medium
+
+## Ground
+branch-created: feature/env-utility-repair base: develop (worktree: /tmp/claude-1000/-mnt-workspace/bb9b9715-4ea6-4628-9115-ce47ee08dba4/scratchpad/wt-env-utility-repair)
+paths: 2/2 ok ($HOME/ComfyUI/models exists; SETUP.md exists in worktree) | missing: none
+test-cmd-runs: yes (`make -n verify-fast` resolves to `python3 -m compileall -q .`)
+executor: loop-medium model=sonnet tier=medium
