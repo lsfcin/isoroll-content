@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""scene_guide_render.py — one guide panel of a whole scene: dimetric view of the massing boxes, or TOP plan."""
+
+from PIL import Image, ImageDraw
+
+from layout_massing import massing
+from layout_parse import DOOR, FLOOR, SOLID, STAIRS, VOID, WINDOW, rotate_cw
+from tile_guide_render import FACE_CAP, FACE_LONG, FACE_TOP, GRID_WIDTH, MAGENTA, SIL_WIDTH
+
+# True rotation per view: the single-tile mirror trick would mirror the floor
+# plan itself, so scenes re-run massing on a clockwise-rotated grid instead.
+VIEW_TURNS = {"SW": 0, "SE": 1, "NE": 2, "NW": 3}
+_UX, _UY, _UZ = 1.0, 0.5, 1.0  # 2:1 dimetric, same camera as tile_guide_render
+
+
+def _proj(u, v, z):
+    return (u - v) * _UX, (u + v) * _UY - z * _UZ
+
+
+def _fit(boxes, avail_w, avail_h):
+    xs, ys = [], []
+    for b in boxes:
+        for u in (b.u0, b.u0 + b.l):
+            for v in (b.v0, b.v0 + b.d):
+                for z in (0, b.h):
+                    x, y = _proj(u, v, z)
+                    xs.append(x)
+                    ys.append(y)
+    minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+    s = min(avail_w / (maxx - minx or 1), avail_h / (maxy - miny or 1))
+    ox = -minx * s + (avail_w - (maxx - minx) * s) / 2
+    oy = -miny * s + (avail_h - (maxy - miny) * s) / 2
+    return s, ox, oy
+
+
+class _Cam:
+    def __init__(self, boxes, avail_w, avail_h, pad):
+        self.s, ox, oy = _fit(boxes, avail_w - 2 * pad, avail_h - 2 * pad)
+        self.ox, self.oy = ox + pad, oy + pad
+
+    def pt(self, u, v, z):
+        x, y = _proj(u, v, z)
+        return self.ox + x * self.s, self.oy + y * self.s
+
+
+def _quad(cam, fn, a0, a1, b0, b1):
+    return [cam.pt(*fn(a0, b0)), cam.pt(*fn(a1, b0)), cam.pt(*fn(a1, b1)), cam.pt(*fn(a0, b1))]
+
+
+def _faces(box):
+    """Visible faces with this fixed camera: TOP, LONG (v=v0+d), CAP (u=u0+l)."""
+    u0, v0, l, d, h = box.u0, box.v0, box.l, box.d, box.h
+    if l > 0 and d > 0:
+        yield "top", (lambda a, b: (u0 + a, v0 + b, h)), l, d, FACE_TOP
+    if l > 0 and h > 0:
+        yield "long", (lambda a, b: (u0 + a, v0 + d, b)), l, h, FACE_LONG
+    if d > 0 and h > 0:
+        yield "cap", (lambda a, b: (u0 + l, v0 + a, b)), d, h, FACE_CAP
+
+
+def _draw_openings(draw, cam, box, fn, face):
+    """Door/window recesses on the face that runs along the wall's run axis."""
+    run_face = "long" if box.axis == "u" else "cap"
+    if face != run_face:
+        return
+    for op in box.openings:
+        a = op.offset
+        if op.kind == "door":
+            a0, a1, b0, b1 = a + 0.15, a + 0.85, 0.0, 0.8 * box.h
+        else:
+            a0, a1, b0, b1 = a + 0.2, a + 0.8, 0.35 * box.h, 0.8 * box.h
+        poly = _quad(cam, fn, a0, a1, b0, b1)
+        draw.polygon(poly, fill=(0, 0, 0))
+        draw.line(poly + [poly[0]], fill=MAGENTA, width=GRID_WIDTH + 1, joint="curve")
+
+
+def _stroke(draw, cam, fn, sa, sb, width):
+    poly = _quad(cam, fn, 0, sa, 0, sb)
+    draw.line(poly + [poly[0]], fill=MAGENTA, width=width, joint="curve")
+    for a in range(1, int(sa) if sa == int(sa) else 0):
+        draw.line([cam.pt(*fn(a, 0)), cam.pt(*fn(a, sb))], fill=MAGENTA, width=GRID_WIDTH)
+    for b in range(1, int(sb) if sb == int(sb) else 0):
+        draw.line([cam.pt(*fn(0, b)), cam.pt(*fn(sa, b))], fill=MAGENTA, width=GRID_WIDTH)
+
+
+def render_scene_panel(layout, view, size, pad=24):
+    """Dimetric scene view (NW/NE/SW/SE) as an RGB image on black."""
+    turned = rotate_cw(layout, VIEW_TURNS[view])
+    # Per-cell boxes + ground-first: exact painter's order on a grid (merged
+    # runs extending past a nearer flat produced cover-through slivers).
+    boxes = sorted(massing(turned, merge=False), key=lambda b: (b.h > 0, b.u0 + b.v0))
+    img = Image.new("RGB", (size, size), (0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    cam = _Cam(boxes, size, size, pad)
+    for box in boxes:
+        width = GRID_WIDTH if box.kind == "step" else SIL_WIDTH
+        for face, fn, sa, sb, color in _faces(box):
+            draw.polygon(_quad(cam, fn, 0, sa, 0, sb), fill=color)
+            if box.kind == "wall":
+                _draw_openings(draw, cam, box, fn, face)
+            _stroke(draw, cam, fn, sa, sb, width)
+    return img
+
+
+_PLAN_STAIR_RAMP = (110, 140, 170, 200)  # light toward the ascent
+
+
+def render_plan_panel(layout, size, pad=24):
+    """Orthographic TOP plan: floor light, walls mid, openings magenta-marked."""
+    img = Image.new("RGB", (size, size), (0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    avail = size - 2 * pad
+    cell = min(avail / max(layout.cols, 1), avail / max(layout.rows, 1))
+    ox = (size - cell * layout.cols) / 2
+    oy = (size - cell * layout.rows) / 2
+
+    def rect(u, v, du=1.0, dv=1.0):
+        return [ox + u * cell, oy + v * cell, ox + (u + du) * cell, oy + (v + dv) * cell]
+
+    for v in range(layout.rows):
+        for u in range(layout.cols):
+            ch = layout.kind(u, v)
+            if ch == VOID:
+                continue
+            if ch == FLOOR:
+                draw.rectangle(rect(u, v), fill=FACE_TOP)
+            elif ch in STAIRS:
+                horizontal = ch in "<>"
+                for i, tone in enumerate(_PLAN_STAIR_RAMP):
+                    band = i if ch in ">v" else 3 - i
+                    box = rect(u + band / 4, v, 0.25, 1) if horizontal else rect(u, v + band / 4, 1, 0.25)
+                    draw.rectangle(box, fill=(tone, tone, tone))
+            elif ch in SOLID:
+                draw.rectangle(rect(u, v), fill=FACE_LONG)
+                if ch == DOOR:
+                    draw.rectangle(rect(u + 0.15, v + 0.15, 0.7, 0.7), fill=FACE_TOP, outline=MAGENTA, width=GRID_WIDTH)
+                elif ch == WINDOW:
+                    draw.rectangle(rect(u + 0.3, v + 0.3, 0.4, 0.4), outline=MAGENTA, width=GRID_WIDTH)
+            draw.rectangle(rect(u, v), outline=MAGENTA, width=GRID_WIDTH)
+    return img

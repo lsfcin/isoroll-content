@@ -1,0 +1,16 @@
+TASK: Repaint the schematic guide as a finished isometric game scene. Same building, every panel.
+
+READ THE GUIDE (never draw guide elements):
+- 3x2 grid of panels split by magenta lines; labels "1 NW", "2 NE", "3 TOP", "4 SW", "5 SE"; panel 6 = caption (ignore it).
+- All four oblique panels show the SAME building rotated on its base in 90-degree steps; nothing is mirrored.
+- Panel 3 TOP is the floor plan seen straight down; the building shape must match it exactly in every panel.
+- The building is made of grid cells: walls follow the plan exactly — do not move, add, or remove walls.
+- Grayscale faces encode light: light gray = top faces, mid gray = long wall faces, dark gray = end faces. Keep this lighting direction.
+- CYAN symbols are registration marks: the same symbol = the same physical spot across panels. Use them to align features; NEVER draw them.
+- Dark recesses outlined in magenta are doors and windows: render real doors and windows at exactly those cells, same cells in every panel.
+
+SUBJECT: {description}
+STYLE: {style}; crisp silhouette; identical palette, materials and weathering in ALL panels; neutral top-left daylight.
+
+OUTPUT: same 3x2 grid, same panel geometry and scale, pure black background inside panels.
+NEGATIVE: no cyan symbols, no magenta lines, no text or labels, no extra objects, no people, no ground shadows, no perspective (dimetric only), no mirrored panels.

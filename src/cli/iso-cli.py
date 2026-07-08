@@ -46,6 +46,8 @@ Commands:
     --rembg                           also strip background
     --out      <dir>                  copy result here
 
+  mv-tile | mv-scene | mv-restyle   multiview generation via guides + registration marks (each has -h)
+
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
   python iso-cli.py ipadapter-ref ../../assets/chars/rogue/concept/rogue_concept_clean.png \\
@@ -181,6 +183,10 @@ def main() -> None:
             weight=float(get_arg(args, "--weight", "0.6")),
             output_path=get_arg(args, "--out"),
         )
+
+    elif command.startswith("mv-"):
+        from multiview_commands import run_mv_command
+        run_mv_command(command, args[1:])
 
     else:
         print(f"[FAIL] Unknown command: {command}")
