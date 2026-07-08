@@ -12,7 +12,7 @@ STAIRS = {STAIR_N, STAIR_E, STAIR_S, STAIR_W}
 _STAIR_CW = {STAIR_N: STAIR_E, STAIR_E: STAIR_S, STAIR_S: STAIR_W, STAIR_W: STAIR_N}
 SOLID = {WALL, DOOR, WINDOW}
 KNOWN = SOLID | STAIRS | {FLOOR, VOID}
-DEFAULT_WALL_H = 4  # grid units, matches the W5 H4 tile-guide era
+DEFAULT_WALL_H = 3  # voxels; 1 voxel = 1.5 m side, so walls are 4.5 m tall
 
 
 @dataclass
@@ -40,6 +40,14 @@ def rotate_cw(layout, turns=1):
     out = Layout(layout.name, grid, layout.wall_h, len(grid), len(grid[0]) if grid else 0)
     out.errors, out.warnings = layout.errors, layout.warnings
     return out
+
+
+def rotate_point(u, v, rows, cols, turns=1):
+    """Continuous-coordinate twin of rotate_cw: one CW turn maps (u, v) → (rows − v, u)."""
+    for _ in range(turns % 4):
+        u, v = rows - v, u
+        rows, cols = cols, rows
+    return u, v
 
 
 def _split_directives(lines):

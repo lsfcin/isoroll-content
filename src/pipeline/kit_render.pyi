@@ -1,0 +1,9 @@
+from _typeshed import Incomplete
+
+PX_PER_UNIT: int
+MARGIN: int
+PIECES: Incomplete
+
+def piece_boxes(name, wall_h: int = 3): ...
+def render_piece(name, wall_h: int = 3, px=...): ...
+def build_kit(out_dir, wall_h: int = 3, px=...): ...

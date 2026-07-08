@@ -1,5 +1,5 @@
 name: l-room
-wall_h: 4
+wall_h: 3
 ########
 #......#
 #......W

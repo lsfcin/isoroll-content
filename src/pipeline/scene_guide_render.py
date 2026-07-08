@@ -33,14 +33,26 @@ def _fit(boxes, avail_w, avail_h):
     return s, ox, oy
 
 
-class _Cam:
-    def __init__(self, boxes, avail_w, avail_h, pad):
-        self.s, ox, oy = _fit(boxes, avail_w - 2 * pad, avail_h - 2 * pad)
-        self.ox, self.oy = ox + pad, oy + pad
+class Cam:
+    """Dimetric camera: fit-to-panel by default, or fixed scale+origin for kit/assembly alignment."""
+
+    def __init__(self, boxes, avail_w, avail_h, pad, scale=None, origin=None):
+        if scale is None:
+            self.s, ox, oy = _fit(boxes, avail_w - 2 * pad, avail_h - 2 * pad)
+            self.ox, self.oy = ox + pad, oy + pad
+        else:
+            self.s = scale
+            self.ox, self.oy = origin
 
     def pt(self, u, v, z):
         x, y = _proj(u, v, z)
         return self.ox + x * self.s, self.oy + y * self.s
+
+
+def scene_cam(turned_layout, size, pad=24):
+    """Fitted camera for a rotated layout — shared by panel render and anchor projection."""
+    boxes = massing(turned_layout, merge=False)
+    return Cam(boxes, size, size, pad)
 
 
 def _quad(cam, fn, a0, a1, b0, b1):
@@ -59,16 +71,16 @@ def _faces(box):
 
 
 def _draw_openings(draw, cam, box, fn, face):
-    """Door/window recesses on the face that runs along the wall's run axis."""
+    """Exact-voxel through-holes on the run-axis face: door 1w x 2h from the floor, window 1x1 at z 1..2."""
     run_face = "long" if box.axis == "u" else "cap"
     if face != run_face:
         return
     for op in box.openings:
         a = op.offset
         if op.kind == "door":
-            a0, a1, b0, b1 = a + 0.15, a + 0.85, 0.0, 0.8 * box.h
+            a0, a1, b0, b1 = a, a + 1, 0.0, min(2.0, box.h)
         else:
-            a0, a1, b0, b1 = a + 0.2, a + 0.8, 0.35 * box.h, 0.8 * box.h
+            a0, a1, b0, b1 = a, a + 1, min(1.0, box.h), min(2.0, box.h)
         poly = _quad(cam, fn, a0, a1, b0, b1)
         draw.polygon(poly, fill=(0, 0, 0))
         draw.line(poly + [poly[0]], fill=MAGENTA, width=GRID_WIDTH + 1, joint="curve")
@@ -83,16 +95,14 @@ def _stroke(draw, cam, fn, sa, sb, width):
         draw.line([cam.pt(*fn(0, b)), cam.pt(*fn(sa, b))], fill=MAGENTA, width=GRID_WIDTH)
 
 
-def render_scene_panel(layout, view, size, pad=24):
-    """Dimetric scene view (NW/NE/SW/SE) as an RGB image on black."""
-    turned = rotate_cw(layout, VIEW_TURNS[view])
-    # Per-cell boxes + ground-first: exact painter's order on a grid (merged
-    # runs extending past a nearer flat produced cover-through slivers).
-    boxes = sorted(massing(turned, merge=False), key=lambda b: (b.h > 0, b.u0 + b.v0))
-    img = Image.new("RGB", (size, size), (0, 0, 0))
+def render_boxes(boxes, size, pad=24, cam=None):
+    """RGB panel on black from explicit boxes, painter-ordered by the caller's sort or here."""
+    ordered = sorted(boxes, key=lambda b: (b.h > 0, b.u0 + b.v0))
+    img = Image.new("RGB", (size[0], size[1]) if isinstance(size, tuple) else (size, size), (0, 0, 0))
     draw = ImageDraw.Draw(img)
-    cam = _Cam(boxes, size, size, pad)
-    for box in boxes:
+    if cam is None:
+        cam = Cam(ordered, img.width, img.height, pad)
+    for box in ordered:
         width = GRID_WIDTH if box.kind == "step" else SIL_WIDTH
         for face, fn, sa, sb, color in _faces(box):
             draw.polygon(_quad(cam, fn, 0, sa, 0, sb), fill=color)
@@ -100,6 +110,15 @@ def render_scene_panel(layout, view, size, pad=24):
                 _draw_openings(draw, cam, box, fn, face)
             _stroke(draw, cam, fn, sa, sb, width)
     return img
+
+
+def render_scene_panel(layout, view, size, pad=24):
+    """Dimetric scene view (NW/NE/SW/SE) as an RGB image on black.
+
+    Per-cell boxes + ground-first: exact painter's order on a grid (merged
+    runs extending past a nearer flat produced cover-through slivers)."""
+    turned = rotate_cw(layout, VIEW_TURNS[view])
+    return render_boxes(massing(turned, merge=False), size, pad)
 
 
 _PLAN_STAIR_RAMP = (110, 140, 170, 200)  # light toward the ascent

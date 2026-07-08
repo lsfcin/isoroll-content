@@ -21,7 +21,8 @@ def _run_pipeline(script, script_args):
 def _marks_args(args):
     extra = []
     if args.marks:
-        extra = ["--scheme", args.scheme, "--back-mode", args.back_mode, "--opacity", str(args.opacity)]
+        extra = ["--marks", "--marks-mode", args.marks_mode,
+                 "--back-mode", args.back_mode, "--opacity", str(args.opacity)]
     return extra
 
 
@@ -46,7 +47,7 @@ def _add_common(parser):
     parser.add_argument("--model", choices=list(imagegen_client.MODELS), default="nb")
     parser.add_argument("--manual", action="store_true", help="stage guide+prompt for the web app instead of calling the API")
     parser.add_argument("--marks", action="store_true", help="apply registration marks to the guide")
-    parser.add_argument("--scheme", choices=["columns", "varied"], default="columns")
+    parser.add_argument("--marks-mode", choices=["anchored", "columns", "varied"], default="anchored")
     parser.add_argument("--back-mode", choices=["occluded", "faded"], default="occluded")
     parser.add_argument("--opacity", type=float, default=0.85)
 
@@ -59,7 +60,9 @@ def _cmd_tile(args):
                  "--depth", str(args.depth), "--layout", "6cell", "--output", str(guide)]
     _run_pipeline("make_tile_guide.py", tile_args)
     if args.marks:
-        mark_args = ["--input", str(guide), "--output", str(guide), "--layout", "6cell"] + _marks_args(args)
+        scheme = args.marks_mode if args.marks_mode in ("columns", "varied") else "columns"
+        mark_args = ["--input", str(guide), "--output", str(guide), "--layout", "6cell",
+                     "--scheme", scheme, "--back-mode", args.back_mode, "--opacity", str(args.opacity)]
         _run_pipeline("guide_marks.py", mark_args)
     prompt = _fill_prompt("multiview_tile_v2.txt", args.desc, args.style)
     return _dispatch(args, guide, prompt, stem)
@@ -72,7 +75,7 @@ def _cmd_scene(args):
     guide.parent.mkdir(parents=True, exist_ok=True)
     scene_args = ["--layout", str(layout_path), "--output", str(guide), "--cell-px", str(args.cell_px)]
     if args.marks:
-        scene_args = scene_args + ["--marks"] + _marks_args(args)
+        scene_args = scene_args + _marks_args(args)
     _run_pipeline("scene_guide_sheet.py", scene_args)
     prompt = _fill_prompt("multiview_scene_v2.txt", args.desc, args.style)
     return _dispatch(args, guide, prompt, stem)
