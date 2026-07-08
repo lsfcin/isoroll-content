@@ -15,6 +15,7 @@
 | [`multiview_commands.py`](multiview_commands.py) | — | `run_mv_command` | !/usr/bin/env python3 |
 | [`sheet_grid.py`](sheet_grid.py) | [`sheet_grid.pyi`](sheet_grid.pyi) | `magenta_mask`, `white_mask`, `line_mask`, `detect_boundaries`, `detect_grid` | !/usr/bin/env python3 |
 | [`sheet_postproc.py`](sheet_postproc.py) | [`sheet_postproc.pyi`](sheet_postproc.pyi) | `parse_watermark_region`, `parse_args`, `run`, `main` | !/usr/bin/env python3 |
+| [`sheet_qc.py`](sheet_qc.py) | [`sheet_qc.pyi`](sheet_qc.pyi) | `silhouette_mask`, `mask_iou`, `silhouette_iou` | !/usr/bin/env python3 |
 | [`sheet_utils.py`](sheet_utils.py) | [`sheet_utils.pyi`](sheet_utils.pyi) | `SheetLayout`, `load_image`, `split_cells`, `even_boundaries`, `split_grid` | !/usr/bin/env python3 |
 | [`sprite_splitter.py`](sprite_splitter.py) | [`sprite_splitter.pyi`](sprite_splitter.pyi) | `parse_args`, `split_sheet`, `remove_bg`, `next_index`, `main` | !/usr/bin/env python3 |
 | [`workflow_ops.py`](workflow_ops.py) | [`workflow_ops.pyi`](workflow_ops.pyi) | `apply_random_seeds`, `inject_prompt`, `inject_input_image`, `inject_concept_image`, `set_base_denoise` | workflow_ops.py — Workflow mutation helpers for the isoroll ComfyUI pipeline. |

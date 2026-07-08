@@ -116,4 +116,10 @@ isoroll-content/
 | [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
+| [`test/conftest.py`](test/conftest.py) | [`test/conftest.pyi`](test/conftest.pyi) | — | !/usr/bin/env python3 |
+| [`test/fixtures.py`](test/fixtures.py) | [`test/fixtures.pyi`](test/fixtures.pyi) | `magenta_grid_sheet`, `cyan_squares`, `clean_image`, `filled_mask`, `alpha_blob` | !/usr/bin/env python3 |
+| [`test/test_grid_drift.py`](test/test_grid_drift.py) | [`test/test_grid_drift.pyi`](test/test_grid_drift.pyi) | `test_detect_grid_snaps_to_drifted_interior_lines` | !/usr/bin/env python3 |
+| [`test/test_guide_marks.py`](test/test_guide_marks.py) | [`test/test_guide_marks.pyi`](test/test_guide_marks.pyi) | `test_residue_count_in_expected_band_for_k_squares`, `test_residue_count_zero_on_clean_image` | !/usr/bin/env python3 |
+| [`test/test_sheet_grid.py`](test/test_sheet_grid.py) | [`test/test_sheet_grid.pyi`](test/test_sheet_grid.pyi) | `test_detect_grid_matches_even_division_no_drift`, `test_strip_linework_removes_magenta_keeps_blob_body`, `test_strip_linework_keeps_interior_near_white_pixel` | !/usr/bin/env python3 |
+| [`test/test_sheet_qc.py`](test/test_sheet_qc.py) | [`test/test_sheet_qc.pyi`](test/test_sheet_qc.pyi) | `test_silhouette_iou_identical_masks_near_one`, `test_silhouette_iou_disjoint_masks_low` | !/usr/bin/env python3 |
 <!-- routing:end -->
