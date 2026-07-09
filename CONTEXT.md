@@ -11,21 +11,19 @@ The long-term product is two things:
 ## Read Order
 
 1. `CONTEXT.md`: onboarding and current intent.
-2. `SPECS.md`: current files, code behavior, environment assumptions, and implementation rules.
-3. `ROADMAP.md`: milestones and next tasks.
-4. `.gitignore`: shows what is source versus generated output.
+2. `SCENE-CREATION.md`: canonical scene-creation spec — architecture, contract, kill-log, P0–P9 program.
+3. `ROADMAP-content-gen.md`: live execution state (kit assembly + multiview spine).
+4. `SPECS.md`: current files, code behavior, environment assumptions, and implementation rules.
+5. `ROADMAP.md`: S0 tile decision + housekeeping; superseded strategies in `archive/`.
+6. Visual work: load `core/skills/iso-visual.md` (conventions + model failure modes + verification rule) before touching guides/kits/sprites.
 
 ## Current Focus
 
-The immediate work is `src/cli/iso-cli.py`, a small CLI that submits ComfyUI API workflows for character image generation.
+**Scene creation via kit assembly** (see SCENE-CREATION.md): layout DSL → massing → guide render → NB paints tile-sized kit pieces → deterministic scene assembly → manifest export to `isoroll-module`. Generation baseline:
 
-The current generation baseline is:
-
-- ComfyUI receives a workflow JSON through `/prompt`.
-- `iso-cli.py` picks a workflow by profile name — filename selection only, no profile-JSON tuning layer (see SPECS.md `## Render Profiles`).
-- The workflow handles the real node graph.
-- Generated PNGs are gitignored under `assets/chars/`.
-- Tracked reference outputs live directly in per-comparison folders under `benchmarks/` (each with its own `manifest.json` — see SPECS.md).
+- **NB (Gemini Flash Image) is the primary generator** — `src/cli/imagegen_client.py` (API + daily ledger) with manual web-app fallback (`gen-inbox`/`gen-outbox` folder contract).
+- ComfyUI is a **utility rail only** (rembg, upscale, SAM2, LaMa) — `iso-cli.py` submits workflow JSONs through `/prompt`; local SD generation is dead as primary (SCENE-CREATION.md kill-log).
+- Generated PNGs are gitignored under `assets/`; tracked reference outputs live under `benchmarks/` (each with `manifest.json` — see SPECS.md).
 
 ## Core Product Decisions
 
@@ -34,8 +32,9 @@ The current generation baseline is:
 - Keep runtime and asset generation separate.
 - Aim for a Hades-like production model: controlled offline generation/rendering into 2D sprites, then efficient Foundry playback.
 - Treat prompts as an input to a structured asset pipeline, not as the whole pipeline.
-- Use ComfyUI as the local image-generation hub for now.
-- Later, introduce Blender or another controlled renderer for consistent 8-direction and animation output.
+- Scene geometry is deterministic (kit assembly); the generator only ever paints tile-sized pieces.
+- Geometry is verified by code, never by model eyes; style is verified by human eyeball (`core/skills/iso-visual.md`).
+- Blender remains the fallback lane (P-Kit) if NB fails a reliability gate — `[OBSOLETE-MESH]` scripts quarantined for that purpose.
 
 ## Repository Shape
 
