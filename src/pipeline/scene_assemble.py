@@ -27,9 +27,20 @@ def _piece_for(box):
     return result  # steps: unsupported in assembly v1
 
 
+def load_kit_meta(kit_dir):
+    """Read kit.json only — no PIL, no requirement that piece PNGs exist on disk.
+
+    Used by manifest building (scene_manifest.build_manifest), which is
+    metadata-only by construction: asset EXISTENCE is validated later by
+    wall_schema.validate_manifest, not eagerly here.
+    """
+    kit = Path(kit_dir)
+    return json.loads((kit / "kit.json").read_text())
+
+
 def load_kit(kit_dir):
     kit = Path(kit_dir)
-    manifest = json.loads((kit / "kit.json").read_text())
+    manifest = load_kit_meta(kit_dir)
     sprites = {}
     for name in manifest["pieces"]:
         sprites[name] = Image.open(kit / f"{name}.png").convert("RGBA")

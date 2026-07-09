@@ -83,7 +83,7 @@ Skills: loops do isoroll-module devem invocar `/foundry` (router de referência 
 |---|---|---|---|---|
 | env-utility-repair | content | low (padaria) | consertar symlinks `~/ComfyUI/models/*` → destino real + baixar SÓ utilitários (rembg, 4xUltrasharp, SAM2 small, LaMa); SD ckpts NÃO | — |
 | postproc-tests | content | medium | pytest p/ `sheet_grid`/`sheet_postproc`/QC novo + hardening do split | F1 core |
-| export-manifest | content | medium | exporter naming+manifest (tiles+`WallDef[]`) validado contra `wall-types.d.ts` | F1 core |
+| ✓ export-manifest | content | medium | exporter naming+manifest (tiles+`WallDef[]`) validado contra `wall-types.d.ts` | F1 core | DONE: all criteria pass, CLI export with round-trip validation working |
 | f2-segment-lane | content | medium | workflows SAM2+LaMa + verbo decompose | env-utility-repair |
 | f4-restyle | content | medium | verbo restyle sobre a espinha (sheet existente → NB) | nb client |
 | module-walls-import | module | medium | manifest → `createWallsFromDefs` (`wall-crud.ts`) | export-manifest |
