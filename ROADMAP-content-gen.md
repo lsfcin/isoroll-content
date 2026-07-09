@@ -1,11 +1,15 @@
 # ROADMAP — content-gen: F1 procedural + espinha multiview
 > Sub-roadmap de [ROADMAP.md](ROADMAP.md). Sessão Fable 2026-07-07. Status vivo — atualizar a cada loop/merge.
+> **Spec canônica + programa P0–P9: [SCENE-CREATION.md](SCENE-CREATION.md)** (Fable 2026-07-09, plano aprovado — painter dentro do Foundry, 8+1 desde já em 2 regimes de arte, seam pilot P2 = `export-manifest` → `module-walls-import`).
 
 ## Decisão de execução (inline × /loops)
 
 Build híbrido: **Fable inline** construiu o que tinha decisão arquitetural viva — compilador layout→massing, renderer de guia de cena, marks parametrizados p/ A/B, prompt NB v2, client NB — porque o design do instrumento (guia) e a iteração de prompt exigem julgamento contínuo. **Todo o resto é mecânico após as seams existirem** e ruteia via loop-engineering (`/loops`, executores pinados loop-low/medium): reparo de ambiente utilitário, testes+hardening do postproc, exporters, lane F2, restyle F4, tasks do isoroll-module. opencode/modelos externos: **proibidos em código do repo** (precedente kimi 2026-07: stub corrompido, zero código mergeado); permitidos p/ notebooks Colab e experimentos descartáveis. A/Bs NB: usuário executa (web/API) e eyeballa; modelos baratos processam resultados.
 
-## Estado (2026-07-07)
+## Estado (2026-07-07; consolidação 2026-07-09)
+
+- [x] **P0 consolidação (Fable 2026-07-09, branch `feature/scene-creation-consolidation`)**: SCENE-CREATION.md (spec + kill-log + programa), ROADMAP.md podado (árvore S1–S4/EXP/AP/M2–M9 → `archive/ROADMAP-2026H1-strategies.md`), S0 estendido a 8+1 (S0-E7 batch cardinal, deck-ancorado), marks/anchors PARKED em escala de cena (vivos em escala de tile). Merges f1-procedural-spine/postproc-tests/env-utility-repair já constam em develop (verificado no git 2026-07-09) — L20 abaixo mantido como histórico.
+- [ ] Matriz A/B guia-v2 (abaixo): **REESCOPADA** — foi desenhada pro single-pass de cena (morto). Válida apenas onde marks seguem vivos: kit sheets / tile scale. Rodar só o subconjunto que informar a pintura do kit (V3 opacity, V5 prompt); V1/V2/V4 em escala de cena = mortos.
 
 - [x] Gitflow: `develop` + `feature/f1-procedural-spine` (content); module já tem `develop`.
 - [x] F1 core inline: `layout_parse.py` + `layout_massing.py` + `guide_marks.py` + `scene_guide_render.py` + `scene_guide_sheet.py` — l-room renderizado nas 4 rotações + plan + marks (painter por célula; runs mesclados ficam pro manifest).

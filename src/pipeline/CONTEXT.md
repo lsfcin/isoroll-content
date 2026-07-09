@@ -1,5 +1,7 @@
 # pipeline
-> ← add description
+> Guide rendering + kit assembly + Blender legacy. Spec: [../../SCENE-CREATION.md](../../SCENE-CREATION.md).
+> Status tags: `[OBSOLETE-MESH]` = quarantined legacy (kept only as P-Kit fallback lane — don't extend, don't delete without a cleanup loop). `guide_marks.py`/`scene_anchors.py` = **PARKED at scene scale** (single-pass scene generation killed 2026-07-08); still live at tile/kit-sheet scale.
+> Known scale caveat: `tile_guide_render.py::fit_scale` autofits per cell — cross-view px-per-voxel drifts; fix spec'd in SCENE-CREATION.md § Scale-consistency (program P3).
 
 <!-- routing:start -->
 ## Routing

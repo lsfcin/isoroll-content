@@ -115,6 +115,8 @@ isoroll-content/
 | [`HISTORY.md`](HISTORY.md) | — | — | History |
 | [`ROADMAP-content-gen.md`](ROADMAP-content-gen.md) | — | — | ROADMAP — content-gen: F1 procedural + espinha multiview |
 | [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
+| [`SCENE-CREATION.md`](SCENE-CREATION.md) | — | — | SCENE-CREATION — Canonical Spec |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
+| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | — | — | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
 <!-- routing:end -->
