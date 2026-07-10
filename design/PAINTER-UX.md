@@ -50,4 +50,23 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   5. **Stairs rise configurable** (default 1 cube) — massing already parameterizes `STAIR_RISE`; per-cell rise joins the same DSL extension.
   6. **ROOFS** (Lucas: strongly wanted, cheap on current base — CONFIRMED): tool 6; procedural gable prism; **ridge axis auto from the roof run** (same contextual rule as door axis); base defaults to wall-top z=3; Alt+wheel ridge height, Shift+Alt base. Pipeline path: roof kit pieces = 2 new NB pieces (`roof_u`/`roof_v` + gable ends) reusing the wall-piece process; runtime path: roofs = overhead tiles fading via existing occluder when tokens go inside. CONTRACT GAP: `R` char + roof dims → same DSL extension batch.
 
+- 2026-07-10 — **Lucas round 5 (15 items) → rig v4 + design memo** (`DSL-V2-MEMO.md`, consultant agent):
+  | # | Item | Decision |
+  |---|---|---|
+  | 1 | wall height rescaled sprite (bug) | FIX: voxel stacking — piece sprite sliced into base/unit-band/top-face; extra units tiled from wall band; no vertical scaling ever |
+  | 2 | height/elevation hotkeys | ADOPTED: `+`/`-` height, `[`/`]` elevation on hovered cell; Ctrl+wheel height, Shift+wheel elevation (replaces Alt combos) |
+  | 3 | drop 0.5 step | ADOPTED: integer steps |
+  | 4 | stair height = stair atop (h−1) cubes | ADOPTED: render cube pedestal + wedge; mechanics = boundHeight h |
+  | 5 | stairs drag as rect growing in height | ADOPTED: drag along ascent = rows rise 1,2,3…; across = wider staircase |
+  | 6 | grid resize | ADOPTED: rail steppers cols/rows |
+  | 7 | 4-char cells in DSL | COUNTER-PROPOSAL (memo decides): named aligned layer grids (`kind` + optional `h`/`z`/`side`/`mat`), 1 char/cell each — same expressiveness, hand-editable, unlimited layers; positional 4-char caps fields and hurts readability. NOT for implementation ease — for editability |
+  | 8 | opening side renders on wrong face (bug) | FIX: openings now drawn procedurally as recess on the CHOSEN face over a plain wall stack (door/window sprites retired in rig); hidden-face sides show dimmed badge. Contract: kit needs per-face recess compositing or piece variants |
+  | 9 | roofs drag-rect + configurable h/z | ADOPTED (h/z already were; drag becomes rect) |
+  | 10 | stair cosmetic lines + 5 steps/voxel | ADOPTED: STEPS=5 (1 step = 1 foot @1.5m voxel…≈), no strokes on co-planar slice seams (silhouette-only outline) |
+  | 11 | active elevation level (slicing grid) | ADOPTED — strong idea: editing plane at level E (PgUp/PgDn + HUD), grid drawn at z=E, new pieces default z=E, off-level pieces 20% opacity; solves roofs + multi-story. Memo defines data model |
+  | 12 | hover-behind transparency | ADOPTED: occluders in front of hovered cell drop to 20% |
+  | 13 | diagonal 45° walls | ACCEPTED as IMPORTANT requirement (user insists, aware of content-gen cost). Rig: procedural diagonal wall tools `/` `\`. Kit: new diagonal piece family (memo counts). Foundry walls handle angles natively |
+  | 14 | component types/materials (road vs grass floor) | ACCEPTED: `mat` layer in DSL v2; kit = piece×material batches (honest multiplication — memo tables it); rig placeholder: material tint cycle |
+  | 15 | adjacent openings merge (no jamb between two D) | ACCEPTED: massing merges same-kind adjacent openings into one wide recess; rig's procedural recess spans contiguous runs already |
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
