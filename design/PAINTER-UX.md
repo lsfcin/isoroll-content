@@ -86,4 +86,12 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   - **Diagonals in TOP view**: stored AND derived smoothing diagonals render in plan (stroke + solid-half fill), slice-filtered like everything else.
   - **Diagonals coexist with floor**: corner smoothing derives over floor cells too (floor beneath, prism above). Stored-diag-over-floor = DSL v2 layer separation (structure vs floor layers) — memo scope.
 
+- 2026-07-10 — **Lucas round 7 → rig v6**:
+  a. Corner rule: smoothing derives ONLY when the two diagonal walls are not already joined through the cross cell (`#./.#` smooths; `##/.#` stays a corner). MASSING RULE for DSL-v2 loop.
+  b. Wall groups flood 8-neighbor (diagonally-touching walls = one group).
+  c. Group rotation: R in group scope rotates the whole block 90° CW around the hovered cell (positions + arrows + ridge axes + opening sides all spin); blocked with a hint if occupied/out of bounds.
+  d. Shed roofs climb like stair runs (+1 z per row along slope) on drag.
+  e. Type feedback: hover readout shows `ch·type h z`; tints already visible (Lucas confirmed wood).
+  f. BUG fix: opening cell has TWO materials — wall's + leaf's; placing a window was overwriting the wall material (wood wall went stone). Wall material now preserved in its own map. CONTRACT NOTE: DSL v2 opening cells need both `type` (leaf) and wall-material inheritance from the run.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
