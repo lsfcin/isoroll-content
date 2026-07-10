@@ -1,0 +1,9 @@
+from _typeshed import Incomplete
+
+MIN_THICK: float
+TOP_FOLD_RATIO: Incomplete
+PAD: int
+
+def fit_scale(l, d, h, avail_w, avail_h): ...
+def content_extent(orientation, w, d, h): ...
+def panel_fit_scale(orientation, w, d, h, cell_px, pad=...): ...

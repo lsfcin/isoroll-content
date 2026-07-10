@@ -20,6 +20,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from generate_sheet_template import load_font
+from panel_geometry import panel_fit_scale
 from tile_guide_render import (
     FACE_TOP, FACE_LONG, FACE_CAP,
     draw_iso_panel, draw_flat_grid, draw_square_grid,
@@ -44,15 +45,15 @@ class CellSpec:
     mark: bool = False
 
 
-def draw_panel(img, draw, orientation, w, d, h, box, mark=False):
+def draw_panel(img, draw, orientation, w, d, h, box, mark=False, s=None):
     if orientation in ("NW", "NE", "SW", "SE"):
-        draw_iso_panel(img, w, d, h, orientation, box, mark_edge=mark)
+        return draw_iso_panel(img, w, d, h, orientation, box, mark_edge=mark, s=s)
     elif orientation in ("N", "S"):
-        draw_flat_grid(draw, w, d + h, FACE_LONG, d, box)
+        return draw_flat_grid(draw, w, d + h, FACE_LONG, d, box, s=s)
     elif orientation in ("W", "E"):
-        draw_flat_grid(draw, d, w + h, FACE_CAP, w, box)
+        return draw_flat_grid(draw, d, w + h, FACE_CAP, w, box, s=s)
     elif orientation == "TOP":
-        draw_square_grid(draw, w, d, FACE_TOP, box)
+        return draw_square_grid(draw, w, d, FACE_TOP, box, s=s)
 
 
 def draw_caption(draw, box, font, label):
@@ -108,10 +109,21 @@ def parse_spec(spec):
     return rows, cols, grid
 
 
-def render_cells(rows, cols, grid, cell_px=320):
+def render_cells(rows, cols, grid, cell_px=320, shared_scale=True):
+    """Two-pass render: pass 1 computes s_shared = min over non-caption panels'
+    own autofit scale (the largest piece constrains all); pass 2 draws every
+    panel at s_shared (shared_scale=True) or autofit per-cell (False, legacy —
+    byte-identical to pre-scale-consistency output). scale_info["px_per_voxel"]
+    is ALWAYS s_shared, even in legacy mode: that mismatch vs. each panel's own
+    implied scale is exactly what sheet_qc.cross_view_dims flags."""
+    scored = [cell for cell in grid.values() if cell.orientation != "CAPTION"]
+    fits = [panel_fit_scale(cell.orientation, cell.w, cell.d, cell.h, cell_px) for cell in scored]
+    s_shared = min(fits) if fits else None
+
     img = Image.new("RGB", (cols * cell_px, rows * cell_px), BG)
     draw = ImageDraw.Draw(img)
     font = load_font(16)
+    panels = []
     for r in range(rows):
         for c in range(cols):
             cell = grid.get((r, c))
@@ -121,7 +133,10 @@ def render_cells(rows, cols, grid, cell_px=320):
             if cell.orientation == "CAPTION":
                 draw_caption(draw, box, font, cell.label)
             else:
-                draw_panel(img, draw, cell.orientation, cell.w, cell.d, cell.h, box, cell.mark)
+                panel_s = s_shared if shared_scale else None
+                bbox = draw_panel(img, draw, cell.orientation, cell.w, cell.d, cell.h, box, cell.mark, s=panel_s)
+                panels.append({"row": r, "col": c, "orientation": cell.orientation,
+                                "w": cell.w, "d": cell.d, "h": cell.h, "bbox": list(bbox)})
             if cell.label and cell.orientation != "CAPTION":
                 draw.text((box[0] + 6, box[1] + 4), cell.label, font=font, fill=MAGENTA)
     for c in range(1, cols):
@@ -130,14 +145,27 @@ def render_cells(rows, cols, grid, cell_px=320):
     for r in range(1, rows):
         y = r * cell_px
         draw.line([(0, y), (cols * cell_px, y)], fill=MAGENTA, width=2)
-    return img
+    return img, {"px_per_voxel": s_shared, "panels": panels}
 
 
-def generate(spec, out_path: Path, cell_px=320):
+def write_scale_sidecar(out_path: Path, scale_info: dict) -> Path:
+    """Write/extend {stem}.scale.json next to out_path with px_per_voxel + panels.
+    If a sidecar already exists, only those two keys are updated (extend, not
+    clobber) — other keys future callers add survive."""
+    sidecar_path = out_path.with_suffix(".scale.json")
+    data = json.loads(sidecar_path.read_text()) if sidecar_path.exists() else {}
+    data["px_per_voxel"] = scale_info["px_per_voxel"]
+    data["panels"] = scale_info["panels"]
+    sidecar_path.write_text(json.dumps(data, indent=2))
+    return sidecar_path
+
+
+def generate(spec, out_path: Path, cell_px=320, shared_scale=True):
     rows, cols, grid = parse_spec(spec)
-    img = render_cells(rows, cols, grid, cell_px)
+    img, scale_info = render_cells(rows, cols, grid, cell_px, shared_scale)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
+    write_scale_sidecar(out_path, scale_info)
     print(f"Saved: {out_path}  ({cols * cell_px}x{rows * cell_px} px, {len(grid)} cells, {rows}x{cols} matrix)")
 
 
@@ -154,5 +182,7 @@ if __name__ == "__main__":
     parser.add_argument("--cells", required=True, help="literal JSON string or path to a JSON file")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--cell-px", type=int, default=320, dest="cell_px")
+    parser.add_argument("--legacy-autofit", action="store_true",
+                         help="per-cell autofit scale (pre-scale-consistency behavior)")
     args = parser.parse_args()
-    generate(resolve_cells_arg(args.cells), args.output, args.cell_px)
+    generate(resolve_cells_arg(args.cells), args.output, args.cell_px, shared_scale=not args.legacy_autofit)

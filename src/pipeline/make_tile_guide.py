@@ -64,12 +64,13 @@ def _layout_to_spec(w, d, h, layout):
     return {"rows": len(rows_kinds), "cols": cols, "cells": cells}
 
 
-def generate(w, d, h, layout, out_path: Path):
+def generate(w, d, h, layout, out_path: Path, shared_scale=True):
     spec = _layout_to_spec(w, d, h, layout)
     rows, cols, grid = tile_guide_matrix.parse_spec(spec)
-    img = tile_guide_matrix.render_cells(rows, cols, grid, CELL_PX)
+    img, scale_info = tile_guide_matrix.render_cells(rows, cols, grid, CELL_PX, shared_scale)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path)
+    tile_guide_matrix.write_scale_sidecar(out_path, scale_info)
     print(f"Saved: {out_path}  ({cols * CELL_PX}x{rows * CELL_PX} px, {layout}, W{w}xH{h}xD{d})")
 
 
@@ -80,5 +81,7 @@ if __name__ == "__main__":
     parser.add_argument("--depth", type=int, default=1, help="wall thickness, grid units (default 1)")
     parser.add_argument("--layout", choices=list(LAYOUTS), default="6cell")
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--legacy-autofit", action="store_true",
+                         help="per-cell autofit scale (pre-scale-consistency behavior)")
     args = parser.parse_args()
-    generate(args.width, args.depth, args.height, args.layout, args.output)
+    generate(args.width, args.depth, args.height, args.layout, args.output, shared_scale=not args.legacy_autofit)

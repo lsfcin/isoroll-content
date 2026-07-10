@@ -8,6 +8,7 @@ Content pipeline roadmap. Keep tasks small and test each milestone end to end.
 
 ## Backlog / Ideas
 
+- **Scale-consistency in guide sheets (P3)** (2026-07-10, done) — shared px-per-voxel per sheet w/ `.scale.json` sidecar + QC cross-view dim check; all criteria met, e2e test pass, legacy byte-compat verified.
 - **Env utility repair (2026-07-08, padaria, done)** — `$HOME/ComfyUI/models/{checkpoints,embeddings,loras,upscale_models}` symlinks pointed at `/mnt/workspace/Models/diffusion/*`, which didn't exist (every local CLI command failed at ComfyUI runtime). Created the four target dirs so all symlinks resolve, and downloaded `4xUltrasharp_4xUltrasharpV10.pt` into `upscale_models`. No SD checkpoint downloaded, no service started. Trail: `.loop/env-utility-repair/`.
 - **Multiview via registration marks — mural-painter technique** (INBOX 2026-07) → EXECUTING: sub-roadmap [ROADMAP-content-gen.md](ROADMAP-content-gen.md) (Fable 2026-07-07). STATUS UPDATE 2026-07-09: at SCENE scale the technique is PARKED (single-pass scene generation killed by test — see SCENE-CREATION.md kill-log); marks/anchors remain in use at TILE/kit-sheet scale. The short-paper idea (research the technique in literature) stays alive.
 - ~~**Single-pass full tilemap generation** (INBOX 2026-07)~~ — **DEAD 2026-07-08**: same failure mode as single-pass scene (geometry diverges at scene scale). See SCENE-CREATION.md kill-log. Superseded by kit assembly.

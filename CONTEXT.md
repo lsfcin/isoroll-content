@@ -118,4 +118,5 @@ isoroll-content/
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
 | [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | — | — | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
+| [`design/PAINTER-UX.md`](design/PAINTER-UX.md) | — | — | Painter UX — P6.5 interaction design |
 <!-- routing:end -->
