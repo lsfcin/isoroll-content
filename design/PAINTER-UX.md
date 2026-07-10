@@ -69,4 +69,16 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   | 14 | component types/materials (road vs grass floor) | ACCEPTED: `mat` layer in DSL v2; kit = piece×material batches (honest multiplication — memo tables it); rig placeholder: material tint cycle |
   | 15 | adjacent openings merge (no jamb between two D) | ACCEPTED: massing merges same-kind adjacent openings into one wide recess; rig's procedural recess spans contiguous runs already |
 
+- 2026-07-10 — **Lucas round 6 (10 items) → rig v5** (single-shot, no micro-cycles):
+  1. Diagonal buttons removed → wall drag snaps 8-way (H/V/45°); corner smoothing is DERIVED at render (two wallish orthogonal neighbors forming a corner → sliced half-cube prism at min(neighbor heights)); erase a wall, smoothing follows. Derived diagonals never enter the DSL — massing owns the rule.
+  2. Hover = selection: +/−, [/], Ctrl/Shift+wheel edit hovered piece AND sync the brush steppers (elevation adjust also moves the editing slice).
+  3. Openings pierce the wall: hole on both faces; front face = leaf/bars (type-styled), back = dark hole; dimmed badge when front faces away.
+  4. Rotation discoverability: R = spin hovered stair / toggle hovered roof ridge-axis (gable) or slope-direction (shed); tool buttons cycle brush arrow / roof form.
+  5. Roof forms v1: **gable / shed (45° ramp) / flat slab**, cycled on the roof button; hip/pyramid deferred (corner kit art). Open to smarter parametric forms — discussion lives here.
+  6. Slice rules v2: pieces reaching or piercing the plane render NORMAL; only pieces floating ABOVE ghost (20%) + dashed drop-line to their footprint on the plane; TOP view also slice-filtered (roofs stop hiding interiors). PgUp/PgDn = slice hotkeys.
+  7. Cyan retired from art: kit linework remapped to neutral dark at load; cyan = selection/highlight only. (Pipeline linework color decision still separate.)
+  8. Type cycling: M cycles the ACTIVE tool's type (floor stone/grass/road, wall stone/wood, door wood/iron, window bars/glass) with a rail chip; `layer type:` joins the DSL v2 draft.
+  9. Default wall height = 2 voxels (10 ft).
+  10. Q/E rotation directions inverted.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
