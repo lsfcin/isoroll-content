@@ -25,6 +25,8 @@ Build híbrido: **Fable inline** construiu o que tinha decisão arquitetural viv
 
 ## Papéis de ferramenta (verificado web 2026-07)
 
+**Lane P-CTRL (fallback geométrico, 2026-07-10):** se o batch de kit NB falhar o gate de QC, testar Flux+ControlNet hospedado (fal.ai/Replicate, ~US$0,02-0,05/img) condicionado por depth/lineart derivados do massing (caixas → depth map e contornos são triviais de emitir do renderer de guia). LayerDiffuse p/ alpha nativo (mataria o passo rembg). OpenRouter = rota paga p/ modelos de imagem (incl. Gemini image) — só se a quota free esgotar; teste de custo com 1-2 imagens antes de escalar.
+
 NB (Gemini 2.5 Flash Image, free ~500/dia) = geração primária; NB2 (~20/dia) reserva. ComfyUI = **trilho utilitário só** (rembg, upscale 4xUltrasharp, SAM2 tiny/small, LaMa) — geração local SD1.5 deu artefatos horríveis p/ personagens e é arquiteturalmente errada p/ viewpoint (ROADMAP.md S). Fallbacks se NB falhar: Hunyuan3D-2mini (5GB, fork 2GP p/ 6GB) / TripoSR (~6GB) p/ mesh; Qwen-Image-Edit GGUF Q2-Q4 / Flux Kontext Q4 (6GB, lento) p/ edit; Colab T4 16GB ~15-30h/sem + Kaggle 30h/sem p/ jobs grandes. WFC/grammar (CPU) p/ decoração procedural futura.
 
 ## Arquitetura — espinha de 4 camadas
