@@ -81,4 +81,9 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   9. Default wall height = 2 voxels (10 ft).
   10. Q/E rotation directions inverted.
 
+- 2026-07-10 — **Lucas round 6b → rig v5.1/v5.2**:
+  - **Group-scope selection** (Lucas idea, adopted): Space toggles cell ↔ connected-group scope (HUD chip); height/elevation edits apply to the whole flood-filled component (walls+diagonals / stairs / roofs / floors families); group outlined cyan on hover. Conflict resolved: pan moved to MMB-only, Space freed for scope.
+  - **Diagonals in TOP view**: stored AND derived smoothing diagonals render in plan (stroke + solid-half fill), slice-filtered like everything else.
+  - **Diagonals coexist with floor**: corner smoothing derives over floor cells too (floor beneath, prism above). Stored-diag-over-floor = DSL v2 layer separation (structure vs floor layers) — memo scope.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
