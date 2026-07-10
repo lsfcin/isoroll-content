@@ -35,3 +35,10 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
 ## Decisions log
 
 - 2026-07-10 — rig v1 published; grammar table above is the P7 baseline pending Lucas feel-session (☐ checkpoint).
+- 2026-07-10 — **Lucas round 1 feedback → rig v2** (same URL):
+  1. Foundry integration trust — noted; rig validates grammar only, P7 implements it as an isoroll canvas layer over the same contract.
+  2. Camera control missing → ADDED: wheel zoom at cursor, MMB/Space pan, C reset. **P7 requirement: painter must never fight Foundry's own pan/zoom — reuse canvas navigation, add nothing.**
+  3. Camera auto-moved on edit → FIXED: camera is user-owned; fit only on load/rotate/top/reset. **P7 rule: no camera moves on edit operations, ever.**
+  4. Couldn't paint top of scene → FIXED: full-board faint diamond grid = paintable-area affordance. **P7 rule: editable extent always visible in paint mode.**
+  5. Door/window unreadable in gray kit → MITIGATED: amber/cyan cell badges (editor overlay, not art). Art-level legibility = P5 painted-kit question + a "paint-mode overlays" toggle in P7.
+  6. Stairs wrong shape + no orientation → FIXED: true massing wedge (4 rising slices, `_stair_boxes` twin) + directional glyphs `^>v<` (real DSL vocabulary, arrows follow view rotation); paint-again spins, R rotates hovered. **Grammar addition: re-applying a directional tool on its own cell rotates it.**
