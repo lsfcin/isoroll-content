@@ -105,4 +105,11 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   3. Erase is slice-scoped: only removes pieces BASED at the current elevation (hint when nothing matches).
   4. Shift+wheel over empty ground moves the slice; over a piece still adjusts its elevation.
 
+- 2026-07-11 — **Lucas round 10 → rig v9**:
+  1. TWO-PASS RENDER: pieces fully below the slice → translucent plane sheet + grid lines → everything else. The slice visually cuts the scene (grid in front of below-voxels).
+  2. Roof base elevation steps whole voxels (keys/wheel).
+  3. Roof groups painter-sorted by depth (min u+v) — skirts no longer jump in front of nearer roofs regardless of creation order.
+  4. Slice/elevation range up to 9.
+  5. PER-SIDE enclosure: V near a roof's outer edge (door-style pick, <0.3 cell) toggles that side's skirt only; V mid-roof cycles all sides (clears overrides). Data: rf.sideOv{N/E/S/W}.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
