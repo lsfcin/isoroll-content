@@ -112,4 +112,10 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   4. Slice/elevation range up to 9.
   5. PER-SIDE enclosure: V near a roof's outer edge (door-style pick, <0.3 cell) toggles that side's skirt only; V mid-roof cycles all sides (clears overrides). Data: rf.sideOv{N/E/S/W}.
 
+- 2026-07-11 — **Lucas round 11 → rig v10**:
+  1. Roof edge-hover feedback: amber thick edge segment marks the V target (door-style pick).
+  2. Per-side enclosure now full 3-mode (none/edge/inset per side). Mixed-contour corners SELF-FILL: skirts are rect segments whose ends extend to the neighbor side's contour line (CSS-border-corner joining) — exact because roofs are rects by construction.
+  3. TRUE SLICE CLIPPING: all drawers take (clipB,clipT]; wall sprite bands, stair pedestal voxels + wedge, diagonal prisms, opening recesses, tints all split at the plane — a 2-high wall with the slice mid-way renders 1 voxel behind the sheet, 1 in front.
+  4. Elevation/slice range to 9. (round 10 item, shipped here together)
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
