@@ -118,4 +118,9 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   3. TRUE SLICE CLIPPING: all drawers take (clipB,clipT]; wall sprite bands, stair pedestal voxels + wedge, diagonal prisms, opening recesses, tints all split at the plane — a 2-high wall with the slice mid-way renders 1 voxel behind the sheet, 1 in front.
   4. Elevation/slice range to 9. (round 10 item, shipped here together)
 
+- 2026-07-11 — **Lucas round 12 → rig v11 — SCENE LAYERS (accepted, big)**:
+  - Grid elevation = LAYER: the scene is a stack of independent maps (0..9), each with its own grid + attributes. Building at layer 2 never touches layer 0; walls stack (2h@0 + 2h@2 = 4 voxels). Multi-story real. All placements (walls, floors-as-platforms, doors, windows, stairs, roofs) land at the current layer; erase/hover/groups layer-scoped; [/] MOVES a piece between layers.
+  - Slice cut fixed properly: instead of sprite band splitting (horizontal seams), each piece renders in both passes under a DIAGONAL ISO CLIP POLYGON at the plane (below: under the back edges; above: over the front edges; the cut diamond overlaps correctly). Works for every component type incl. wedges/prisms/recesses.
+  - CONTRACT: DSL v2 becomes multi-level (`level N:` blocks, each with kind grid + attr layers); per-cell z dies (z = level). Manifest: tile elevation = level. Memo update queued.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
