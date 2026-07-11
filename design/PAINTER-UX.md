@@ -98,4 +98,11 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   Roofs = GROUP OBJECTS on their own layer (coexist with walls/floors — never eat grid cells). Group params: form (flat/shed1/shed2 — gable removed as a form; odd-length shed2 middle cell is the gable case, emerges from the surface formula), direction (like stairs; R rotates), inclination 1–5 ft/cell (float elevations, 0.2-voxel steps; group edit re-derives all cells from the same base → always contiguous), base z ([/] ±1 ft), enclosure none/edge/inset (V cycles; inset = EAVES: skirts on the inner contour, 1-cell overhang ring — Lucas confirmed interpretation). Surface = single formula h(u,v)=z+min(a−aLow,aHigh−a)·rise (shed2) — midline peak + odd-gable for free. Erase removes roof group first, structure second. DSL v2: roofs serialize as `roof:` group directives, not a char layer. Kills the v6 z-fighting class (roofs no longer inside the painter cell sort).
   Also this round: GEMINI key received (stored 0600, rotate later — it touched chat); quota 429 → batch armed to fire at Pacific-midnight reset (7 calls: kit sheet + 6 pieces). P6 floor=tiles recorded. P-CTRL fallback lane logged.
 
+- 2026-07-11 — **Lucas round 9 → rig v8 (painter grammar candidate-final)** — THE SLICE IS THE SINGLE SOURCE OF TRUTH:
+  0. Bug (stacked roofs at same cells + walls unreachable under roofs) → fixed structurally by 1:
+  1. Roofs place AT the current slice (no +2 magic) and REPLACE overlapping roofs — same placement semantics as every other component; walls stay reachable by moving the slice.
+  2. Editing plane renders as translucent sheet (bg color @50%) + grid lines.
+  3. Erase is slice-scoped: only removes pieces BASED at the current elevation (hint when nothing matches).
+  4. Shift+wheel over empty ground moves the slice; over a piece still adjusts its elevation.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
