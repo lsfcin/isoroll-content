@@ -126,4 +126,8 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
 - 2026-07-11 — **Lucas round 12b → rig v11.1 — opacity window (unifies visibility rules)**:
   Below the slice: naturally occluded by the plane's own transparency. Above the slice: fully opaque within an OPAQUE WINDOW of N voxels (default 2, min 1, stepper) above the plane; beyond it, configurable fade opacity 0–100% (default 20%, stepper; 0 = hidden). Replaces the special roof-ghost rule — one rule for everything. Droplines only for faded pieces.
 
+- 2026-07-11 — **Lucas round 13 → rig v12 — VOXEL SEMANTICS (Minecraft-underneath, explicit)**:
+  Strategy reframe confirmed: the scene's ground truth is a voxel grid; tools are brushes writing voxels; kit sprites are voxel skins. Consequences shipped: roofs claim their voxels (placing over a wall erases it at that layer); roofs render PER-CELL inside the global painter sort (fixes inter-roof z-ordering for good); the opaque-window/fade rule applies PER VOXEL (2h wall with win=1 shows exactly 1 voxel opaque) — walls, tints, openings, stairs pedestals, prisms all decompose per voxel band at render.
+  CONTRACT: assembler/manifest should adopt voxel-level decomposition where mechanics need it (fog/vision already per-cell; boundHeight stays the aggregate).
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
