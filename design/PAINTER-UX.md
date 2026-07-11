@@ -123,4 +123,7 @@ Input redundancy matrix: every action reachable by (a) tool rail click, (b) keyb
   - Slice cut fixed properly: instead of sprite band splitting (horizontal seams), each piece renders in both passes under a DIAGONAL ISO CLIP POLYGON at the plane (below: under the back edges; above: over the front edges; the cut diamond overlaps correctly). Works for every component type incl. wedges/prisms/recesses.
   - CONTRACT: DSL v2 becomes multi-level (`level N:` blocks, each with kind grid + attr layers); per-cell z dies (z = level). Manifest: tile elevation = level. Memo update queued.
 
+- 2026-07-11 — **Lucas round 12b → rig v11.1 — opacity window (unifies visibility rules)**:
+  Below the slice: naturally occluded by the plane's own transparency. Above the slice: fully opaque within an OPAQUE WINDOW of N voxels (default 2, min 1, stepper) above the plane; beyond it, configurable fade opacity 0–100% (default 20%, stepper; 0 = hidden). Replaces the special roof-ghost rule — one rule for everything. Droplines only for faded pieces.
+
 **Queued contract extension (one loop, after P3/P4 ship): DSL v2** — `sides:`/`dims:` directives (or per-cell attribute block) carrying opening side, per-cell h/z, stair rise, roof cells; massing consumes; manifest export maps side→`WallDef.dir`, h/z→`boundHeight`/elevation. Feel-rig already produces the data; parser twin lands in both Python and the module's TS layout parser.
