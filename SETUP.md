@@ -41,7 +41,7 @@ $env:COMFY_DIR        # Windows
 
 Place in the correct subfolder under `$COMFY_DIR/models/`.
 
-> **Troubleshooting:** if `$COMFY_DIR/models/{checkpoints,embeddings,loras,upscale_models}` are symlinks that don't resolve, the link target (e.g. `/mnt/workspace/Models/diffusion/`) is missing — `mkdir -p` the four subdirs there. The "Source" column above often names a provider without a literal URL; resolve the actual download link via web search when needed.
+> **Troubleshooting:** if `$COMFY_DIR/models/{checkpoints,embeddings,loras,upscale_models}` are symlinks that don't resolve, the link target — `/mnt/workspace/models/diffusion/` (lowercase `models`, canonical — never recreate a capital-`Models/`) — is missing; `mkdir -p` the four subdirs there. The "Source" column above often names a provider without a literal URL; resolve the actual download link via web search when needed.
 
 ### Checkpoints
 
