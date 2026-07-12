@@ -46,7 +46,7 @@ Commands:
     --rembg                           also strip background
     --out      <dir>                  copy result here
   mv-tile | mv-scene | mv-restyle   multiview generation via guides + registration marks (each has -h)
-
+  export-manifest --layout <file>  layout DSL + kit → scene manifest JSON (see -h for flags)
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
   python iso-cli.py ipadapter-ref ../../assets/chars/rogue/concept/rogue_concept_clean.png \\
