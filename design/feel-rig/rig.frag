@@ -1,4 +1,4 @@
-<!-- isoroll painter feel rig — P6.5 UX prototype v11; layered scene, paints layout DSL, renders real gray kit -->
+<!-- isoroll painter feel rig — P6.5 UX prototype v15; true per-voxel scene (no base+height), paints layout DSL, renders real gray kit -->
 <title>isoroll painter — feel rig</title>
 <style>
   :root{
@@ -81,7 +81,7 @@
 </style>
 
 <header>
-  <h1>isoroll <em>painter</em> — feel rig <span style="color:var(--dim);font-variant:normal;font-size:.72rem">P6.5 v11</span></h1>
+  <h1>isoroll <em>painter</em> — feel rig <span style="color:var(--dim);font-variant:normal;font-size:.72rem">P6.5 v15</span></h1>
   <div class="hud">
     <span>view <span id="viewChip">NW</span></span>
     <span>layer <span id="lvlChip">0</span></span>
@@ -152,13 +152,12 @@
       <div id="copied">copied — DSL v2 parser lands with the memo</div>
     </div>
     <div>
-      <h2>v11 — layered scenes</h2>
+      <h2>v15 — TRUE voxels, no “base”</h2>
       <ul class="feel">
-        <li><b>Each grid elevation is a LAYER</b> — its own map. Building at layer 2 never touches layer 0: walls stack (2h wall at 0 + 2h wall at 2 = 4 voxels). Multi-story for real.</li>
-        <li>Everything places at the current layer: walls, floors (platforms!), doors, windows, stairs, roofs.</li>
-        <li>Erase, hover, groups: all layer-scoped. [/] moves a piece between layers.</li>
-        <li>The slice <b>cuts diagonally</b> now — pieces crossing the plane split along iso lines, not horizontal crops.</li>
-        <li>Roofs: unchanged from v10 (groups, per-side skirts, edge-hover V).</li>
+        <li><b>The scene IS the voxel grid</b>: a 2-high wall is two independent <code>#</code> voxels; render merges contiguous voxels into stacks. Painting a floor mid-column substitutes exactly that voxel.</li>
+        <li><b>Openings are voxels</b>: door / window voxels substitute into the wall column at the slice; the height stepper sets how many (door default 2, window 1). [/] slides them through the wall, +/− grows/shrinks.</li>
+        <li><b>Stairs are wedge voxels on real <code>#</code> pedestals</b> — drag writes the pedestal voxels; the DSL shows them literally.</li>
+        <li><b>[/] moves the stack</b>: the slice voxel plus everything contiguously above rides along (any kind); landing substitutes. +/− on a wall grows/shrinks the column top, riders ride.</li>
       </ul>
     </div>
     <div>
@@ -200,7 +199,7 @@ const VIEWS=["SW","SE","NE","NW"];
 let COLS=16, ROWS=14;
 let layers=[], roofs=[], roofSeq=1;          // layers[L] = {g, side, dim, type, wmat}
 let viewIdx=3, topView=false, tool="#", stairDir="^", undoStack=[], scopeGroup=false;
-let brushH=2, brushIncl=5, roofFormIdx=1, roofDir="^", level=0;
+let brushHt={"#":2,"D":2,"W":1}, brushIncl=5, roofFormIdx=1, roofDir="^", level=0;
 let viewWin=2, fadeOp=0.2;              // opaque window above the slice (voxels) + opacity beyond it
 function alphaFor(vz){ if(vz<level) return 1;              // below the plane: the sheet itself occludes
   return (vz-level)<viewWin ? 1 : fadeOp; }                // win=1 -> exactly the plane's voxel opaque
@@ -209,23 +208,51 @@ const H_MAX=6, GHOST=0.2;
 const sprites={};
 
 function blankGrid(r,c){ return Array.from({length:r},()=>Array(c).fill(" ")); }
-function blankLayer(){ return {g:blankGrid(ROWS,COLS), side:{}, dim:{}, type:{}, wmat:{}}; }
+function blankLayer(){ return {g:blankGrid(ROWS,COLS), side:{}, type:{}, wmat:{}}; }
 function initLayers(){ layers=Array.from({length:NLVL},()=>blankLayer()); }
 function L(n){ return layers[n]; }
 function loadLRoom(){
   initLayers(); roofs=[];
-  const l0=L(0), r0=Math.floor((ROWS-L_ROOM.length)/2), c0=Math.floor((COLS-8)/2);
-  L_ROOM.forEach((row,r)=>{ [...row].forEach((ch,c)=>{ l0.g[r0+r][c0+c]=ch; }); });
-  l0.side[(r0+7)+","+(c0+1)]="v"; l0.side[(r0+2)+","+(c0+7)]=">";
+  const r0=Math.floor((ROWS-L_ROOM.length)/2), c0=Math.floor((COLS-8)/2);
+  L_ROOM.forEach((row,r)=>{ [...row].forEach((ch,c)=>{
+    const br=r0+r, bcC=c0+c, key=br+","+bcC;
+    if(ch==="#"){ L(0).g[br][bcC]="#"; L(1).g[br][bcC]="#"; }
+    else if(ch==="D"){ for(const l of [0,1]){ L(l).g[br][bcC]="D"; L(l).side[key]="v"; } }
+    else if(ch==="W"){ L(0).g[br][bcC]="#"; L(1).g[br][bcC]="W"; L(1).side[key]=">"; }
+    else if(ch==="."){ L(0).g[br][bcC]="."; }
+  }); });
 }
-function snapshot(){ return {ly:JSON.stringify(layers.map(l=>({g:l.g.map(r=>r.join("")),s:l.side,d:l.dim,t:l.type,w:l.wmat}))),
+function snapshot(){ return {ly:JSON.stringify(layers.map(l=>({g:l.g.map(r=>r.join("")),s:l.side,t:l.type,w:l.wmat}))),
   rf:JSON.stringify(roofs), C:COLS, R:ROWS}; }
 function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>200) undoStack.shift(); }
 function restore(st){ COLS=st.C; ROWS=st.R;
-  layers=JSON.parse(st.ly).map(l=>({g:l.g.map(r=>r.split("")), side:l.s, dim:l.d, type:l.t, wmat:l.w}));
+  layers=JSON.parse(st.ly).map(l=>({g:l.g.map(r=>r.split("")), side:l.s, type:l.t, wmat:l.w}));
   roofs=JSON.parse(st.rf); syncSteppers(); }
-function defH(ch){ return STAIRS.has(ch)?1:2; }
-function hOf(lay,key,ch){ const e=lay.dim[key]; return (e&&e.h)!==undefined&&e.h?e.h:defH(ch); }
+/* ---------- TRUE voxel model: each layer cell IS one voxel; no base+height ---------- */
+function vox(l,br,bc){ return L(l).g[br][bc]; }
+function isOcc(l,br,bc){ return vox(l,br,bc)!==" "; }
+function clearVox(l,br,bc){ const lay=L(l); lay.g[br][bc]=" "; const key=br+","+bc;
+  delete lay.side[key]; delete lay.type[key]; delete lay.wmat[key]; }
+function setVox(l,br,bc,ch,tIdx){ clearVox(l,br,bc); L(l).g[br][bc]=ch;
+  if(tIdx) L(l).type[br+","+bc]=tIdx; }
+function copyVox(fromL,toL,br,bc){ const A=L(fromL), B=L(toL), key=br+","+bc;
+  clearVox(toL,br,bc);
+  B.g[br][bc]=A.g[br][bc];
+  for(const m of ["side","type","wmat"]) if(A[m][key]!==undefined) B[m][key]=A[m][key];
+  clearVox(fromL,br,bc); }
+function stackTop(l0,br,bc){ let b=l0; while(b+1<NLVL&&isOcc(b+1,br,bc)) b++; return b; }
+function moveStack(l0,br,bc,dz){   /* slice voxel + contiguous voxels above ride (any kind); landing substitutes */
+  const b=stackTop(l0,br,bc);
+  if(dz>0){ if(b+1>=NLVL) return false;
+    for(let l=b;l>=l0;l--) copyVox(l,l+1,br,bc);
+    return true; }
+  if(l0-1<0) return false;
+  for(let l=l0;l<=b;l++) copyVox(l,l-1,br,bc);
+  return true; }
+function openRun(l0,br,bc){ const ch=vox(l0,br,bc); let a=l0,b=l0;
+  while(a-1>=0&&vox(a-1,br,bc)===ch) a--;
+  while(b+1<NLVL&&vox(b+1,br,bc)===ch) b++;
+  return [a,b]; }
 
 /* rotation — rotate never mirror; arrows + diagonals follow */
 function chRot(ch){ if(STAIRS.has(ch)) return ARROW_CW[ch]; if(DIAG.has(ch)) return DIAG_CW[ch]; return ch; }
@@ -295,12 +322,12 @@ function drawWallStack(px,py,h,z){
   for(let j=2;j<=h;j++) ctx.drawImage(img,0,200,208,96, x,py-UNIT*(j-1)-lift,208,96);
   ctx.drawImage(img,0,0,208,104, x,py-296-(h-3)*UNIT-lift,208,104);
 }
-function tintWallFaces(u,v,h,z,tintName){
+function tintBand(u,v,zLo,zHi,tintName,withTop){   /* per-voxel band tint: side faces + optional top diamond */
   if(!tintName||!TINT[tintName]) return;
-  const P=(a,b,c)=>proj(a,b,c+z), col=TINT[tintName];
-  fillPoly([P(u,v,h),P(u+1,v,h),P(u+1,v+1,h),P(u,v+1,h)],col);
-  fillPoly([P(u,v+1,h),P(u+1,v+1,h),P(u+1,v+1,0),P(u,v+1,0)],col);
-  fillPoly([P(u+1,v,h),P(u+1,v+1,h),P(u+1,v+1,0),P(u+1,v,0)],col);
+  const P=(a,b,z)=>proj(a,b,z), col=TINT[tintName];
+  if(withTop) fillPoly([P(u,v,zHi),P(u+1,v,zHi),P(u+1,v+1,zHi),P(u,v+1,zHi)],col);
+  fillPoly([P(u,v+1,zHi),P(u+1,v+1,zHi),P(u+1,v+1,zLo),P(u,v+1,zLo)],col);
+  fillPoly([P(u+1,v,zHi),P(u+1,v+1,zHi),P(u+1,v+1,zLo),P(u+1,v,zLo)],col);
 }
 function faceQuad(u,v,side,zlo,zhi){
   const P=(a,b,z)=>proj(a,b,z);
@@ -308,8 +335,8 @@ function faceQuad(u,v,side,zlo,zhi){
   if(side===">") return [P(u+1,v,zlo),P(u+1,v+1,zlo),P(u+1,v+1,zhi),P(u+1,v,zhi)];
   return null;
 }
-function drawOpening(u,v,ch,frontSide,z,typeName){
-  const zlo=(ch==="D"?0:1)+z, zhi=2+z;
+function drawOpening(u,v,ch,frontSide,zlo,zhi,typeName){
+  if(zhi<=zlo) return {frontVisible:false};
   const back=faceQuad(u,v,ARROW_OPP[frontSide],zlo,zhi);
   if(back) fillPoly(back,"#141418");
   const front=faceQuad(u,v,frontSide,zlo,zhi);
@@ -363,20 +390,13 @@ function drawDiagVox(u,v,ch,solid,h,z,lw){
     quad([P(u+1,v,h),P(u+1,v+1,h),P(u+1,v+1,0),P(u+1,v,0)],FACE.cap,true,lw);
   quad(TRI.map(p=>P(p[0],p[1],h)),FACE.top,true,lw);
 }
-function derivedDiagsOf(g,lvl){
+function derivedDiagsOf(g,lvl){   /* per-voxel: smoothing derives independently at each layer */
   const M=g.length, N=g[0].length, out=[];
-  const lay=L(lvl);
   for(let r=0;r<M;r++) for(let c=0;c<N;c++){
     if(g[r][c]!==" " && g[r][c]!==".") continue;
     for(const dch of ["/","\\"]){
       const solid=diagSolid(g,r,c,dch);
-      if(solid){
-        const pair = solid==="NE"?[[r-1,c],[r,c+1]] : solid==="NW"?[[r-1,c],[r,c-1]] :
-                     solid==="SE"?[[r+1,c],[r,c+1]] : [[r+1,c],[r,c-1]];
-        const hs=pair.map(rc=>{ const bc=viewCellToBase(rc[0],rc[1]);
-          return hOf(lay,bc[0]+","+bc[1],g[rc[0]][rc[1]]); });
-        out.push({u:c,v:r,ch:dch,derived:true,solid,h:Math.min(hs[0],hs[1]),lvl});
-        break; } } }
+      if(solid){ out.push({u:c,v:r,ch:dch,derived:true,solid,lvl}); break; } } }
   return out;
 }
 
@@ -477,32 +497,47 @@ function render(){
   ctx.save(); ctx.translate(cam.dx,cam.dy); ctx.scale(cam.s,cam.s);
   const lw=1/cam.s;
 
-  /* collect all cells from all layers */
+  /* collect draw entries: per-COLUMN runs of contiguous voxels (render merges what storage keeps independent) */
   const cells=[], vgrids=[], rfData=new Map();
-  for(let lvl=0;lvl<NLVL;lvl++){
-    const g=viewGridOf(lvl); vgrids[lvl]=g;
-    for(let r=0;r<M;r++) for(let c=0;c<N;c++){
-      const ch=g[r][c]; if(ch===" ") continue; cells.push({u:c,v:r,ch,lvl}); }
-    for(const dc of derivedDiagsOf(g,lvl)) cells.push(dc);
+  for(let lvl=0;lvl<NLVL;lvl++) vgrids[lvl]=viewGridOf(lvl);
+  const derived=new Map();
+  for(let lvl=0;lvl<NLVL;lvl++)
+    for(const dc of derivedDiagsOf(vgrids[lvl],lvl)) derived.set(dc.v+","+dc.u+","+lvl,dc);
+  for(let r=0;r<M;r++) for(let c=0;c<N;c++){
+    let run=null;
+    const flush=()=>{ if(run){ cells.push(run); run=null; } };
+    for(let lvl=0;lvl<NLVL;lvl++){
+      const ch=vgrids[lvl][r][c], dd=derived.get(r+","+c+","+lvl);
+      if(ch===".") cells.push({u:c,v:r,kind:"floor",ch:".",zBot:lvl,zTop:lvl,lvl});
+      if(STAIRS.has(ch)){ flush(); cells.push({u:c,v:r,kind:"wedge",ch,zBot:lvl,zTop:lvl+1,lvl}); continue; }
+      let fam=null, dch=null, dsolid=null;
+      if(WALLISH.has(ch)) fam="wall";
+      else if(DIAG.has(ch)){ dch=ch; dsolid=diagSolid(vgrids[lvl],r,c,ch); fam="diag:"+ch+":"+(dsolid||""); }
+      else if(dd){ dch=dd.ch; dsolid=dd.solid; fam="diag:"+dd.ch+":"+dd.solid+":d"; }
+      if(!fam){ flush(); continue; }
+      if(run&&run.fam===fam&&run.zTop===lvl){ run.zTop=lvl+1; run.items.push({lvl,ch}); }
+      else{ flush();
+        run={u:c,v:r,fam,zBot:lvl,zTop:lvl+1,lvl,items:[{lvl,ch}],
+          kind:fam==="wall"?"wall":"diag", ch:dch, solid:dsolid}; }
+    }
+    flush();
   }
-  for(const rf of roofs){                          // roofs are voxels too: per-cell in the same painter order
+  for(const rf of roofs){
     rfData.set(rf, {G:roofViewData(rf), R:roofRectView(rf)});
     for(const rc of rf.cells){ const vc=baseCellToView(rc[0],rc[1]);
-      cells.push({u:vc[1],v:vc[0],ch:"ROOF",lvl:Math.floor(rf.z),rf}); } }
-  cells.sort((a,b)=>((a.u+a.v)-(b.u+b.v)) || (a.lvl-b.lvl) || ((a.ch!=="."?1:0)-(b.ch!=="."?1:0)));
+      cells.push({u:vc[1],v:vc[0],kind:"ROOF",ch:"ROOF",zBot:Math.floor(rf.z),lvl:Math.floor(rf.z),rf}); } }
+  cells.sort((a,b)=>((a.u+a.v)-(b.u+b.v)) || (a.zBot-b.zBot) || ((a.kind!=="floor"?1:0)-(b.kind!=="floor"?1:0)));
 
   const hoverBB = hover? {x:proj(hover[1],hover[0],level)[0]-104,y:proj(hover[1],hover[0],level)[1]-96,w:208,h:160} : null;
   const hoverSum = hover? hover[0]+hover[1] : null;
   const badges=[];
 
   function pieceTopBot(cell){
-    if(cell.ch==="ROOF"){ const {G}=rfData.get(cell.rf);
+    if(cell.kind==="ROOF"){ const {G}=rfData.get(cell.rf);
       const tops=[[cell.u,cell.v],[cell.u+1,cell.v],[cell.u+1,cell.v+1],[cell.u,cell.v+1]]
         .map(p=>G.hAt(p[0],p[1]));
       return [cell.rf.z, Math.max(...tops)+0.01]; }
-    const lay=L(cell.lvl), bc=viewCellToBase(cell.v,cell.u);
-    const h = cell.derived? cell.h : (cell.ch==="."?0:hOf(lay,bc[0]+","+bc[1],cell.ch));
-    return [cell.lvl, cell.lvl+h]; }
+    return [cell.zBot, cell.zTop]; }
 
   function drawRoofCell(rf,u,v,lw,extra){
     const {G,R}=rfData.get(rf);
@@ -561,8 +596,8 @@ function render(){
   function drawOneCell(cell,pass){                     // pass: 'below' | 'above'
     const [zBot,zTop]=pieceTopBot(cell);
     if(pass==="below" && zBot>=level) return;
-    if(pass==="above" && zTop<=level && !(cell.ch==="."&&cell.lvl===level)) return;
-    const lay=L(cell.lvl), bc=viewCellToBase(cell.v,cell.u), key=bc[0]+","+bc[1];
+    if(pass==="above" && zTop<=level && !(cell.kind==="floor"&&cell.lvl===level)) return;
+    const bc=viewCellToBase(cell.v,cell.u), key=bc[0]+","+bc[1];
     const needsClip = zBot<level && zTop>level;
     ctx.save();
     if(needsClip){ if(pass==="below") clipBelow(cell.u,cell.v); else clipAbove(cell.u,cell.v); }
@@ -570,29 +605,36 @@ function render(){
     if(hoverBB && (cell.u+cell.v)>hoverSum &&
        rectsOverlap({x:proj(cell.u,cell.v,0)[0]-104,y:proj(cell.u,cell.v,0)[1]-296-(zTop-3)*UNIT,w:208,h:400},hoverBB))
       extra=GHOST;
-    if(cell.ch==="ROOF"){ drawRoofCell(cell.rf,cell.u,cell.v,lw,extra); ctx.restore(); return; }
-    const px=proj(cell.u,cell.v,0), tname=TYPES[cell.ch]?TYPES[cell.ch][lay.type[key]||0]:null;
-    const z=cell.lvl, g=vgrids[cell.lvl];
+    if(cell.kind==="ROOF"){ drawRoofCell(cell.rf,cell.u,cell.v,lw,extra); ctx.restore(); return; }
+    const px=proj(cell.u,cell.v,0);
+    let subs=null;                                     /* opening sub-runs inside a wall run */
+    if(cell.kind==="wall"){
+      subs=[]; let i=0;
+      while(i<cell.items.length){ const it=cell.items[i];
+        if(it.ch==="#"){ i++; continue; }
+        const sd=L(it.lvl).side[key]; let j=i;
+        while(j+1<cell.items.length&&cell.items[j+1].ch===it.ch&&L(cell.items[j+1].lvl).side[key]===sd) j++;
+        subs.push({ch:it.ch, zLo:cell.items[i].lvl, zHi:cell.items[j].lvl+1,
+          side: sd?rotArrow(sd):"v", tname:TYPES[it.ch][L(it.lvl).type[key]||0]});
+        i=j+1; }
+    }
     const drawPiece=()=>{
-      if(cell.ch==="."){
-        const py=proj(cell.u,cell.v,z);
+      if(cell.kind==="floor"){
+        const py=proj(cell.u,cell.v,cell.lvl);
         ctx.drawImage(sprites.floor,py[0]-104,py[1]-8);
-        if(tname&&TINT[tname]) fillPoly(cellDiamond(cell.u,cell.v,z),TINT[tname]);
+        const tn=TYPES["."][L(cell.lvl).type[key]||0];
+        if(tn&&TINT[tn]) fillPoly(cellDiamond(cell.u,cell.v,cell.lvl),TINT[tn]);
       }
-      else if(WALLISH.has(cell.ch)){
-        const h=hOf(lay,key,cell.ch);
-        drawWallStack(px[0],px[1],h,z);
-        if(cell.ch==="#") tintWallFaces(cell.u,cell.v,h,z,tname);
-        else{
-          tintWallFaces(cell.u,cell.v,h,z,TYPES["#"][lay.wmat[key]||0]);
-          const baseSide=lay.side[key], side=baseSide?rotArrow(baseSide):"v";
-          drawOpening(cell.u,cell.v,cell.ch,side,z,tname);
-        }
+      else if(cell.kind==="wedge") drawStair(cell.u,cell.v,cell.ch,1,cell.zBot,lw);
+      else if(cell.kind==="diag")
+        drawDiagVox(cell.u,cell.v,cell.ch,cell.solid,cell.zTop-cell.zBot,cell.zBot,lw);
+      else{                                            /* wall run: one stack, per-voxel band tints, merged openings */
+        drawWallStack(px[0],px[1],cell.zTop-cell.zBot,cell.zBot);
+        for(const it of cell.items){ const lay2=L(it.lvl);
+          const tn = it.ch==="#" ? TYPES["#"][lay2.type[key]||0] : TYPES["#"][lay2.wmat[key]||0];
+          tintBand(cell.u,cell.v,it.lvl,it.lvl+1,tn,it.lvl+1===cell.zTop); }
+        for(const s of subs) drawOpening(cell.u,cell.v,s.ch,s.side,s.zLo,s.zHi,s.tname);
       }
-      else if(STAIRS.has(cell.ch)) drawStair(cell.u,cell.v,cell.ch,hOf(lay,key,cell.ch),z,lw);
-      else if(DIAG.has(cell.ch))
-        drawDiagVox(cell.u,cell.v,cell.ch,cell.derived?cell.solid:diagSolid(g,cell.v,cell.u,cell.ch),
-          cell.derived?cell.h:hOf(lay,key,cell.ch),z,lw);
     };
     /* per-VOXEL opacity: group contiguous voxels of equal alpha, draw the FULL piece clipped
        to each run's iso hexagon — boundaries follow the diamond, never horizontal crops */
@@ -608,22 +650,20 @@ function render(){
       ctx.globalAlpha=a; drawPiece(); ctx.globalAlpha=1;
       ctx.restore();
       /* cut cap: a run ending mid-piece exposes side pixels of the voxel above — cover with a top-face diamond */
-      if(run.hi<nvox && cell.ch!=="."){
+      if(run.hi<nvox && cell.kind!=="floor"){
         ctx.globalAlpha=a;
         const zc=zBot+run.hi;
-        if(DIAG.has(cell.ch)){
-          const solid=cell.derived?cell.solid:diagSolid(g,cell.v,cell.u,cell.ch);
-          if(solid){ const u2=cell.u,v2=cell.v;
+        if(cell.kind==="diag"){
+          if(cell.solid){ const u2=cell.u,v2=cell.v;
             const TRI={NE:[[u2,v2],[u2+1,v2],[u2+1,v2+1]], NW:[[u2,v2],[u2+1,v2],[u2,v2+1]],
-                       SE:[[u2+1,v2],[u2+1,v2+1],[u2,v2+1]], SW:[[u2,v2],[u2,v2+1],[u2+1,v2+1]]}[solid];
+                       SE:[[u2+1,v2],[u2+1,v2+1],[u2,v2+1]], SW:[[u2,v2],[u2,v2+1],[u2+1,v2+1]]}[cell.solid];
             quad(TRI.map(p=>proj(p[0],p[1],zc)),FACE.top,true,lw); } }
         else quad(cellDiamond(cell.u,cell.v,zc),FACE.top,true,lw);
         ctx.globalAlpha=1; }
     }
-    if(WALLISH.has(cell.ch)&&cell.ch!=="#"&&(pass==="above"||zTop<=level)){
-      const baseSide=lay.side[key], side=baseSide?rotArrow(baseSide):"v";
-      badges.push({cell,alpha:alphaFor(z)*extra,dimmed:!(side==="v"||side===">"),z});
-    }
+    if(subs&&(pass==="above"||zTop<=level))
+      for(const s of subs) badges.push({u:cell.u,v:cell.v,ch:s.ch,alpha:alphaFor(s.zLo)*extra,
+        dimmed:!(s.side==="v"||s.side===">"),z:s.zLo});
     ctx.restore();
   }
 
@@ -640,11 +680,11 @@ function render(){
     ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke(); }
   for(const cell of cells) drawOneCell(cell,"above");
   for(const b of badges){
-    const col=b.cell.ch==="D"?getVar("--accent"):getVar("--mark");
+    const col=b.ch==="D"?getVar("--accent"):getVar("--mark");
     ctx.globalAlpha=(b.dimmed?0.4:1)*b.alpha;
-    const c0=proj(b.cell.u+0.5,b.cell.v+0.5,b.z);
+    const c0=proj(b.u+0.5,b.v+0.5,b.z);
     ctx.fillStyle=col; ctx.font=(16/cam.s)+"px ui-monospace, monospace";
-    ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(b.cell.ch,c0[0],c0[1]);
+    ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(b.ch,c0[0],c0[1]);
     ctx.globalAlpha=1;
   }
   if(preview){ const col=previewErase?getVar("--danger"):getVar("--mark");
@@ -666,9 +706,12 @@ function render(){
         ctx.beginPath(); ctx.moveTo(seg[0][0],seg[0][1]); ctx.lineTo(seg[1][0],seg[1][1]);
         ctx.strokeStyle=getVar("--accent"); ctx.lineWidth=6*lw; ctx.lineCap="round"; ctx.stroke(); } }
     strokePoly(cellDiamond(hover[1],hover[0],level),getVar("--mark"),2*lw);
-    if((tool==="D"||tool==="W")&&WALLISH.has(gH[hover[0]][hover[1]])&&hoverFrac){
-      const s=nearestSide(hoverFrac);
-      if(s==="v"||s===">") fillPoly(faceQuad(hover[1],hover[0],s,(tool==="D"?0:1)+level,2+level),"rgba(224,164,88,.5)");
+    if((tool==="D"||tool==="W")&&hoverFrac){
+      const bcW=viewCellToBase(hover[0],hover[1]);
+      if(WALLISH.has(vox(level,bcW[0],bcW[1]))){
+        const s=nearestSide(hoverFrac);
+        if(s==="v"||s===">") fillPoly(faceQuad(hover[1],hover[0],s,level,level+brushHt[tool]),"rgba(224,164,88,.5)");
+      }
     }
   }
   ctx.restore(); updateHud();
@@ -778,64 +821,62 @@ function rectCells(a,b){ const out=new Set();
   for(let r=Math.min(a[0],b[0]);r<=Math.max(a[0],b[0]);r++)
     for(let c=Math.min(a[1],b[1]);c<=Math.max(a[1],b[1]);c++) out.add(r+","+c);
   return out; }
-function setCell(lvl,r,c,next,h,tIdx){
-  const lay=L(lvl), bc=viewCellToBase(r,c), key=bc[0]+","+bc[1];
-  lay.g[bc[0]][bc[1]]=next;
-  delete lay.side[key]; delete lay.dim[key]; delete lay.type[key]; delete lay.wmat[key];
-  if(h&&h!==defH(next)) lay.dim[key]={h};
-  if(tIdx) lay.type[key]=tIdx;
-}
 function commitStroke(){
   if(!preview||preview.size===0) return;
   pushUndo();
+  const baseCells=[...preview].map(k=>{ const rc=k.split(",").map(Number);
+    return viewCellToBase(rc[0],rc[1]); });
+  const baseSet=new Set(baseCells.map(rc=>rc[0]+","+rc[1]));
+  const evictRoofs=(zLo,zHi)=>{ roofs=roofs.filter(rf=>{ const rz=Math.floor(rf.z);
+    return rz<zLo||rz>=zHi || !rf.cells.some(rc=>baseSet.has(rc[0]+","+rc[1])); }); };
   if(previewErase){
-    const baseSet=new Set([...preview].map(k=>{ const rc=k.split(",").map(Number);
-      const bc=viewCellToBase(rc[0],rc[1]); return bc[0]+","+bc[1]; }));
-    const before=roofs.length;
-    roofs=roofs.filter(rf=>Math.floor(rf.z)!==level || !rf.cells.some(rc=>baseSet.has(rc[0]+","+rc[1])));
+    const before=roofs.length; evictRoofs(level,level+1);
     let cleared=roofs.length<before;
-    const lay=L(level);
-    for(const key of preview){ const rc=key.split(",").map(Number);
-      const bc=viewCellToBase(rc[0],rc[1]);
-      if(lay.g[bc[0]][bc[1]]!==" "){ setCell(level,rc[0],rc[1]," ",0,0); cleared=true; } }
+    for(const rc of baseCells) if(isOcc(level,rc[0],rc[1])){ clearVox(level,rc[0],rc[1]); cleared=true; }
     if(!cleared) hint("layer "+level+" is empty here — PgUp/Dn to change layer");
   }
   else if(tool==="R"){
-    const cellsB=[...preview].map(k=>{ const rc=k.split(",").map(Number);
-      return viewCellToBase(rc[0],rc[1]); });
-    const newSet=new Set(cellsB.map(rc=>rc[0]+","+rc[1]));
-    roofs=roofs.filter(rf=>Math.floor(rf.z)!==level || !rf.cells.some(rc=>newSet.has(rc[0]+","+rc[1])));
-    for(const key of preview){ const rc=key.split(",");     // roofs claim their voxels: structure at this layer dies
-      setCell(level,+rc[0],+rc[1]," ",0,0); }
-    roofs.push({id:roofSeq++, cells:cellsB, form:roofFormIdx, dir:unrotArrow(roofDir),
+    evictRoofs(level,level+1);
+    for(const rc of baseCells) clearVox(level,rc[0],rc[1]);   /* roofs claim their voxels */
+    roofs.push({id:roofSeq++, cells:baseCells, form:roofFormIdx, dir:unrotArrow(roofDir),
       incl:brushIncl, z: level, enclose:0});
   }
   else if(tool==="^"){
     const baseArrow=unrotArrow(stairDir), asc=ASCENT[stairDir];
     const cellsArr=[...preview].map(k=>k.split(",").map(Number));
     const along = asc[0]!==0 ? cellsArr.map(rc=>asc[0]>0?rc[1]:-rc[1]) : cellsArr.map(rc=>asc[1]>0?rc[0]:-rc[0]);
-    const lo=Math.min(...along);
-    cellsArr.forEach((rc,i)=>{ setCell(level,rc[0],rc[1],baseArrow,along[i]-lo+1,brushType["^"]); });
+    const lo=Math.min(...along), hi=Math.max(...along);
+    evictRoofs(level,level+(hi-lo)+2);
+    cellsArr.forEach((rc,i)=>{ const rise=along[i]-lo, bc=viewCellToBase(rc[0],rc[1]);
+      for(let j=0;j<rise&&level+j<NLVL;j++) setVox(level+j,bc[0],bc[1],"#",brushType["^"]);  /* pedestal = real wall voxels */
+      if(level+rise<NLVL) setVox(level+rise,bc[0],bc[1],baseArrow,brushType["^"]); });
   }
   else{
-    /* structure claims its voxels back: roofs based at this layer overlapping the stroke die */
-    const baseSet=new Set([...preview].map(k=>{ const rc=k.split(",").map(Number);
-      const bc=viewCellToBase(rc[0],rc[1]); return bc[0]+","+bc[1]; }));
-    roofs=roofs.filter(rf=>Math.floor(rf.z)!==level || !rf.cells.some(rc=>baseSet.has(rc[0]+","+rc[1])));
-    for(const key of preview){ const rc=key.split(",");
-      setCell(level,+rc[0],+rc[1],tool, tool==="#"?brushH:0, brushType[tool]); }
+    const hN = tool==="#"?brushHt["#"]:1;
+    evictRoofs(level,level+hN);
+    for(const rc of baseCells){
+      if(tool===".") setVox(level,rc[0],rc[1],".",brushType["."]);
+      else for(let j=0;j<hN&&level+j<NLVL;j++) setVox(level+j,rc[0],rc[1],"#",brushType["#"]);
+    }
   }
   preview=null; render(); updateDsl();
 }
 function clickPlace(cell){
-  const lay=L(level), bc=viewCellToBase(cell[0],cell[1]), key=bc[0]+","+bc[1], cur=lay.g[bc[0]][bc[1]];
-  if(!WALLISH.has(cur)){ hint((tool==="D"?"Doors":"Windows")+" live on walls — paint a wall at THIS layer first"); return; }
+  const bc=viewCellToBase(cell[0],cell[1]), key=bc[0]+","+bc[1];
+  const cur=vox(level,bc[0],bc[1]);
+  if(!WALLISH.has(cur)){
+    hint((tool==="D"?"Doors":"Windows")+" replace wall voxels — move the slice onto one first"); return; }
   const side=unrotArrow(nearestSide(hoverFrac||[0.5,0.9]));
-  if(cur===tool&&lay.side[key]===side) return;
+  if(cur===tool&&L(level).side[key]===side) return;
   pushUndo();
-  if(cur==="#"&&lay.type[key]) lay.wmat[key]=lay.type[key];
-  lay.g[bc[0]][bc[1]]=tool; lay.side[key]=side;
-  if(brushType[tool]) lay.type[key]=brushType[tool]; else delete lay.type[key];
+  for(let j=0;j<brushHt[tool]&&level+j<NLVL;j++){   /* opening substitutes wall voxels upward from the slice */
+    const lay=L(level+j), was=lay.g[bc[0]][bc[1]];
+    if(j>0&&was!=="#"&&was!==" ") break;            /* grow only through wall or air */
+    const wm = was==="#" ? lay.type[key] : lay.wmat[key];
+    lay.g[bc[0]][bc[1]]=tool; lay.side[key]=side;
+    if(wm) lay.wmat[key]=wm; else delete lay.wmat[key];
+    if(brushType[tool]) lay.type[key]=brushType[tool]; else delete lay.type[key];
+  }
   render(); updateDsl();
 }
 function hoveredRoof(){ if(!hover) return null; const bc=viewCellToBase(hover[0],hover[1]);
@@ -852,15 +893,6 @@ function roofEdgePick(){
   const outside=!nbBase||roofAtBase(nbBase[0],nbBase[1])!==rf;
   return {rf, side:(dist<0.3&&outside)?side:null};
 }
-function moveCellLayer(fromL,toL,r,c){
-  if(toL<0||toL>=NLVL) return false;
-  const A=L(fromL), B=L(toL), bc=viewCellToBase(r,c), key=bc[0]+","+bc[1];
-  if(A.g[bc[0]][bc[1]]===" ") return false;
-  if(B.g[bc[0]][bc[1]]!==" ") return false;
-  B.g[bc[0]][bc[1]]=A.g[bc[0]][bc[1]]; A.g[bc[0]][bc[1]]=" ";
-  for(const m of ["side","dim","type","wmat"]){ if(A[m][key]!==undefined){ B[m][key]=A[m][key]; delete A[m][key]; } }
-  return true;
-}
 function adjustHovered(dz,isElev){
   if(!hover) return;
   const rf=hoveredRoof();
@@ -869,29 +901,69 @@ function adjustHovered(dz,isElev){
     else{ rf.incl=Math.max(1,Math.min(5,rf.incl+dz)); brushIncl=rf.incl; iVal.textContent=brushIncl;
       hint("roof slope "+rf.incl+" ft/cell (brush follows)"); }
     render(); updateDsl(); return; }
-  const g=viewGridOf(level), ch=g[hover[0]][hover[1]];
-  if(!(WALLISH.has(ch)||STAIRS.has(ch)||DIAG.has(ch))) return;
-  const targets = scopeGroup ? groupCells(g,hover[0],hover[1]) : [[hover[0],hover[1]]];
+  const bcH=viewCellToBase(hover[0],hover[1]), key=bcH[0]+","+bcH[1];
+  const ch=vox(level,bcH[0],bcH[1]);
+  if(ch===" ") return;
+  if(!scopeGroup&&(ch==="D"||ch==="W")){   /* opening: slide/resize its voxel run within the wall column */
+    const [o0,o1]=openRun(level,bcH[0],bcH[1]);
+    const toOpen=(l)=>{ const lay=L(l), was=lay.g[bcH[0]][bcH[1]];
+      const wm = was==="#" ? lay.type[key] : lay.wmat[key];
+      lay.g[bcH[0]][bcH[1]]=ch; lay.side[key]=L(level).side[key];
+      if(wm) lay.wmat[key]=wm; else delete lay.wmat[key];
+      const t=L(level).type[key]; if(t) lay.type[key]=t; else delete lay.type[key]; };
+    const toWall=(l)=>{ const lay=L(l), wm=lay.wmat[key];
+      lay.g[bcH[0]][bcH[1]]="#"; delete lay.side[key]; delete lay.wmat[key];
+      if(wm) lay.type[key]=wm; else delete lay.type[key]; };
+    pushUndo();
+    if(isElev){
+      if(dz>0){ if(o1+1<NLVL&&vox(o1+1,bcH[0],bcH[1])==="#"){ toOpen(o1+1); toWall(o0); } else hint("no wall voxel above to slide into"); }
+      else{ if(o0-1>=0&&vox(o0-1,bcH[0],bcH[1])==="#"){ toOpen(o0-1); toWall(o1); } else hint("no wall voxel below to slide into"); }
+    } else {
+      if(dz>0){ if(o1+1<NLVL&&vox(o1+1,bcH[0],bcH[1])==="#"){ toOpen(o1+1); brushHt[ch]=o1+2-o0; }
+        else hint("opening already fills the wall top"); }
+      else{ if(o1>o0){ toWall(o1); brushHt[ch]=o1-o0; } else hint((ch==="D"?"door":"window")+" is already 1 voxel"); }
+      syncSteppers();
+    }
+    render(); updateDsl(); return;
+  }
+  const gE=viewGridOf(level);
+  const targets = scopeGroup ? groupCells(gE,hover[0],hover[1]) : [[hover[0],hover[1]]];
   pushUndo();
   if(isElev){
     let moved=0;
-    for(const rc of targets) if(moveCellLayer(level,level+dz,rc[0],rc[1])) moved++;
+    for(const rc of targets){ const b2=viewCellToBase(rc[0],rc[1]);
+      if(isOcc(level,b2[0],b2[1])&&moveStack(level,b2[0],b2[1],dz)) moved++; }
     if(moved){ setLevel(level+dz,true);
-      hint("moved "+moved+" piece(s) to layer "+level+" (slice follows)"); }
-    else hint("target layer occupied — cannot move");
+      hint("moved "+moved+" stack(s) — voxels above ride along (slice follows)"); }
   } else {
-    const lay=L(level); let shownH=null;
+    let shownH=null;
     for(const rc of targets){
-      const cch=g[rc[0]][rc[1]];
-      if(!(WALLISH.has(cch)||STAIRS.has(cch)||DIAG.has(cch))) continue;
-      const bc=viewCellToBase(rc[0],rc[1]), key=bc[0]+","+bc[1];
-      const h=Math.min(Math.max(hOf(lay,key,cch)+dz,1),H_MAX);
-      lay.dim[key]={h};
-      if(rc[0]===hover[0]&&rc[1]===hover[1]) shownH=h;
+      const b2=viewCellToBase(rc[0],rc[1]), k2=b2[0]+","+b2[1], c2=vox(level,b2[0],b2[1]);
+      if(STAIRS.has(c2)){                  /* wedge rise: pedestal voxel fills in / is consumed */
+        if(dz>0){ if(moveStack(level,b2[0],b2[1],1)) setVox(level,b2[0],b2[1],"#",L(level+1).type[k2]||0); }
+        else if(level>0&&vox(level-1,b2[0],b2[1])==="#") moveStack(level,b2[0],b2[1],-1);
+        continue; }
+      const isDg=DIAG.has(c2);
+      if(!(c2==="#"||isDg)) continue;
+      let a=level,b=level;
+      const match=(cc)=> isDg ? cc===c2 : WALLISH.has(cc);
+      while(a-1>=0&&match(vox(a-1,b2[0],b2[1]))) a--;
+      while(b+1<NLVL&&match(vox(b+1,b2[0],b2[1]))) b++;
+      if(dz>0){
+        if(b+1>=NLVL) continue;
+        if(isOcc(b+1,b2[0],b2[1])&&!moveStack(b+1,b2[0],b2[1],1)) continue;  /* riders shift up first */
+        setVox(b+1,b2[0],b2[1], isDg?c2:"#", L(b).type[k2]||0);
+        if(rc[0]===hover[0]&&rc[1]===hover[1]) shownH=b+2-a;
+      } else {
+        if(b===a) continue;                /* min 1 voxel */
+        if(isOcc(b+1,b2[0],b2[1])) moveStack(b+1,b2[0],b2[1],-1);   /* riders land on the removed top */
+        else clearVox(b,b2[0],b2[1]);
+        if(rc[0]===hover[0]&&rc[1]===hover[1]) shownH=b-a;
+      }
     }
     if(shownH!==null){
-      if(WALLISH.has(ch)||DIAG.has(ch)){ brushH=shownH; hVal.textContent=brushH; }
-      hint((scopeGroup?("group of "+targets.length+" — "):"")+"height h="+shownH+" (brush follows)");
+      brushHt["#"]=Math.min(shownH,H_MAX); syncSteppers();
+      hint((scopeGroup?("group of "+targets.length+" — "):"")+"column h="+shownH+" (brush follows)");
     }
   }
   render(); updateDsl();
@@ -917,27 +989,28 @@ function rotateAtHover(){
   const cellsG=groupCells(g,hover[0],hover[1]);
   const set=new Set(cellsG.map(rc=>rc[0]+","+rc[1]));
   const [M,N]=viewDims(), r0=hover[0], c0=hover[1];
-  const moves=[];
   for(const rc of cellsG){ const nr=r0+(rc[1]-c0), nc=c0-(rc[0]-r0);
     if(nr<0||nr>=M||nc<0||nc>=N){ hint("no room to rotate the group"); return; }
-    if(g[nr][nc]!==" " && !set.has(nr+","+nc)){ hint("group rotation blocked by other pieces"); return; }
-    moves.push({from:rc,to:[nr,nc]}); }
+    if(!set.has(nr+","+nc)){ const tb=viewCellToBase(nr,nc);
+      for(let l=0;l<NLVL;l++) if(isOcc(l,tb[0],tb[1])){ hint("group rotation blocked by other pieces"); return; } } }
   pushUndo();
-  const stash=moves.map(m=>{ const bc=viewCellToBase(m.from[0],m.from[1]), key=bc[0]+","+bc[1];
-    const rec={to:m.to, ch:lay.g[bc[0]][bc[1]], dm:lay.dim[key], sd:lay.side[key], ty:lay.type[key], wm:lay.wmat[key]};
-    lay.g[bc[0]][bc[1]]=" "; delete lay.dim[key]; delete lay.side[key]; delete lay.type[key]; delete lay.wmat[key];
-    return rec; });
+  const stash=cellsG.map(rc=>{            /* whole COLUMNS rotate: every layer of each group cell */
+    const bc=viewCellToBase(rc[0],rc[1]), key=bc[0]+","+bc[1], col=[];
+    for(let l=0;l<NLVL;l++){ const lay2=L(l);
+      col.push({ch:lay2.g[bc[0]][bc[1]], sd:lay2.side[key], ty:lay2.type[key], wm:lay2.wmat[key]});
+      clearVox(l,bc[0],bc[1]); }
+    return {to:[r0+(rc[1]-c0), c0-(rc[0]-r0)], col}; });
   for(const rec of stash){
     const bc=viewCellToBase(rec.to[0],rec.to[1]), key=bc[0]+","+bc[1];
-    let ch2=rec.ch;
-    if(STAIRS.has(ch2)) ch2=ARROW_CW[ch2]; else if(DIAG.has(ch2)) ch2=DIAG_CW[ch2];
-    lay.g[bc[0]][bc[1]]=ch2;
-    if(rec.dm) lay.dim[key]={...rec.dm};
-    if(rec.sd) lay.side[key]=ARROW_CW[rec.sd];
-    if(rec.ty) lay.type[key]=rec.ty;
-    if(rec.wm) lay.wmat[key]=rec.wm;
+    rec.col.forEach((vx,l)=>{ if(vx.ch===" ") return;
+      let ch2=vx.ch;
+      if(STAIRS.has(ch2)) ch2=ARROW_CW[ch2]; else if(DIAG.has(ch2)) ch2=DIAG_CW[ch2];
+      const lay2=L(l); lay2.g[bc[0]][bc[1]]=ch2;
+      if(vx.sd) lay2.side[key]=ARROW_CW[vx.sd];
+      if(vx.ty) lay2.type[key]=vx.ty;
+      if(vx.wm!==undefined) lay2.wmat[key]=vx.wm; });
   }
-  hint("rotated group of "+stash.length+" around the selected cell");
+  hint("rotated group of "+stash.length+" columns around the selected cell");
   render(); updateDsl();
 }
 cv.addEventListener("pointerdown",e=>{ e.preventDefault(); cv.setPointerCapture(e.pointerId);
@@ -959,7 +1032,7 @@ cv.addEventListener("pointermove",e=>{
     const rf0=roofAtBase(bc[0],bc[1]);
     let stack=""; for(let l2=0;l2<NLVL;l2++) if(l2!==level&&L(l2).g[bc[0]][bc[1]]!==" ") stack+=(stack?",":"")+l2;
     coord.textContent="u "+cell[1]+" · v "+cell[0]+
-      (ch!==" "?("  "+ch+(tname?("·"+tname):"")+" h"+hOf(lay,key,ch)):"")+
+      (ch!==" "?("  "+ch+(tname?("·"+tname):"")):"")+
       (rf0?("  roof·"+ROOF_FORMS[rf0.form]+" "+rf0.incl+"ft z"+rf0.z+" enc:"+ENCLOSE[rf0.enclose||0]):"")+
       (stack?("  [also @ "+stack+"]"):"")+"  layer "+level; }
   else coord.textContent="";
@@ -975,8 +1048,11 @@ cv.addEventListener("contextmenu",e=>e.preventDefault());
 cv.addEventListener("wheel",e=>{ e.preventDefault();
   if(e.ctrlKey){ adjustHovered(e.deltaY<0?1:-1,false); return; }
   if(e.shiftKey){
-    const g=viewGridOf(level), overPiece = hover && (hoveredRoof() ||
-      (g[hover[0]]&&familyOf(g[hover[0]][hover[1]])&&g[hover[0]][hover[1]]!=="."));
+    let overPiece=false;
+    if(hover){
+      if(hoveredRoof()) overPiece=true;
+      else{ const bcS=viewCellToBase(hover[0],hover[1]), cS=vox(level,bcS[0],bcS[1]);
+        overPiece=cS!==" "&&cS!=="."; } }
     if(overPiece) adjustHovered(e.deltaY<0?1:-1,true);
     else setLevel(level+(e.deltaY<0?1:-1));
     return; }
@@ -990,16 +1066,20 @@ function hint(msg){ const el=document.getElementById("hint"); el.textContent=msg
   clearTimeout(hintTimer); hintTimer=setTimeout(()=>el.classList.remove("show"),2400); }
 function updateHud(){
   let w=0,d=0,win=0,f=0,st=0;
-  for(const lay of layers) for(const row of lay.g) for(const ch of row){
-    if(ch==="#"||DIAG.has(ch))w++; else if(ch==="D")d++; else if(ch==="W")win++;
-    else if(ch===".")f++; else if(STAIRS.has(ch))st++; }
+  for(let l=0;l<NLVL;l++){ const g0=layers[l].g, below=l>0?layers[l-1].g:null;
+    g0.forEach((row,r)=>row.forEach((ch,c)=>{
+      if(ch==="#"||DIAG.has(ch))w++;                     /* voxel counts */
+      else if(ch===".")f++; else if(STAIRS.has(ch))st++;
+      else if(ch==="D"||ch==="W"){                       /* openings count RUNS, not voxels */
+        if(!(below&&below[r][c]===ch)){ if(ch==="D")d++; else win++; } }
+    })); }
   cWall.textContent=w; cDoor.textContent=d; cWin.textContent=win;
   cStair.textContent=st; cFloor.textContent=f; cRoof.textContent=roofs.length;
   viewChip.textContent=topView?"TOP":VIEWS[viewIdx]; lvlChip.textContent=level;
   scopeChip.textContent=scopeGroup?"group":"cell";
 }
 function updateDsl(){
-  const out=["name: feel-rig","wall_h: 2"];
+  const out=["name: feel-rig"];
   for(let lvl=0;lvl<NLVL;lvl++){
     const lay=L(lvl); let any=roofs.some(rf=>Math.floor(rf.z)===lvl);
     for(const row of lay.g) for(const ch of row) if(ch!==" "){ any=true; break; }
@@ -1012,12 +1092,12 @@ function updateDsl(){
     const mk=(fn)=>{ let has=false;
       const rows=lay.g.map((row,r)=>row.map((ch,c)=>{ const v=fn(ch,r+","+c); if(v!==".")has=true; return v; }).join(""));
       return has?rows:null; };
-    const hL=mk((ch,k)=>{ const e=lay.dim[k]; return e&&e.h&&e.h!==defH(ch)?String(e.h):"."; });
     const sL=mk((ch,k)=>lay.side[k]?SIDE_NAME[lay.side[k]]:".");
     const tL=mk((ch,k)=>lay.type[k]?String(lay.type[k]):".");
-    if(hL) out.push("layer h:",...hL);
+    const wL=mk((ch,k)=>lay.wmat[k]?String(lay.wmat[k]):".");
     if(sL) out.push("layer side:",...sL);
     if(tL) out.push("layer type:",...tL);
+    if(wL) out.push("layer wmat:",...wL);
   }
   for(const rf of roofs){
     const rs=rf.cells.map(rc=>rc[0]), cs2=rf.cells.map(rc=>rc[1]);
@@ -1029,7 +1109,7 @@ function updateDsl(){
 }
 function syncRoofChip(){ roofChip.textContent=ROOF_FORMS[roofFormIdx]+" "+ARROW_GLYPH[roofDir]; }
 function syncSteppers(){ colVal.textContent=COLS; rowVal.textContent=ROWS;
-  hVal.textContent=brushH; lvlVal.textContent=level; iVal.textContent=brushIncl;
+  hVal.textContent=brushHt[brushHt[tool]!==undefined?tool:"#"]; lvlVal.textContent=level; iVal.textContent=brushIncl;
   typeChip.textContent=TYPES[tool]?TYPES[tool][brushType[tool]||0]:"—"; syncRoofChip(); }
 function resizeGrid(dc,dr){
   pushUndo();
@@ -1064,8 +1144,9 @@ function undo(){ const p=undoStack.pop(); if(!p){ hint("nothing to undo"); retur
 copyBtn.onclick=()=>{ navigator.clipboard.writeText(dsl.value).then(()=>{
   copied.style.visibility="visible"; setTimeout(()=>copied.style.visibility="hidden",1800); }); };
 lroomBtn.onclick=()=>{ pushUndo(); loadLRoom(); render(); updateDsl(); };
-hMinus.onclick=()=>{ brushH=Math.max(1,brushH-1); hVal.textContent=brushH; };
-hPlus.onclick=()=>{ brushH=Math.min(H_MAX,brushH+1); hVal.textContent=brushH; };
+function brushHTool(){ return brushHt[tool]!==undefined ? tool : "#"; }
+hMinus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.max(1,brushHt[t]-1); syncSteppers(); };
+hPlus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.min(H_MAX,brushHt[t]+1); syncSteppers(); };
 iMinus.onclick=()=>{ brushIncl=Math.max(1,brushIncl-1); iVal.textContent=brushIncl; };
 iPlus.onclick=()=>{ brushIncl=Math.min(5,brushIncl+1); iVal.textContent=brushIncl; };
 lvlMinus.onclick=()=>setLevel(level-1); lvlPlus.onclick=()=>setLevel(level+1);
