@@ -60,9 +60,11 @@ Render backend options:
 - **Metrics**: silhouette IoU ≥ 0.9 vs source render; **door/window side correctness across 2 yaws** (the criterion that killed round-15's sheet); mark residue; Lucas style 1–5.
 - **Decision rule (pre-registered)**: R-arm beats A0 on side-correctness AND IoU with style ≥ (A0 − 1) → **promote lane R to P5 primary** (P-CTRL becomes a sibling conditioning arm, P-Kit its mesh backend — no longer fallbacks). Otherwise → kill-log entry with the sheets as evidence.
 
-## ☐ Lucas decides (then this memo collapses into SCENE-CREATION P5)
+## Lucas decided (2026-07-13)
 
-1. **Backend first pass**: python flat-shaded (recommended — cheapest falsification) vs Blender revival now.
-2. **Arms**: start with R-b + R-c as above? (a) deferred?
-3. **Restyle prompt shape**: whole-sheet single pass (style consistency across pieces) vs per-module calls (per-piece geometry, more calls) — whole-sheet recommended since sides no longer depend on the prompt.
-4. Confirm route stays **web app manual** (gen-inbox/gen-outbox contract; API key limit:0 stands).
+1. **Backend: python flat-shaded** — "even better". Original intent: leave lighting to Foundry, since we know by construction which sprite portions belong to which voxel faces (render step can emit per-face masks for free — the parked per-face-relighting item becomes tractable in THIS lane because segmentation exists at render time, no post-hoc problem). If Foundry-side lighting doesn't pan out, ignore it and keep whatever NB's stylization gives.
+2. **Arms: (b), (b+c), and (d)** — huge uncertainty, compare. ☐ OPEN: "(d)" is not in the a/b/c list above — needs clarification (real textures (a)? gray massing render with no texturing at all? b+c+a combined?).
+3. **Whole-sheet single pass** ✓.
+4. **Web app manual route** ✓.
+
+Next step once (d) is clarified: fold this memo into SCENE-CREATION P5 + ROADMAP-content-gen lane update, stage the test sheets (`design/feel-rig/stage_kit_paint.py` + guide renderer extension), Lucas runs the web-app batch.

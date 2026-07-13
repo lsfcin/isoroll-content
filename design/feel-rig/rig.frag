@@ -1,4 +1,4 @@
-<!-- isoroll painter feel rig — P6.5 UX prototype v15; true per-voxel scene (no base+height), paints layout DSL, renders real gray kit -->
+<!-- isoroll painter feel rig — P6.5 UX prototype v16; per-voxel scene + unified sloped groups (roofs/stairs), paints layout DSL, renders real gray kit -->
 <title>isoroll painter — feel rig</title>
 <style>
   :root{
@@ -81,7 +81,7 @@
 </style>
 
 <header>
-  <h1>isoroll <em>painter</em> — feel rig <span style="color:var(--dim);font-variant:normal;font-size:.72rem">P6.5 v15</span></h1>
+  <h1>isoroll <em>painter</em> — feel rig <span style="color:var(--dim);font-variant:normal;font-size:.72rem">P6.5 v16</span></h1>
   <div class="hud">
     <span>view <span id="viewChip">NW</span></span>
     <span>layer <span id="lvlChip">0</span></span>
@@ -91,7 +91,7 @@
     <span>win <b id="cWin">0</b></span>
     <span>stairs <b id="cStair">0</b></span>
     <span>floor <b id="cFloor">0</b></span>
-    <span>roofs <b id="cRoof">0</b></span>
+    <span>grps <b id="cRoof">0</b></span>
   </div>
 </header>
 
@@ -102,7 +102,7 @@
     <button data-tool=".">Floor <kbd>2</kbd></button>
     <button data-tool="D">Door <kbd>3</kbd></button>
     <button data-tool="W">Window <kbd>4</kbd></button>
-    <button data-tool="^" id="stairBtn">Stairs <span id="stairArrow">↑</span> <kbd>5</kbd></button>
+    <button data-tool="^" id="stairBtn">Stairs <span id="stairChip">solid ↑</span> <kbd>5</kbd></button>
     <button data-tool="R" id="roofBtn">Roof <span id="roofChip">shed1 ↑</span> <kbd>6</kbd></button>
     <button data-tool=" " class="danger">Erase <kbd>X</kbd></button>
     <div id="typeRow">type <b id="typeChip">stone</b> <span style="opacity:.7">(M)</span></div>
@@ -152,12 +152,13 @@
       <div id="copied">copied — DSL v2 parser lands with the memo</div>
     </div>
     <div>
-      <h2>v15 — TRUE voxels, no “base”</h2>
+      <h2>v16 — stairs = roofs = sloped groups</h2>
       <ul class="feel">
-        <li><b>The scene IS the voxel grid</b>: a 2-high wall is two independent <code>#</code> voxels; render merges contiguous voxels into stacks. Painting a floor mid-column substitutes exactly that voxel.</li>
-        <li><b>Openings are voxels</b>: door / window voxels substitute into the wall column at the slice; the height stepper sets how many (door default 2, window 1). [/] slides them through the wall, +/− grows/shrinks.</li>
-        <li><b>Stairs are wedge voxels on real <code>#</code> pedestals</b> — drag writes the pedestal voxels; the DSL shows them literally.</li>
-        <li><b>[/] moves the stack</b>: the slice voxel plus everything contiguously above rides along (any kind); landing substitutes. +/− on a wall grows/shrinks the column top, riders ride.</li>
+        <li><b>One concept</b>: roofs and stairs are both sloped-surface groups (cells, direction, slope 1–5 ft/cell, base z). Roof surface is smooth; stair surface is stepped — slope 3 = 3 one-foot steps per cell.</li>
+        <li><b>Stair types cycle on the button / F</b>: <code>solid</code> (supported down to base) or <code>thin</code> (floating stepped slab). R rotates direction — same as roofs.</li>
+        <li><b>DSL is slope-aware</b>: R/S voxels land in the level grid their surface actually passes through (a climbing shed marks rising levels), plus <code>roof:</code>/<code>stair:</code> parameter lines.</li>
+        <li><b>Floors have thickness</b>: height stepper on the floor tool = 0/1/2 ft slab; +/− edits a placed floor.</li>
+        <li>v15 base rules stand: voxel grid is the ground truth, painting substitutes, [/] moves stacks with riders.</li>
       </ul>
     </div>
     <div>
@@ -190,29 +191,31 @@ const ARROW_GLYPH={"^":"↑", ">":"→", "v":"↓", "<":"←"};
 const SIDE_NAME={"^":"N", ">":"E", "v":"S", "<":"W"};
 const DIAG_CW={"/":"\\", "\\":"/"};
 const ROOF_FORMS=["flat","shed1","shed2"];
+const STAIR_TYPES=["solid","thin"];
 const ENCLOSE=["none","edge","inset"];
-const TYPES={"#":["stone","wood"], ".":["stone","grass","road"], "D":["wood","iron"], "W":["bars","glass"], "^":["stone"]};
+const TYPES={"#":["stone","wood"], ".":["stone","grass","road"], "D":["wood","iron"], "W":["bars","glass"]};
 const TINT={grass:"rgba(70,140,60,.45)", road:"rgba(130,95,55,.5)", wood:"rgba(140,95,45,.28)",
   iron:"rgba(90,100,120,.6)", glass:"rgba(120,180,200,.5)"};
 const L_ROOM=["########","#......#","#......W","#......#","#..#####","#..#","#..#","#D##"];
 const VIEWS=["SW","SE","NE","NW"];
 let COLS=16, ROWS=14;
-let layers=[], roofs=[], roofSeq=1;          // layers[L] = {g, side, dim, type, wmat}
+let layers=[], grps=[], grpSeq=1;          // layers[L] = {g, side, dim, type, wmat}
 let viewIdx=3, topView=false, tool="#", stairDir="^", undoStack=[], scopeGroup=false;
-let brushHt={"#":2,"D":2,"W":1}, brushIncl=5, roofFormIdx=1, roofDir="^", level=0;
+let brushHt={"#":2,"D":2,"W":1,".":0}, brushIncl=5, roofFormIdx=1, roofDir="^", level=0;
+let stairTypeIdx=0;                  /* stair brush type: solid/thin (direction = stairDir) */
 let viewWin=2, fadeOp=0.2;              // opaque window above the slice (voxels) + opacity beyond it
 function alphaFor(vz){ if(vz<level) return 1;              // below the plane: the sheet itself occludes
   return (vz-level)<viewWin ? 1 : fadeOp; }                // win=1 -> exactly the plane's voxel opaque
-const brushType={"#":0,".":0,"D":0,"W":0,"^":0};
+const brushType={"#":0,".":0,"D":0,"W":0};
 const H_MAX=6, GHOST=0.2;
 const sprites={};
 
 function blankGrid(r,c){ return Array.from({length:r},()=>Array(c).fill(" ")); }
-function blankLayer(){ return {g:blankGrid(ROWS,COLS), side:{}, type:{}, wmat:{}}; }
+function blankLayer(){ return {g:blankGrid(ROWS,COLS), side:{}, type:{}, wmat:{}, fh:{}}; }
 function initLayers(){ layers=Array.from({length:NLVL},()=>blankLayer()); }
 function L(n){ return layers[n]; }
 function loadLRoom(){
-  initLayers(); roofs=[];
+  initLayers(); grps=[];
   const r0=Math.floor((ROWS-L_ROOM.length)/2), c0=Math.floor((COLS-8)/2);
   L_ROOM.forEach((row,r)=>{ [...row].forEach((ch,c)=>{
     const br=r0+r, bcC=c0+c, key=br+","+bcC;
@@ -222,23 +225,23 @@ function loadLRoom(){
     else if(ch==="."){ L(0).g[br][bcC]="."; }
   }); });
 }
-function snapshot(){ return {ly:JSON.stringify(layers.map(l=>({g:l.g.map(r=>r.join("")),s:l.side,t:l.type,w:l.wmat}))),
-  rf:JSON.stringify(roofs), C:COLS, R:ROWS}; }
+function snapshot(){ return {ly:JSON.stringify(layers.map(l=>({g:l.g.map(r=>r.join("")),s:l.side,t:l.type,w:l.wmat,f:l.fh}))),
+  rf:JSON.stringify(grps), C:COLS, R:ROWS}; }
 function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>200) undoStack.shift(); }
 function restore(st){ COLS=st.C; ROWS=st.R;
-  layers=JSON.parse(st.ly).map(l=>({g:l.g.map(r=>r.split("")), side:l.s, type:l.t, wmat:l.w}));
-  roofs=JSON.parse(st.rf); syncSteppers(); }
+  layers=JSON.parse(st.ly).map(l=>({g:l.g.map(r=>r.split("")), side:l.s, type:l.t, wmat:l.w, fh:l.f||{}}));
+  grps=JSON.parse(st.rf); syncSteppers(); }
 /* ---------- TRUE voxel model: each layer cell IS one voxel; no base+height ---------- */
 function vox(l,br,bc){ return L(l).g[br][bc]; }
 function isOcc(l,br,bc){ return vox(l,br,bc)!==" "; }
 function clearVox(l,br,bc){ const lay=L(l); lay.g[br][bc]=" "; const key=br+","+bc;
-  delete lay.side[key]; delete lay.type[key]; delete lay.wmat[key]; }
+  delete lay.side[key]; delete lay.type[key]; delete lay.wmat[key]; delete lay.fh[key]; }
 function setVox(l,br,bc,ch,tIdx){ clearVox(l,br,bc); L(l).g[br][bc]=ch;
   if(tIdx) L(l).type[br+","+bc]=tIdx; }
 function copyVox(fromL,toL,br,bc){ const A=L(fromL), B=L(toL), key=br+","+bc;
   clearVox(toL,br,bc);
   B.g[br][bc]=A.g[br][bc];
-  for(const m of ["side","type","wmat"]) if(A[m][key]!==undefined) B[m][key]=A[m][key];
+  for(const m of ["side","type","wmat","fh"]) if(A[m][key]!==undefined) B[m][key]=A[m][key];
   clearVox(fromL,br,bc); }
 function stackTop(l0,br,bc){ let b=l0; while(b+1<NLVL&&isOcc(b+1,br,bc)) b++; return b; }
 function moveStack(l0,br,bc,dz){   /* slice voxel + contiguous voxels above ride (any kind); landing substitutes */
@@ -357,18 +360,6 @@ function drawBoxP(u0,v0,l,d,z0,h,lw,strokeSides){
   quad([P(u0,v0+d,z0+h),P(u0+l,v0+d,z0+h),P(u0+l,v0+d,z0),P(u0,v0+d,z0)],FACE.long,strokeSides,lw);
   quad([P(u0+l,v0,z0+h),P(u0+l,v0+d,z0+h),P(u0+l,v0+d,z0),P(u0+l,v0,z0)],FACE.cap,strokeSides,lw);
 }
-function drawStair(u,v,ch,h,z,lw){
-  const base=h-1;
-  if(base>0) drawBoxP(u,v,1,1,z,base,lw,true);
-  const z0=z+base, STEPS=5, a=ASCENT[ch], du=a[0], dv=a[1], slices=[];
-  for(let i=0;i<STEPS;i++){
-    const t=(i+0.5)/STEPS, hh=(i+1)/STEPS;
-    if(du!==0){ const su=u+(du>0?t-0.5/STEPS:1-t-0.5/STEPS); slices.push([su,v,1/STEPS,1,hh]); }
-    else{ const sv=v+(dv>0?t-0.5/STEPS:1-t-0.5/STEPS); slices.push([u,sv,1,1/STEPS,hh]); }
-  }
-  slices.sort((p,q2)=>(p[0]+p[1])-(q2[0]+q2[1]));
-  for(const s of slices) drawBoxP(s[0],s[1],s[2],s[3],z0,s[4],lw,false);
-}
 function diagSolid(g,r,c,ch){
   const M=g.length,N=g[0].length;
   const W_=(rr,cc)=>rr>=0&&rr<M&&cc>=0&&cc<N&&WALLISH.has(g[rr][cc]);
@@ -400,10 +391,14 @@ function derivedDiagsOf(g,lvl){   /* per-voxel: smoothing derives independently 
   return out;
 }
 
-/* ---------- roofs (v10 model, unchanged) ---------- */
-function roofAtBase(br,bc){ for(let i=roofs.length-1;i>=0;i--)
-  if(roofs[i].cells.some(rc=>rc[0]===br&&rc[1]===bc)) return roofs[i]; return null; }
-function roofViewData(rf){
+/* ---------- sloped-surface GROUPS: roofs and stairs share one model ----------
+   {kind:"roof"|"stair", cells, form, dir, incl(ft/cell), z, enclose/sideMode(roof only)}
+   roof forms: flat/shed1/shed2 (smooth surface). stair types: solid/thin (stepped shed1 surface). */
+function grpAtBase(br,bc){ for(let i=grps.length-1;i>=0;i--)
+  if(grps[i].cells.some(rc=>rc[0]===br&&rc[1]===bc)) return grps[i]; return null; }
+function grpForm(rf){ return rf.kind==="stair" ? "shed1" : ROOF_FORMS[rf.form]; }
+function grpFormName(rf){ return rf.kind==="stair" ? STAIR_TYPES[rf.form] : ROOF_FORMS[rf.form]; }
+function grpViewData(rf){
   const cellsV=rf.cells.map(rc=>baseCellToView(rc[0],rc[1]));
   const dir=rotArrow(rf.dir), rise=rf.incl/5;
   const aOf=(u,v)=> dir===">"?u : dir==="<"?-u : dir==="v"?v : -v;
@@ -411,7 +406,7 @@ function roofViewData(rf){
   for(const rc of cellsV){ for(const d of [0,1]){
     const a = (dir===">"||dir==="<") ? aOf(rc[1]+d,0) : aOf(0,rc[0]+d);
     aLow=Math.min(aLow,a); aHigh=Math.max(aHigh,a); } }
-  const form=ROOF_FORMS[rf.form];
+  const form=grpForm(rf);
   const hAt=(u,v)=>{ if(form==="flat") return rf.z;
     const a=aOf(u,v);
     if(form==="shed1") return rf.z + (a-aLow)*rise;
@@ -419,58 +414,34 @@ function roofViewData(rf){
   const set=new Set(cellsV.map(rc=>rc[0]+","+rc[1]));
   return {cellsV,dir,rise,hAt,set,aOf,aLow,aHigh,form};
 }
+function grpBaseData(rf){                /* base-frame twin of grpViewData — for DSL export + voxel claiming */
+  const dir=rf.dir, rise=rf.incl/5;
+  const aOf=(r,c)=> dir===">"?c : dir==="<"?-c : dir==="v"?r : -r;
+  let aLow=1e9,aHigh=-1e9;
+  for(const rc of rf.cells) for(const d of [0,1]){
+    const a=(dir===">"||dir==="<") ? aOf(0,rc[1]+d) : aOf(rc[0]+d,0);
+    aLow=Math.min(aLow,a); aHigh=Math.max(aHigh,a); }
+  const form=grpForm(rf);
+  const hAt=(r,c)=>{ if(form==="flat") return rf.z;
+    const a=aOf(r,c);
+    if(form==="shed1") return rf.z + (a-aLow)*rise;
+    return rf.z + Math.min(a-aLow, aHigh-a)*rise; };
+  return {aOf,aLow,aHigh,rise,form,hAt};
+}
+function grpCellVoxels(B,rf,br,bc){      /* [voxLo,voxHi) the surface passes through over this cell */
+  const hs=[B.hAt(br,bc),B.hAt(br+1,bc),B.hAt(br,bc+1),B.hAt(br+1,bc+1)];
+  const lo=Math.min(...hs), hi=Math.max(...hs);
+  const voxLo=Math.max(0,Math.floor(lo+1e-9));
+  const voxHi=Math.min(NLVL,Math.max(voxLo+1,Math.ceil(hi-1e-9)));
+  return [voxLo,voxHi];
+}
 function modeOf(rf,baseSide){ const m=rf.sideMode&&rf.sideMode[baseSide];
   return m!==undefined ? m : (rf.enclose||0); }
-function roofRectView(rf){
+function grpRectView(rf){
   const rs=[],cs2=[];
   for(const rc of rf.cells){ const vc=baseCellToView(rc[0],rc[1]); rs.push(vc[0]); cs2.push(vc[1]); }
   return {r0:Math.min(...rs), r1:Math.max(...rs), c0:Math.min(...cs2), c1:Math.max(...cs2)};
 }
-function drawRoofGroup(rf,lw,alpha){
-  const G=roofViewData(rf);
-  ctx.globalAlpha=alpha;
-  const R=roofRectView(rf);
-  const mo=(vs)=>modeOf(rf,unrotArrow(vs));
-  const off=(vs)=>mo(vs)===2?1:0;
-  const ridgeXing=(a0,a1)=>{ const aStar=(G.aLow+G.aHigh)/2;
-    return (G.form==="shed2"&&a0<aStar-1e-9&&a1>aStar+1e-9)?aStar:null; };
-  const skirtRun=(pts,color)=>{
-    for(let i=0;i<pts.length-1;i++){
-      const A=pts[i],B=pts[i+1];
-      quad([proj(A[0],A[1],rf.z),proj(B[0],B[1],rf.z),
-            proj(B[0],B[1],G.hAt(B[0],B[1])),proj(A[0],A[1],G.hAt(A[0],A[1]))],color,true,lw); } };
-  if(mo("v")>0){ const y=R.r1+1-off("v"), x0=R.c0+off("<"), x1=R.c1+1-off(">");
-    if(x1>x0){ const pts=[[x0,y]];
-      const xr=(G.dir===">"||G.dir==="<")? ridgeXing(Math.min(G.aOf(x0,y),G.aOf(x1,y)),Math.max(G.aOf(x0,y),G.aOf(x1,y))):null;
-      if(xr!==null) pts.push([G.dir===">"?xr:-xr, y]);
-      pts.push([x1,y]); skirtRun(pts,ROOF_SKIRT); } }
-  if(mo(">")>0){ const x=R.c1+1-off(">"), y0=R.r0+off("^"), y1=R.r1+1-off("v");
-    if(y1>y0){ const pts=[[x,y0]];
-      const yr=(G.dir==="^"||G.dir==="v")? ridgeXing(Math.min(G.aOf(x,y0),G.aOf(x,y1)),Math.max(G.aOf(x,y0),G.aOf(x,y1))):null;
-      if(yr!==null) pts.push([x, G.dir==="v"?yr:-yr]);
-      pts.push([x,y1]); skirtRun(pts,FACE.cap); } }
-  const cellsSorted=[...G.cellsV].sort((a,b)=>(a[1]+a[0])-(b[1]+b[0]));
-  const aStar=(G.aLow+G.aHigh)/2;
-  for(const rc of cellsSorted){ const v=rc[0], u=rc[1];
-    const corners=[[u,v],[u+1,v],[u+1,v+1],[u,v+1]];
-    const cellA=corners.map(p=>G.aOf(p[0],p[1]));
-    const crosses = G.form==="shed2" && Math.min(...cellA)<aStar-1e-9 && Math.max(...cellA)>aStar+1e-9;
-    const shade=(pts)=>{ const h0=G.hAt(pts[0][0],pts[0][1]);
-      const gradTo=G.hAt(pts[0][0]+0.01,pts[0][1]+0.01)-h0;
-      return gradTo<-1e-9?ROOF_FAR:ROOF_NEAR; };
-    const drawPatch=(pts)=>{ quad(pts.map(p=>proj(p[0],p[1],G.hAt(p[0],p[1]))), shade(pts), true, lw); };
-    if(!crosses){ drawPatch(corners); }
-    else{ const horiz=(G.dir==="^"||G.dir==="v");
-      if(horiz){ const vr = G.dir==="v"? aStar : -aStar;
-        drawPatch([[u,v],[u+1,v],[u+1,vr],[u,vr]]);
-        drawPatch([[u,vr],[u+1,vr],[u+1,v+1],[u,v+1]]); }
-      else{ const ur = G.dir===">"? aStar : -aStar;
-        drawPatch([[u,v],[ur,v],[ur,v+1],[u,v+1]]);
-        drawPatch([[ur,v],[u+1,v],[u+1,v+1],[ur,v+1]]); } }
-  }
-  ctx.globalAlpha=1;
-}
-
 /* ---------- iso clip paths: the slice cuts along iso lines, per cell ---------- */
 const BIG=1e6;
 function clipBelow(u,v){ const Pl=proj(u,v+1,level), Pb=proj(u,v,level), Pr=proj(u+1,v,level);
@@ -508,8 +479,8 @@ function render(){
     const flush=()=>{ if(run){ cells.push(run); run=null; } };
     for(let lvl=0;lvl<NLVL;lvl++){
       const ch=vgrids[lvl][r][c], dd=derived.get(r+","+c+","+lvl);
-      if(ch===".") cells.push({u:c,v:r,kind:"floor",ch:".",zBot:lvl,zTop:lvl,lvl});
-      if(STAIRS.has(ch)){ flush(); cells.push({u:c,v:r,kind:"wedge",ch,zBot:lvl,zTop:lvl+1,lvl}); continue; }
+      if(ch==="."){ const bcF=viewCellToBase(r,c), f=L(lvl).fh[bcF[0]+","+bcF[1]]||0;
+        cells.push({u:c,v:r,kind:"floor",ch:".",zBot:lvl,zTop:lvl+f*0.2,lvl}); }
       let fam=null, dch=null, dsolid=null;
       if(WALLISH.has(ch)) fam="wall";
       else if(DIAG.has(ch)){ dch=ch; dsolid=diagSolid(vgrids[lvl],r,c,ch); fam="diag:"+ch+":"+(dsolid||""); }
@@ -522,10 +493,14 @@ function render(){
     }
     flush();
   }
-  for(const rf of roofs){
-    rfData.set(rf, {G:roofViewData(rf), R:roofRectView(rf)});
-    for(const rc of rf.cells){ const vc=baseCellToView(rc[0],rc[1]);
-      cells.push({u:vc[1],v:vc[0],kind:"ROOF",ch:"ROOF",zBot:Math.floor(rf.z),lvl:Math.floor(rf.z),rf}); } }
+  for(const rf of grps){
+    const G=grpViewData(rf);
+    rfData.set(rf, {G, R:grpRectView(rf)});
+    for(const rc of rf.cells){ const vc=baseCellToView(rc[0],rc[1]), gu=vc[1], gv=vc[0];
+      const hs=[G.hAt(gu,gv),G.hAt(gu+1,gv),G.hAt(gu,gv+1),G.hAt(gu+1,gv+1)];
+      const lo=(rf.kind==="stair"&&STAIR_TYPES[rf.form]==="solid") ? rf.z : Math.min(...hs);
+      cells.push({u:gu,v:gv,kind:"GRP",ch:"GRP",zBot:Math.floor(lo+1e-9),zTopf:Math.max(...hs)+0.01,
+        lvl:Math.floor(lo+1e-9),rf}); } }
   cells.sort((a,b)=>((a.u+a.v)-(b.u+b.v)) || (a.zBot-b.zBot) || ((a.kind!=="floor"?1:0)-(b.kind!=="floor"?1:0)));
 
   const hoverBB = hover? {x:proj(hover[1],hover[0],level)[0]-104,y:proj(hover[1],hover[0],level)[1]-96,w:208,h:160} : null;
@@ -533,16 +508,12 @@ function render(){
   const badges=[];
 
   function pieceTopBot(cell){
-    if(cell.kind==="ROOF"){ const {G}=rfData.get(cell.rf);
-      const tops=[[cell.u,cell.v],[cell.u+1,cell.v],[cell.u+1,cell.v+1],[cell.u,cell.v+1]]
-        .map(p=>G.hAt(p[0],p[1]));
-      return [cell.rf.z, Math.max(...tops)+0.01]; }
+    if(cell.kind==="GRP") return [cell.zBot, cell.zTopf];
     return [cell.zBot, cell.zTop]; }
 
-  function drawRoofCell(rf,u,v,lw,extra){
-    const {G,R}=rfData.get(rf);
-    const cellTop=Math.max(G.hAt(u,v),G.hAt(u+1,v),G.hAt(u+1,v+1),G.hAt(u,v+1));
-    const zB=Math.floor(rf.z), nv=Math.max(1,Math.ceil(cellTop-zB));
+  function drawGrpCell(cell,lw,extra){
+    const rf=cell.rf, u=cell.u, v=cell.v, {G,R}=rfData.get(rf);
+    const zB=cell.zBot, nv=Math.max(1,Math.ceil(cell.zTopf-zB));
     const runs=[]; let rs=0, ra=alphaFor(zB);
     for(let j=1;j<nv;j++){ const a2=alphaFor(zB+j);
       if(a2!==ra){ runs.push({lo:rs,hi:j,a:ra}); rs=j; ra=a2; } }
@@ -550,8 +521,29 @@ function render(){
     for(const run of runs){ const aR=run.a*extra; if(aR<=0) continue;
       ctx.save();
       if(runs.length>1) clipBand(u,v,zB+run.lo,zB+run.hi);
-      drawRoofCellInner(rf,u,v,lw,aR,G,R);
+      if(rf.kind==="stair") drawStairCellInner(rf,u,v,lw,aR,G);
+      else drawRoofCellInner(rf,u,v,lw,aR,G,R);
       ctx.restore(); }
+  }
+  function drawStairCellInner(rf,u,v,lw,a,G){   /* stepped shed1 surface: incl steps/cell, 1ft (0.2 voxel) each */
+    ctx.globalAlpha=a;
+    const steps=Math.max(1,Math.round(rf.incl));
+    const hLo=Math.min(G.hAt(u,v),G.hAt(u+1,v),G.hAt(u,v+1),G.hAt(u+1,v+1));
+    const solid=STAIR_TYPES[rf.form]==="solid";
+    const slices=[];
+    for(let i=0;i<steps;i++){
+      const t0=i/steps, t1=(i+1)/steps, hi=hLo+(i+1)*0.2;
+      let u0=u, v0=v, l=1, d=1;
+      if(G.dir===">"){ u0=u+t0; l=t1-t0; }
+      else if(G.dir==="<"){ u0=u+1-t1; l=t1-t0; }
+      else if(G.dir==="v"){ v0=v+t0; d=t1-t0; }
+      else { v0=v+1-t1; d=t1-t0; }
+      const zb = solid ? rf.z : hi-0.2;
+      slices.push([u0,v0,l,d,zb,hi-zb]);
+    }
+    slices.sort((p,q)=>(p[0]+p[1])-(q[0]+q[1]));
+    for(const s of slices) drawBoxP(s[0],s[1],s[2],s[3],s[4],s[5],lw,false);
+    ctx.globalAlpha=1;
   }
   function drawRoofCellInner(rf,u,v,lw,a,G,R){
     ctx.globalAlpha=a;
@@ -605,7 +597,7 @@ function render(){
     if(hoverBB && (cell.u+cell.v)>hoverSum &&
        rectsOverlap({x:proj(cell.u,cell.v,0)[0]-104,y:proj(cell.u,cell.v,0)[1]-296-(zTop-3)*UNIT,w:208,h:400},hoverBB))
       extra=GHOST;
-    if(cell.kind==="ROOF"){ drawRoofCell(cell.rf,cell.u,cell.v,lw,extra); ctx.restore(); return; }
+    if(cell.kind==="GRP"){ drawGrpCell(cell,lw,extra); ctx.restore(); return; }
     const px=proj(cell.u,cell.v,0);
     let subs=null;                                     /* opening sub-runs inside a wall run */
     if(cell.kind==="wall"){
@@ -620,12 +612,14 @@ function render(){
     }
     const drawPiece=()=>{
       if(cell.kind==="floor"){
-        const py=proj(cell.u,cell.v,cell.lvl);
-        ctx.drawImage(sprites.floor,py[0]-104,py[1]-8);
-        const tn=TYPES["."][L(cell.lvl).type[key]||0];
-        if(tn&&TINT[tn]) fillPoly(cellDiamond(cell.u,cell.v,cell.lvl),TINT[tn]);
+        const f=L(cell.lvl).fh[key]||0, tn=TYPES["."][L(cell.lvl).type[key]||0];
+        if(f>0){ drawBoxP(cell.u,cell.v,1,1,cell.lvl,f*0.2,lw,true);
+          if(tn&&TINT[tn]) fillPoly(cellDiamond(cell.u,cell.v,cell.lvl+f*0.2),TINT[tn]); }
+        else{
+          const py=proj(cell.u,cell.v,cell.lvl);
+          ctx.drawImage(sprites.floor,py[0]-104,py[1]-8);
+          if(tn&&TINT[tn]) fillPoly(cellDiamond(cell.u,cell.v,cell.lvl),TINT[tn]); }
       }
-      else if(cell.kind==="wedge") drawStair(cell.u,cell.v,cell.ch,1,cell.zBot,lw);
       else if(cell.kind==="diag")
         drawDiagVox(cell.u,cell.v,cell.ch,cell.solid,cell.zTop-cell.zBot,cell.zBot,lw);
       else{                                            /* wall run: one stack, per-voxel band tints, merged openings */
@@ -692,7 +686,7 @@ function render(){
       strokePoly(cellDiamond(+rc[1],+rc[0],level),col,2.5*lw); } }
   if(hover){
     const bcH=viewCellToBase(hover[0],hover[1]);
-    const rfH0=roofAtBase(bcH[0],bcH[1]);
+    const rfH0=grpAtBase(bcH[0],bcH[1]);
     const rfH=(rfH0&&Math.floor(rfH0.z)===level)?rfH0:null;
     const gH=vgrids[level];
     if(scopeGroup){
@@ -740,21 +734,18 @@ function renderTop(W,H){
     for(const dcell of derivedDiagsOf(g,lvl)) topDiagStroke(dx,dy,cs,dcell.v,dcell.u,dcell.ch,dcell.solid);
     for(let r=0;r<M;r++)for(let c=0;c<N;c++){ const ch=g[r][c]; if(ch===" ")continue;
       if(DIAG.has(ch)){ topDiagStroke(dx,dy,cs,r,c,ch,diagSolid(g,r,c,ch)); continue; }
-      ctx.fillStyle=STAIRS.has(ch)?FACE.top:colors[ch];
-      ctx.fillRect(dx+c*cs+1,dy+r*cs+1,cs-2,cs-2);
-      if(STAIRS.has(ch)){ ctx.fillStyle=FACE.cap; ctx.font=(cs*0.6)+"px ui-monospace,monospace";
-        ctx.textAlign="center"; ctx.textBaseline="middle";
-        ctx.fillText(ARROW_GLYPH[ch],dx+(c+0.5)*cs,dy+(r+0.5)*cs); } }
+      ctx.fillStyle=colors[ch];
+      ctx.fillRect(dx+c*cs+1,dy+r*cs+1,cs-2,cs-2); }
     ctx.globalAlpha=1;
   }
-  for(const rf of roofs){
+  for(const rf of grps){
     ctx.globalAlpha = rf.z>level+1e-9 ? 0.15 : 0.6;
     for(const rc of rf.cells){ const vc=baseCellToView(rc[0],rc[1]);
       ctx.fillStyle="#c9c9c9"; ctx.fillRect(dx+vc[1]*cs+2,dy+vc[0]*cs+2,cs-4,cs-4); }
     const c0=rf.cells[Math.floor(rf.cells.length/2)], vc0=baseCellToView(c0[0],c0[1]);
     ctx.fillStyle="#3a3a40"; ctx.font=(cs*0.45)+"px ui-monospace,monospace";
     ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText(ROOF_FORMS[rf.form][0]+ARROW_GLYPH[rotArrow(rf.dir)],dx+(vc0[1]+0.5)*cs,dy+(vc0[0]+0.5)*cs);
+    ctx.fillText((rf.kind==="stair"?"S":grpFormName(rf)[0])+ARROW_GLYPH[rotArrow(rf.dir)],dx+(vc0[1]+0.5)*cs,dy+(vc0[0]+0.5)*cs);
     ctx.globalAlpha=1; }
   ctx.strokeStyle="rgba(128,128,128,.3)";
   for(let r=0;r<=M;r++){ctx.beginPath();ctx.moveTo(dx,dy+r*cs);ctx.lineTo(dx+N*cs,dy+r*cs);ctx.stroke();}
@@ -827,35 +818,38 @@ function commitStroke(){
   const baseCells=[...preview].map(k=>{ const rc=k.split(",").map(Number);
     return viewCellToBase(rc[0],rc[1]); });
   const baseSet=new Set(baseCells.map(rc=>rc[0]+","+rc[1]));
-  const evictRoofs=(zLo,zHi)=>{ roofs=roofs.filter(rf=>{ const rz=Math.floor(rf.z);
-    return rz<zLo||rz>=zHi || !rf.cells.some(rc=>baseSet.has(rc[0]+","+rc[1])); }); };
+  const evictGrps=(zLo,zHi)=>{ grps=grps.filter(rf=>{   /* span-aware: a group dies when the stroke hits ITS voxels */
+    if(!rf.cells.some(rc=>baseSet.has(rc[0]+","+rc[1]))) return true;
+    const B=grpBaseData(rf);
+    return !rf.cells.some(rc=>{ if(!baseSet.has(rc[0]+","+rc[1])) return false;
+      const [vl,vh]=grpCellVoxels(B,rf,rc[0],rc[1]);
+      return vl<zHi&&vh>zLo; }); }); };
   if(previewErase){
-    const before=roofs.length; evictRoofs(level,level+1);
-    let cleared=roofs.length<before;
+    const before=grps.length; evictGrps(level,level+1);
+    let cleared=grps.length<before;
     for(const rc of baseCells) if(isOcc(level,rc[0],rc[1])){ clearVox(level,rc[0],rc[1]); cleared=true; }
     if(!cleared) hint("layer "+level+" is empty here — PgUp/Dn to change layer");
   }
-  else if(tool==="R"){
-    evictRoofs(level,level+1);
-    for(const rc of baseCells) clearVox(level,rc[0],rc[1]);   /* roofs claim their voxels */
-    roofs.push({id:roofSeq++, cells:baseCells, form:roofFormIdx, dir:unrotArrow(roofDir),
-      incl:brushIncl, z: level, enclose:0});
-  }
-  else if(tool==="^"){
-    const baseArrow=unrotArrow(stairDir), asc=ASCENT[stairDir];
-    const cellsArr=[...preview].map(k=>k.split(",").map(Number));
-    const along = asc[0]!==0 ? cellsArr.map(rc=>asc[0]>0?rc[1]:-rc[1]) : cellsArr.map(rc=>asc[1]>0?rc[0]:-rc[0]);
-    const lo=Math.min(...along), hi=Math.max(...along);
-    evictRoofs(level,level+(hi-lo)+2);
-    cellsArr.forEach((rc,i)=>{ const rise=along[i]-lo, bc=viewCellToBase(rc[0],rc[1]);
-      for(let j=0;j<rise&&level+j<NLVL;j++) setVox(level+j,bc[0],bc[1],"#",brushType["^"]);  /* pedestal = real wall voxels */
-      if(level+rise<NLVL) setVox(level+rise,bc[0],bc[1],baseArrow,brushType["^"]); });
+  else if(tool==="R"||tool==="^"){                      /* roofs and stairs: same sloped-group placement */
+    const nrf = tool==="R"
+      ? {id:grpSeq++, kind:"roof", cells:baseCells, form:roofFormIdx, dir:unrotArrow(roofDir), incl:brushIncl, z:level, enclose:0}
+      : {id:grpSeq++, kind:"stair", cells:baseCells, form:stairTypeIdx, dir:unrotArrow(stairDir), incl:brushIncl, z:level};
+    const NB=grpBaseData(nrf);
+    grps=grps.filter(rf=>{ const B=grpBaseData(rf);     /* replace groups whose voxels overlap the new one */
+      return !rf.cells.some(rc=>{ if(!baseSet.has(rc[0]+","+rc[1])) return false;
+        const [al,ah]=grpCellVoxels(B,rf,rc[0],rc[1]);
+        const [bl,bh]=grpCellVoxels(NB,nrf,rc[0],rc[1]);
+        return al<bh&&ah>bl; }); });
+    for(const rc of nrf.cells){ const [vl,vh]=grpCellVoxels(NB,nrf,rc[0],rc[1]);
+      for(let l=vl;l<vh;l++) clearVox(l,rc[0],rc[1]); } /* groups claim the voxels their surface passes through */
+    grps.push(nrf);
   }
   else{
     const hN = tool==="#"?brushHt["#"]:1;
-    evictRoofs(level,level+hN);
+    evictGrps(level,level+hN);
     for(const rc of baseCells){
-      if(tool===".") setVox(level,rc[0],rc[1],".",brushType["."]);
+      if(tool==="."){ setVox(level,rc[0],rc[1],".",brushType["."]);
+        if(brushHt["."]>0) L(level).fh[rc[0]+","+rc[1]]=brushHt["."]; }
       else for(let j=0;j<hN&&level+j<NLVL;j++) setVox(level+j,rc[0],rc[1],"#",brushType["#"]);
     }
   }
@@ -879,27 +873,27 @@ function clickPlace(cell){
   }
   render(); updateDsl();
 }
-function hoveredRoof(){ if(!hover) return null; const bc=viewCellToBase(hover[0],hover[1]);
-  const rf=roofAtBase(bc[0],bc[1]);
+function hoveredGrp(){ if(!hover) return null; const bc=viewCellToBase(hover[0],hover[1]);
+  const rf=grpAtBase(bc[0],bc[1]);
   return (rf && Math.floor(rf.z)===level) ? rf : null;
 }
 function roofEdgePick(){
-  const rf=hoveredRoof(); if(!rf) return null;
+  const rf=hoveredGrp(); if(!rf||rf.kind!=="roof") return null;   /* enclosure/skirts are roof-only */
   if(!hover||!hoverFrac) return {rf,side:null};
   const side=nearestSide(hoverFrac);
   const dist=Math.min(hoverFrac[1],1-hoverFrac[0],1-hoverFrac[1],hoverFrac[0]);
   const d=ASCENT[side], nb=[hover[0]+d[1],hover[1]+d[0]];
   const nbBase=(nb[0]>=0&&nb[1]>=0)?viewCellToBase(nb[0],nb[1]):null;
-  const outside=!nbBase||roofAtBase(nbBase[0],nbBase[1])!==rf;
+  const outside=!nbBase||grpAtBase(nbBase[0],nbBase[1])!==rf;
   return {rf, side:(dist<0.3&&outside)?side:null};
 }
 function adjustHovered(dz,isElev){
   if(!hover) return;
-  const rf=hoveredRoof();
+  const rf=hoveredGrp();
   if(rf){ pushUndo();
-    if(isElev){ rf.z=Math.max(0,Math.min(NLVL-1, rf.z+dz)); hint("roof base z="+rf.z); }
+    if(isElev){ rf.z=Math.max(0,Math.min(NLVL-1, rf.z+dz)); hint(rf.kind+" base z="+rf.z); }
     else{ rf.incl=Math.max(1,Math.min(5,rf.incl+dz)); brushIncl=rf.incl; iVal.textContent=brushIncl;
-      hint("roof slope "+rf.incl+" ft/cell (brush follows)"); }
+      hint(rf.kind+" slope "+rf.incl+" ft/cell = "+(rf.kind==="stair"?rf.incl+" steps/cell":"rise")+" (brush follows)"); }
     render(); updateDsl(); return; }
   const bcH=viewCellToBase(hover[0],hover[1]), key=bcH[0]+","+bcH[1];
   const ch=vox(level,bcH[0],bcH[1]);
@@ -939,9 +933,11 @@ function adjustHovered(dz,isElev){
     let shownH=null;
     for(const rc of targets){
       const b2=viewCellToBase(rc[0],rc[1]), k2=b2[0]+","+b2[1], c2=vox(level,b2[0],b2[1]);
-      if(STAIRS.has(c2)){                  /* wedge rise: pedestal voxel fills in / is consumed */
-        if(dz>0){ if(moveStack(level,b2[0],b2[1],1)) setVox(level,b2[0],b2[1],"#",L(level+1).type[k2]||0); }
-        else if(level>0&&vox(level-1,b2[0],b2[1])==="#") moveStack(level,b2[0],b2[1],-1);
+      if(c2==="."){                        /* floor slab thickness: 0 / 1ft / 2ft */
+        const lay=L(level), nf=Math.min(2,Math.max(0,(lay.fh[k2]||0)+dz));
+        if(nf) lay.fh[k2]=nf; else delete lay.fh[k2];
+        if(rc[0]===hover[0]&&rc[1]===hover[1]){ brushHt["."]=nf; syncSteppers();
+          hint("floor slab "+nf+"ft (brush follows)"); }
         continue; }
       const isDg=DIAG.has(c2);
       if(!(c2==="#"||isDg)) continue;
@@ -969,21 +965,22 @@ function adjustHovered(dz,isElev){
   render(); updateDsl();
 }
 function rotateAtHover(){
-  const rf=hoveredRoof();
+  const rf=hoveredGrp();
   if(rf){ pushUndo(); rf.dir=ARROW_CW[rf.dir];
-    hint("roof direction "+ARROW_GLYPH[rotArrow(rf.dir)]); render(); updateDsl(); return; }
-  if(!hover){ if(tool==="R"){ roofDir=ARROW_CW[roofDir]; syncRoofChip();
-      hint("roof brush direction "+ARROW_GLYPH[roofDir]); } return; }
+    hint(rf.kind+" direction "+ARROW_GLYPH[rotArrow(rf.dir)]); render(); updateDsl(); return; }
+  const spinBrush=()=>{ if(tool==="R"){ roofDir=ARROW_CW[roofDir]; syncGrpChips();
+      hint("roof brush direction "+ARROW_GLYPH[roofDir]); return true; }
+    if(tool==="^"){ stairDir=ARROW_CW[stairDir]; syncGrpChips();
+      hint("stair brush direction "+ARROW_GLYPH[stairDir]); return true; }
+    return false; };
+  if(!hover){ spinBrush(); return; }
   const g=viewGridOf(level), ch=g[hover[0]][hover[1]];
-  if(tool==="R"&&ch===" "){ roofDir=ARROW_CW[roofDir]; syncRoofChip();
-    hint("roof brush direction "+ARROW_GLYPH[roofDir]); return; }
+  if(ch===" "&&spinBrush()) return;
   if(!familyOf(ch)) return;
-  const lay=L(level);
   if(!scopeGroup){
     const bc=viewCellToBase(hover[0],hover[1]);
-    const cur=lay.g[bc[0]][bc[1]];
-    if(STAIRS.has(cur)){ pushUndo(); lay.g[bc[0]][bc[1]]=ARROW_CW[cur]; render(); updateDsl(); }
-    else if(DIAG.has(cur)){ pushUndo(); lay.g[bc[0]][bc[1]]=DIAG_CW[cur]; render(); updateDsl(); }
+    const lay=L(level), cur=lay.g[bc[0]][bc[1]];
+    if(DIAG.has(cur)){ pushUndo(); lay.g[bc[0]][bc[1]]=DIAG_CW[cur]; render(); updateDsl(); }
     return;
   }
   const cellsG=groupCells(g,hover[0],hover[1]);
@@ -997,7 +994,7 @@ function rotateAtHover(){
   const stash=cellsG.map(rc=>{            /* whole COLUMNS rotate: every layer of each group cell */
     const bc=viewCellToBase(rc[0],rc[1]), key=bc[0]+","+bc[1], col=[];
     for(let l=0;l<NLVL;l++){ const lay2=L(l);
-      col.push({ch:lay2.g[bc[0]][bc[1]], sd:lay2.side[key], ty:lay2.type[key], wm:lay2.wmat[key]});
+      col.push({ch:lay2.g[bc[0]][bc[1]], sd:lay2.side[key], ty:lay2.type[key], wm:lay2.wmat[key], f:lay2.fh[key]});
       clearVox(l,bc[0],bc[1]); }
     return {to:[r0+(rc[1]-c0), c0-(rc[0]-r0)], col}; });
   for(const rec of stash){
@@ -1018,9 +1015,6 @@ cv.addEventListener("pointerdown",e=>{ e.preventDefault(); cv.setPointerCapture(
   const cell=cellAt(e.offsetX,e.offsetY); if(!cell) return;
   eraseDrag=(e.button===2)||tool===" ";
   if(!eraseDrag&&(tool==="D"||tool==="W")){ clickPlace(cell); return; }
-  if(!eraseDrag&&tool==="^"){
-    const lay=L(level), bc=viewCellToBase(cell[0],cell[1]), cur=lay.g[bc[0]][bc[1]];
-    if(STAIRS.has(cur)){ pushUndo(); lay.g[bc[0]][bc[1]]=ARROW_CW[cur]; render(); updateDsl(); return; } }
   painting=true; anchor=cell; previewErase=eraseDrag;
   preview=new Set([cell[0]+","+cell[1]]); render(); });
 cv.addEventListener("pointermove",e=>{
@@ -1029,11 +1023,12 @@ cv.addEventListener("pointermove",e=>{
   if(cell){ const lay=L(level), g=viewGridOf(level), ch=g[cell[0]][cell[1]];
     const bc=viewCellToBase(cell[0],cell[1]), key=bc[0]+","+bc[1];
     const tname=TYPES[ch]?TYPES[ch][lay.type[key]||0]:null;
-    const rf0=roofAtBase(bc[0],bc[1]);
+    const rf0=grpAtBase(bc[0],bc[1]);
     let stack=""; for(let l2=0;l2<NLVL;l2++) if(l2!==level&&L(l2).g[bc[0]][bc[1]]!==" ") stack+=(stack?",":"")+l2;
     coord.textContent="u "+cell[1]+" · v "+cell[0]+
       (ch!==" "?("  "+ch+(tname?("·"+tname):"")):"")+
-      (rf0?("  roof·"+ROOF_FORMS[rf0.form]+" "+rf0.incl+"ft z"+rf0.z+" enc:"+ENCLOSE[rf0.enclose||0]):"")+
+      (rf0?("  "+rf0.kind+"·"+grpFormName(rf0)+" "+rf0.incl+"ft z"+rf0.z+
+        (rf0.kind==="roof"?" enc:"+ENCLOSE[rf0.enclose||0]:"")):"")+
       (stack?("  [also @ "+stack+"]"):"")+"  layer "+level; }
   else coord.textContent="";
   const changed=JSON.stringify(cell)!==JSON.stringify(hover); hover=cell;
@@ -1050,7 +1045,7 @@ cv.addEventListener("wheel",e=>{ e.preventDefault();
   if(e.shiftKey){
     let overPiece=false;
     if(hover){
-      if(hoveredRoof()) overPiece=true;
+      if(hoveredGrp()) overPiece=true;
       else{ const bcS=viewCellToBase(hover[0],hover[1]), cS=vox(level,bcS[0],bcS[1]);
         overPiece=cS!==" "&&cS!=="."; } }
     if(overPiece) adjustHovered(e.deltaY<0?1:-1,true);
@@ -1069,48 +1064,55 @@ function updateHud(){
   for(let l=0;l<NLVL;l++){ const g0=layers[l].g, below=l>0?layers[l-1].g:null;
     g0.forEach((row,r)=>row.forEach((ch,c)=>{
       if(ch==="#"||DIAG.has(ch))w++;                     /* voxel counts */
-      else if(ch===".")f++; else if(STAIRS.has(ch))st++;
+      else if(ch===".")f++;
       else if(ch==="D"||ch==="W"){                       /* openings count RUNS, not voxels */
         if(!(below&&below[r][c]===ch)){ if(ch==="D")d++; else win++; } }
     })); }
+  for(const rf of grps) if(rf.kind==="stair") st++;
   cWall.textContent=w; cDoor.textContent=d; cWin.textContent=win;
-  cStair.textContent=st; cFloor.textContent=f; cRoof.textContent=roofs.length;
+  cStair.textContent=st; cFloor.textContent=f; cRoof.textContent=grps.length-st;
   viewChip.textContent=topView?"TOP":VIEWS[viewIdx]; lvlChip.textContent=level;
   scopeChip.textContent=scopeGroup?"group":"cell";
 }
 function updateDsl(){
   const out=["name: feel-rig"];
+  const gvox=new Map();                    /* "lvl:r,c" -> R/S — the voxels each group surface passes through */
+  for(const rf of grps){ const B=grpBaseData(rf), gch=rf.kind==="stair"?"S":"R";
+    for(const rc of rf.cells){ const [vl,vh]=grpCellVoxels(B,rf,rc[0],rc[1]);
+      for(let l=vl;l<vh;l++) gvox.set(l+":"+rc[0]+","+rc[1],gch); } }
   for(let lvl=0;lvl<NLVL;lvl++){
-    const lay=L(lvl); let any=roofs.some(rf=>Math.floor(rf.z)===lvl);
+    const lay=L(lvl); let any=false;
+    for(const [k] of gvox) if(k.startsWith(lvl+":")){ any=true; break; }
     for(const row of lay.g) for(const ch of row) if(ch!==" "){ any=true; break; }
     if(!any) continue;
     out.push("","level "+lvl+":");
-    const rset=new Set();
-    for(const rf of roofs) if(Math.floor(rf.z)===lvl)
-      for(const rc of rf.cells) rset.add(rc[0]+","+rc[1]);
-    out.push(...lay.g.map((row,ri)=>row.map((ch,ci)=>rset.has(ri+","+ci)?"R":ch).join("").replace(/\s+$/,"")||" "));
+    out.push(...lay.g.map((row,ri)=>row.map((ch,ci)=>gvox.get(lvl+":"+ri+","+ci)||ch).join("").replace(/\s+$/,"")||" "));
     const mk=(fn)=>{ let has=false;
       const rows=lay.g.map((row,r)=>row.map((ch,c)=>{ const v=fn(ch,r+","+c); if(v!==".")has=true; return v; }).join(""));
       return has?rows:null; };
     const sL=mk((ch,k)=>lay.side[k]?SIDE_NAME[lay.side[k]]:".");
     const tL=mk((ch,k)=>lay.type[k]?String(lay.type[k]):".");
     const wL=mk((ch,k)=>lay.wmat[k]?String(lay.wmat[k]):".");
+    const fL=mk((ch,k)=>lay.fh[k]?String(lay.fh[k]):".");
     if(sL) out.push("layer side:",...sL);
     if(tL) out.push("layer type:",...tL);
     if(wL) out.push("layer wmat:",...wL);
+    if(fL) out.push("layer fh:",...fL);
   }
-  for(const rf of roofs){
+  for(const rf of grps){
     const rs=rf.cells.map(rc=>rc[0]), cs2=rf.cells.map(rc=>rc[1]);
-    out.push("roof: "+Math.min(...rs)+","+Math.min(...cs2)+" "+Math.max(...rs)+","+Math.max(...cs2)+
-      " form="+ROOF_FORMS[rf.form]+" dir="+SIDE_NAME[rf.dir]+" incl="+rf.incl+"ft z="+rf.z+
-      " enclose="+ENCLOSE[rf.enclose||0]);
+    out.push((rf.kind==="stair"?"stair: ":"roof: ")+Math.min(...rs)+","+Math.min(...cs2)+" "+Math.max(...rs)+","+Math.max(...cs2)+
+      " form="+grpFormName(rf)+" dir="+SIDE_NAME[rf.dir]+" incl="+rf.incl+"ft z="+rf.z+
+      (rf.kind==="roof"?" enclose="+ENCLOSE[rf.enclose||0]:""));
   }
   dsl.value=out.join("\n");
 }
-function syncRoofChip(){ roofChip.textContent=ROOF_FORMS[roofFormIdx]+" "+ARROW_GLYPH[roofDir]; }
+function syncGrpChips(){ roofChip.textContent=ROOF_FORMS[roofFormIdx]+" "+ARROW_GLYPH[roofDir];
+  stairChip.textContent=STAIR_TYPES[stairTypeIdx]+" "+ARROW_GLYPH[stairDir]; }
 function syncSteppers(){ colVal.textContent=COLS; rowVal.textContent=ROWS;
-  hVal.textContent=brushHt[brushHt[tool]!==undefined?tool:"#"]; lvlVal.textContent=level; iVal.textContent=brushIncl;
-  typeChip.textContent=TYPES[tool]?TYPES[tool][brushType[tool]||0]:"—"; syncRoofChip(); }
+  hVal.textContent=brushHt[brushHt[tool]!==undefined?tool:"#"]+(tool==="."?"ft":"");
+  lvlVal.textContent=level; iVal.textContent=brushIncl;
+  typeChip.textContent=TYPES[tool]?TYPES[tool][brushType[tool]||0]:"—"; syncGrpChips(); }
 function resizeGrid(dc,dr){
   pushUndo();
   const nc=Math.min(Math.max(COLS+dc,4),40), nr=Math.min(Math.max(ROWS+dr,4),40);
@@ -1118,7 +1120,7 @@ function resizeGrid(dc,dr){
     const ng=blankGrid(nr,nc);
     for(let r=0;r<Math.min(ROWS,nr);r++) for(let c=0;c<Math.min(COLS,nc);c++) ng[r][c]=lay.g[r][c];
     lay.g=ng; }
-  roofs=roofs.filter(rf=>rf.cells.every(rc=>rc[0]<nr&&rc[1]<nc));
+  grps=grps.filter(rf=>rf.cells.every(rc=>rc[0]<nr&&rc[1]<nc));
   COLS=nc; ROWS=nr; syncSteppers(); fitCamera(); render(); updateDsl();
 }
 function setLevel(l,silent){ level=Math.min(Math.max(l,0),NLVL-1); lvlVal.textContent=level;
@@ -1126,11 +1128,10 @@ function setLevel(l,silent){ level=Math.min(Math.max(l,0),NLVL-1); lvlVal.textCo
 
 document.querySelectorAll("nav [data-tool]").forEach(b=>{
   b.addEventListener("click",()=>{
-    if(b.id==="stairBtn"&&tool==="^"){ stairDir=ARROW_CW[stairDir];
-      stairArrow.textContent=ARROW_GLYPH[stairDir];
-      hint("stairs ascend "+ARROW_GLYPH[stairDir]+" (screen direction)"); }
+    if(b.id==="stairBtn"&&tool==="^"){ stairTypeIdx=(stairTypeIdx+1)%STAIR_TYPES.length;
+      syncGrpChips(); hint("stair type: "+STAIR_TYPES[stairTypeIdx]+" (R rotates direction)"); }
     if(b.id==="roofBtn"&&tool==="R"){ roofFormIdx=(roofFormIdx+1)%ROOF_FORMS.length;
-      syncRoofChip(); hint("roof form: "+ROOF_FORMS[roofFormIdx]); }
+      syncGrpChips(); hint("roof form: "+ROOF_FORMS[roofFormIdx]); }
     tool=b.dataset.tool; syncSteppers();
     document.querySelectorAll("nav [data-tool]").forEach(x=>x.classList.toggle("active",x===b)); }); });
 function rotate(dir){ viewIdx=(viewIdx+dir+4)%4; topView=false; fitCamera(); render(); }
@@ -1138,15 +1139,15 @@ rotL.onclick=()=>rotate(1); rotR.onclick=()=>rotate(-1);
 topBtn.onclick=()=>{ topView=!topView; fitCamera(); render(); };
 fitBtn.onclick=()=>{ fitCamera(); render(); };
 undoBtn.onclick=undo;
-clearBtn.onclick=()=>{ pushUndo(); initLayers(); roofs=[]; render(); updateDsl(); };
+clearBtn.onclick=()=>{ pushUndo(); initLayers(); grps=[]; render(); updateDsl(); };
 function undo(){ const p=undoStack.pop(); if(!p){ hint("nothing to undo"); return; }
   restore(p); render(); updateDsl(); }
 copyBtn.onclick=()=>{ navigator.clipboard.writeText(dsl.value).then(()=>{
   copied.style.visibility="visible"; setTimeout(()=>copied.style.visibility="hidden",1800); }); };
 lroomBtn.onclick=()=>{ pushUndo(); loadLRoom(); render(); updateDsl(); };
 function brushHTool(){ return brushHt[tool]!==undefined ? tool : "#"; }
-hMinus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.max(1,brushHt[t]-1); syncSteppers(); };
-hPlus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.min(H_MAX,brushHt[t]+1); syncSteppers(); };
+hMinus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.max(t==="."?0:1,brushHt[t]-1); syncSteppers(); };
+hPlus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.min(t==="."?2:H_MAX,brushHt[t]+1); syncSteppers(); };
 iMinus.onclick=()=>{ brushIncl=Math.max(1,brushIncl-1); iVal.textContent=brushIncl; };
 iPlus.onclick=()=>{ brushIncl=Math.min(5,brushIncl+1); iVal.textContent=brushIncl; };
 lvlMinus.onclick=()=>setLevel(level-1); lvlPlus.onclick=()=>setLevel(level+1);
@@ -1170,10 +1171,14 @@ addEventListener("keydown",e=>{
   else if(k==="-"||k==="_") adjustHovered(-1,false);
   else if(k==="]") adjustHovered(1,true);
   else if(k==="[") adjustHovered(-1,true);
-  else if(k==="f"||k==="F"){ const rf=hoveredRoof();
-    if(rf){ pushUndo(); rf.form=(rf.form+1)%ROOF_FORMS.length;
-      hint("roof form: "+ROOF_FORMS[rf.form]); render(); updateDsl(); }
-    else{ roofFormIdx=(roofFormIdx+1)%ROOF_FORMS.length; syncRoofChip();
+  else if(k==="f"||k==="F"){ const rf=hoveredGrp();
+    if(rf){ pushUndo();
+      const forms = rf.kind==="stair"?STAIR_TYPES:ROOF_FORMS;
+      rf.form=(rf.form+1)%forms.length;
+      hint(rf.kind+" form: "+forms[rf.form]); render(); updateDsl(); }
+    else if(tool==="^"){ stairTypeIdx=(stairTypeIdx+1)%STAIR_TYPES.length; syncGrpChips();
+      hint("stair brush type: "+STAIR_TYPES[stairTypeIdx]); }
+    else{ roofFormIdx=(roofFormIdx+1)%ROOF_FORMS.length; syncGrpChips();
       hint("roof brush form: "+ROOF_FORMS[roofFormIdx]); } }
   else if(k==="v"||k==="V"){ const pick=roofEdgePick();
     if(pick){ pushUndo();
