@@ -63,7 +63,7 @@ Render backend options:
 ## Lucas decided (2026-07-13)
 
 1. **Backend: python flat-shaded** — "even better". Original intent: leave lighting to Foundry, since we know by construction which sprite portions belong to which voxel faces (render step can emit per-face masks for free — the parked per-face-relighting item becomes tractable in THIS lane because segmentation exists at render time, no post-hoc problem). If Foundry-side lighting doesn't pan out, ignore it and keep whatever NB's stylization gives.
-2. **Arms: (b), (b+c), and (d)** — huge uncertainty, compare. ☐ OPEN: "(d)" is not in the a/b/c list above — needs clarification (real textures (a)? gray massing render with no texturing at all? b+c+a combined?).
+2. **Arms: (b), (b+c), and (a)** — huge uncertainty, compare all three: blank-technical, blank-technical+cyan-symbols, real textures. (Clarified 2026-07-13: "(d)" meant (a).)
 3. **Whole-sheet single pass** ✓.
 4. **Web app manual route** ✓.
 
