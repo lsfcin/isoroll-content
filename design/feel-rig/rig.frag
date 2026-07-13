@@ -396,8 +396,12 @@ function derivedDiagsOf(g,lvl){   /* per-voxel: smoothing derives independently 
 /* ---------- sloped-surface GROUPS: roofs and stairs share one model ----------
    {kind:"roof"|"stair", cells, form, dir, incl(ft/cell), z, enclose/sideMode(roof only)}
    roof forms: flat/shed1/shed2 (smooth surface). stair types: solid/thin (stepped shed1 surface). */
-function grpAtBase(br,bc){ for(let i=grps.length-1;i>=0;i--)
-  if(grps[i].cells.some(rc=>rc[0]===br&&rc[1]===bc)) return grps[i]; return null; }
+function grpAtBase(br,bc){ let roof=null;          /* selection priority: stair groups beat roofs */
+  for(let i=grps.length-1;i>=0;i--){ const rf=grps[i];
+    if(rf.cells.some(rc=>rc[0]===br&&rc[1]===bc)){
+      if(rf.kind==="stair") return rf;
+      if(!roof) roof=rf; } }
+  return roof; }
 function grpForm(rf){ return rf.kind==="stair" ? "shed1" : ROOF_FORMS[rf.form]; }
 function grpFormName(rf){ return rf.kind==="stair" ? STAIR_TYPES[rf.form] : ROOF_FORMS[rf.form]; }
 function grpViewData(rf){
@@ -500,7 +504,8 @@ function render(){
     rfData.set(rf, {G, R:grpRectView(rf)});
     for(const rc of rf.cells){ const vc=baseCellToView(rc[0],rc[1]), gu=vc[1], gv=vc[0];
       const hs=[G.hAt(gu,gv),G.hAt(gu+1,gv),G.hAt(gu,gv+1),G.hAt(gu+1,gv+1)];
-      const lo=(rf.kind==="stair"&&STAIR_TYPES[rf.form]==="solid") ? rf.z : Math.min(...hs);
+      /* draw extent reaches BASE for roofs (skirts hang there) + solid stairs; only thin stairs float */
+      const lo=(rf.kind==="stair"&&STAIR_TYPES[rf.form]==="thin") ? Math.min(...hs) : rf.z;
       cells.push({u:gu,v:gv,kind:"GRP",ch:"GRP",zBot:Math.floor(lo+1e-9),zTopf:Math.max(...hs)+0.01,
         lvl:Math.floor(lo+1e-9),rf}); } }
   cells.sort((a,b)=>((a.u+a.v)-(b.u+b.v)) || (a.zBot-b.zBot) || ((a.kind!=="floor"?1:0)-(b.kind!=="floor"?1:0)));
@@ -689,7 +694,7 @@ function render(){
   if(hover){
     const bcH=viewCellToBase(hover[0],hover[1]);
     const rfH0=grpAtBase(bcH[0],bcH[1]);
-    const rfH=(rfH0&&Math.floor(rfH0.z)===level)?rfH0:null;
+    const rfH=(rfH0&&Math.floor(rfH0.z)===level&&vox(level,bcH[0],bcH[1])===" ")?rfH0:null;
     const gH=vgrids[level];
     if(scopeGroup){
       for(const rc of groupCells(gH,hover[0],hover[1]))
@@ -891,7 +896,9 @@ function roofEdgePick(){
 }
 function adjustHovered(dz,isElev){
   if(!hover) return;
-  const rf=hoveredGrp();
+  const bcH=viewCellToBase(hover[0],hover[1]), key=bcH[0]+","+bcH[1];
+  const ch=vox(level,bcH[0],bcH[1]);
+  const rf = ch===" " ? hoveredGrp() : null;   /* priority: slice voxels (D/W, walls, floors) beat groups */
   if(rf){ pushUndo();
     if(isElev){ rf.z=Math.max(0,Math.min(NLVL-1, rf.z+dz)); hint(rf.kind+" base z="+rf.z); }
     else if(rf.kind==="stair"){ rf.incl = rf.incl===5 ? 2.5 : 5;   /* two slopes only: voxels crop clean */
@@ -900,8 +907,6 @@ function adjustHovered(dz,isElev){
     else{ rf.incl=Math.max(1,Math.min(5,rf.incl+dz)); brushIncl=rf.incl; iVal.textContent=brushIncl;
       hint("roof slope "+rf.incl+" ft/cell (brush follows)"); }
     render(); updateDsl(); return; }
-  const bcH=viewCellToBase(hover[0],hover[1]), key=bcH[0]+","+bcH[1];
-  const ch=vox(level,bcH[0],bcH[1]);
   if(ch===" ") return;
   if(!scopeGroup&&(ch==="D"||ch==="W")){   /* opening: slide/resize its voxel run within the wall column */
     const [o0,o1]=openRun(level,bcH[0],bcH[1]);
@@ -970,9 +975,6 @@ function adjustHovered(dz,isElev){
   render(); updateDsl();
 }
 function rotateAtHover(){
-  const rf=hoveredGrp();
-  if(rf){ pushUndo(); rf.dir=ARROW_CW[rf.dir];
-    hint(rf.kind+" direction "+ARROW_GLYPH[rotArrow(rf.dir)]); render(); updateDsl(); return; }
   const spinBrush=()=>{ if(tool==="R"){ roofDir=ARROW_CW[roofDir]; syncGrpChips();
       hint("roof brush direction "+ARROW_GLYPH[roofDir]); return true; }
     if(tool==="^"){ stairDir=ARROW_CW[stairDir]; syncGrpChips();
@@ -980,7 +982,11 @@ function rotateAtHover(){
     return false; };
   if(!hover){ spinBrush(); return; }
   const g=viewGridOf(level), ch=g[hover[0]][hover[1]];
-  if(ch===" "&&spinBrush()) return;
+  if(ch===" "){                                /* priority: slice voxels beat groups */
+    const rf=hoveredGrp();
+    if(rf){ pushUndo(); rf.dir=ARROW_CW[rf.dir];
+      hint(rf.kind+" direction "+ARROW_GLYPH[rotArrow(rf.dir)]); render(); updateDsl(); return; }
+    if(spinBrush()) return; }
   if(!familyOf(ch)) return;
   if(!scopeGroup){
     const bc=viewCellToBase(hover[0],hover[1]);
