@@ -154,7 +154,8 @@
     <div>
       <h2>v16 — stairs = roofs = sloped groups</h2>
       <ul class="feel">
-        <li><b>One concept</b>: roofs and stairs are both sloped-surface groups (cells, direction, slope 1–5 ft/cell, base z). Roof surface is smooth; stair surface is stepped — slope 3 = 3 one-foot steps per cell.</li>
+        <li><b>One concept</b>: roofs and stairs are both sloped-surface groups (cells, direction, slope, base z). Roof surface is smooth (slope 1–5 ft/cell); stair surface is stepped.</li>
+        <li><b>Stairs land on floors</b>, so they get exactly two slopes: 45° (1 voxel/cell, 1ft risers) or half (1 voxel per 2 cells, ½ft risers) — slope stepper / Ctrl+wheel toggles.</li>
         <li><b>Stair types cycle on the button / F</b>: <code>solid</code> (supported down to base) or <code>thin</code> (floating stepped slab). R rotates direction — same as roofs.</li>
         <li><b>DSL is slope-aware</b>: R/S voxels land in the level grid their surface actually passes through (a climbing shed marks rising levels), plus <code>roof:</code>/<code>stair:</code> parameter lines.</li>
         <li><b>Floors have thickness</b>: height stepper on the floor tool = 0/1/2 ft slab; +/− edits a placed floor.</li>
@@ -203,6 +204,7 @@ let layers=[], grps=[], grpSeq=1;          // layers[L] = {g, side, dim, type, w
 let viewIdx=3, topView=false, tool="#", stairDir="^", undoStack=[], scopeGroup=false;
 let brushHt={"#":2,"D":2,"W":1,".":0}, brushIncl=5, roofFormIdx=1, roofDir="^", level=0;
 let stairTypeIdx=0;                  /* stair brush type: solid/thin (direction = stairDir) */
+let brushStairIncl=5;                /* stairs land on floors: only 45° (5ft/cell) or half (2.5ft/cell) */
 let viewWin=2, fadeOp=0.2;              // opaque window above the slice (voxels) + opacity beyond it
 function alphaFor(vz){ if(vz<level) return 1;              // below the plane: the sheet itself occludes
   return (vz-level)<viewWin ? 1 : fadeOp; }                // win=1 -> exactly the plane's voxel opaque
@@ -527,18 +529,18 @@ function render(){
   }
   function drawStairCellInner(rf,u,v,lw,a,G){   /* stepped shed1 surface: incl steps/cell, 1ft (0.2 voxel) each */
     ctx.globalAlpha=a;
-    const steps=Math.max(1,Math.round(rf.incl));
+    const steps=5, riser=rf.incl/25;   /* per-tread rise in voxels: 1ft at 45°, 0.5ft at half slope */
     const hLo=Math.min(G.hAt(u,v),G.hAt(u+1,v),G.hAt(u,v+1),G.hAt(u+1,v+1));
     const solid=STAIR_TYPES[rf.form]==="solid";
     const slices=[];
     for(let i=0;i<steps;i++){
-      const t0=i/steps, t1=(i+1)/steps, hi=hLo+(i+1)*0.2;
+      const t0=i/steps, t1=(i+1)/steps, hi=hLo+(i+1)*riser;
       let u0=u, v0=v, l=1, d=1;
       if(G.dir===">"){ u0=u+t0; l=t1-t0; }
       else if(G.dir==="<"){ u0=u+1-t1; l=t1-t0; }
       else if(G.dir==="v"){ v0=v+t0; d=t1-t0; }
       else { v0=v+1-t1; d=t1-t0; }
-      const zb = solid ? rf.z : hi-0.2;
+      const zb = solid ? rf.z : hi-Math.max(riser,0.1);
       slices.push([u0,v0,l,d,zb,hi-zb]);
     }
     slices.sort((p,q)=>(p[0]+p[1])-(q[0]+q[1]));
@@ -833,7 +835,7 @@ function commitStroke(){
   else if(tool==="R"||tool==="^"){                      /* roofs and stairs: same sloped-group placement */
     const nrf = tool==="R"
       ? {id:grpSeq++, kind:"roof", cells:baseCells, form:roofFormIdx, dir:unrotArrow(roofDir), incl:brushIncl, z:level, enclose:0}
-      : {id:grpSeq++, kind:"stair", cells:baseCells, form:stairTypeIdx, dir:unrotArrow(stairDir), incl:brushIncl, z:level};
+      : {id:grpSeq++, kind:"stair", cells:baseCells, form:stairTypeIdx, dir:unrotArrow(stairDir), incl:brushStairIncl, z:level};
     const NB=grpBaseData(nrf);
     grps=grps.filter(rf=>{ const B=grpBaseData(rf);     /* replace groups whose voxels overlap the new one */
       return !rf.cells.some(rc=>{ if(!baseSet.has(rc[0]+","+rc[1])) return false;
@@ -892,8 +894,11 @@ function adjustHovered(dz,isElev){
   const rf=hoveredGrp();
   if(rf){ pushUndo();
     if(isElev){ rf.z=Math.max(0,Math.min(NLVL-1, rf.z+dz)); hint(rf.kind+" base z="+rf.z); }
+    else if(rf.kind==="stair"){ rf.incl = rf.incl===5 ? 2.5 : 5;   /* two slopes only: voxels crop clean */
+      brushStairIncl=rf.incl; syncSteppers();
+      hint("stair slope "+(rf.incl===5?"45° — 1 voxel/cell":"half — 1 voxel per 2 cells")+" (brush follows)"); }
     else{ rf.incl=Math.max(1,Math.min(5,rf.incl+dz)); brushIncl=rf.incl; iVal.textContent=brushIncl;
-      hint(rf.kind+" slope "+rf.incl+" ft/cell = "+(rf.kind==="stair"?rf.incl+" steps/cell":"rise")+" (brush follows)"); }
+      hint("roof slope "+rf.incl+" ft/cell (brush follows)"); }
     render(); updateDsl(); return; }
   const bcH=viewCellToBase(hover[0],hover[1]), key=bcH[0]+","+bcH[1];
   const ch=vox(level,bcH[0],bcH[1]);
@@ -1111,7 +1116,7 @@ function syncGrpChips(){ roofChip.textContent=ROOF_FORMS[roofFormIdx]+" "+ARROW_
   stairChip.textContent=STAIR_TYPES[stairTypeIdx]+" "+ARROW_GLYPH[stairDir]; }
 function syncSteppers(){ colVal.textContent=COLS; rowVal.textContent=ROWS;
   hVal.textContent=brushHt[brushHt[tool]!==undefined?tool:"#"]+(tool==="."?"ft":"");
-  lvlVal.textContent=level; iVal.textContent=brushIncl;
+  lvlVal.textContent=level; iVal.textContent = tool==="^" ? brushStairIncl : brushIncl;
   typeChip.textContent=TYPES[tool]?TYPES[tool][brushType[tool]||0]:"—"; syncGrpChips(); }
 function resizeGrid(dc,dr){
   pushUndo();
@@ -1148,8 +1153,12 @@ lroomBtn.onclick=()=>{ pushUndo(); loadLRoom(); render(); updateDsl(); };
 function brushHTool(){ return brushHt[tool]!==undefined ? tool : "#"; }
 hMinus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.max(t==="."?0:1,brushHt[t]-1); syncSteppers(); };
 hPlus.onclick=()=>{ const t=brushHTool(); brushHt[t]=Math.min(t==="."?2:H_MAX,brushHt[t]+1); syncSteppers(); };
-iMinus.onclick=()=>{ brushIncl=Math.max(1,brushIncl-1); iVal.textContent=brushIncl; };
-iPlus.onclick=()=>{ brushIncl=Math.min(5,brushIncl+1); iVal.textContent=brushIncl; };
+function slopeStep(dz){ if(tool==="^"){ brushStairIncl = brushStairIncl===5 ? 2.5 : 5;
+    hint("stair brush slope: "+(brushStairIncl===5?"45°":"half")); }
+  else brushIncl=Math.max(1,Math.min(5,brushIncl+dz));
+  syncSteppers(); }
+iMinus.onclick=()=>slopeStep(-1);
+iPlus.onclick=()=>slopeStep(1);
 lvlMinus.onclick=()=>setLevel(level-1); lvlPlus.onclick=()=>setLevel(level+1);
 wMinus.onclick=()=>{ viewWin=Math.max(1,viewWin-1); wVal.textContent=viewWin; render(); };
 wPlus.onclick=()=>{ viewWin=Math.min(9,viewWin+1); wVal.textContent=viewWin; render(); };
