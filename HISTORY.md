@@ -44,3 +44,10 @@ Archive of completed work and resolved issues.
 
 ### S4 — External Generation + Local Post-Processing
 - [x] Implement `content/cli/sprite_splitter.py` (split + rembg + save)
+
+## Completed — 2026-07-14 (post-freeze execution day 1)
+- P6.5 painter UX design: grammar FROZEN @ feel-rig v16.2 after 19 rounds (2026-07-13; rounds 16–19 same-day: per-voxel model, sloped-group unification roofs+stairs, two crop-clean stair slopes, skirt-clip fix, selection priority). Full log: design/PAINTER-UX.md.
+- Loop dsl-v2-python SHIPPED (0a4d990+45a2f97): DSL v2 parser/serializer/massing/manifest/guide-render, 53/53 pytest. One Loop-5 integration gap (groups→manifest) caught and closed via RETURN loop=3 inline ruling.
+- Loop kit-module-renderer SHIPPED (b56abc0+189c90c): flat-shaded KIT V2 module renderer, per-face masks, shared px-per-voxel manifest, 3 P5 arm sheets staged to gen-inbox. 82 pytest.
+- Module loop dsl-v2-ts-twin SHIPPED (aad8dac): TS parser/massing/manifest twin, 92 tests + 9/9 live twin-diff vs Python.
+- P5 strategy: render→restyle lane R promoted to candidate-primary (RENDER-RESTYLE-MEMO; arms b/b+c/a; flat-shaded; whole-sheet; web app); P-CTRL/P-Kit relabeled lane-R siblings.

@@ -1,34 +1,36 @@
-# SESSION HANDOFF — scene-creation program (Fable session ended 2026-07-11 at ~17% context)
-> READ FIRST in the next Fable session, together with SCENE-CREATION.md + design/PAINTER-UX.md (full decisions log, rounds 1–15) + design/DSL-V2-MEMO.md. NOTHING here is assumed — it is all in files. When unsure, ASK Lucas; never assume, never redo shipped work.
+# SESSION HANDOFF — scene-creation program (Fable session ended 2026-07-14, post-freeze execution day 1)
+> READ FIRST next session, with SCENE-CREATION.md + design/PAINTER-UX.md (rounds 1–19 + freeze banner) + design/RENDER-RESTYLE-MEMO.md + the approved plan `~/.claude/plans/isoroll-scene-creation-program-cached-graham.md`. NOTHING here is assumed — all in files. When unsure, ASK Lucas.
 
 ## What is DONE and SHIPPED (do not redo)
 | Piece | Where | Proof |
 |---|---|---|
-| P0 consolidation + P1 `/iso-visual` skill | this repo + core/skills | committed |
-| P2 seam BOTH sides | `feature/export-manifest` (content) + `feature/module-walls-import` (module) | gray l-room imports into live Foundry, walls block movement, verify:full green |
-| P3 scale-consistency | `feature/scale-consistency` | 33 tests, bidirectional QC, byte-identical legacy |
-| P4 TS assembler | `feature/ts-assembler` (module) | 59 tests, 4-view golden ≤1% vs Python, novel-fixture oracle 7/7 |
-| P6 floor spike + DECISION | `.loop/floor-fog-spike` (module) | **floor = iso-tiles** (Lucas decided; fog-correct, oracle-verified) |
-| P6.5 feel-rig v13 | Artifact `https://claude.ai/code/artifact/fce5e565-f376-4912-8ca7-7c19f6932ad4` (🧱) | 15 design rounds with Lucas; source PRESERVED at `design/feel-rig/` (rig.frag + build.py + kit_b64.txt); to update: `python3 design/feel-rig/build.py` then Artifact tool with `url:` param = the URL above |
+| P0–P4, P6 | per previous handoff (see git history) | shipped pre-freeze |
+| P6.5 **GRAMMAR FROZEN 2026-07-13 @ rig v16.2** (19 rounds) | artifact 🧱 `https://claude.ai/code/artifact/fce5e565-f376-4912-8ca7-7c19f6932ad4`; source `design/feel-rig/` (NORMATIVE reference) | Lucas: "painter can be freezed"; PAINTER-UX log |
+| D1 DSL v2 Python (parse/serialize/massing/manifest/guide-render) | content `loop/dsl-v2-python` (0a4d990+45a2f97) | pytest 53/53; trail `.loop/dsl-v2-python/` |
+| P5.1 kit renderer + arm sheets | content `loop/kit-module-renderer` (b56abc0+189c90c) | pytest 82; sheets+81 masks staged `output/gen-inbox/` (gitignored) |
+| D2 DSL v2 TS twin | module `loop/dsl-v2-ts-twin` (aad8dac) | verify:fast 92 green; live twin-diff vs Python 9/9; trail kept |
 
-Loop-engineering `[pilot]` is DONE (multiple real loops shipped; routing audits in `.loop/*/`; keep-trail everywhere).
-
-## THE MODEL (crystallized through the rounds — this is the core insight to carry)
-**Scene ground truth = VOXEL GRID (Minecraft-underneath).** Layers 0–9, each an independent map (multi-story). Tools are brushes writing voxels; kit sprites are voxel skins. Editing slice = single source of truth (place/hover/erase at slice). Per-voxel opacity (opaque window + fade). Rotation = remapping, NEVER mirroring (chirality). Openings have sides, pierce through, merge when adjacent. Diagonals derived from wall corners (cross-cell rule). Roofs = group objects (form flat/shed1/shed2, dir, slope 1–5ft, per-side enclosure none/edge/inset w/ corner self-fill, eaves) occupying voxels (R in level grids; params as `roof:` lines). Full grammar + all decisions: `design/PAINTER-UX.md`.
+## THE MODEL (frozen — carry forward)
+Per-voxel scene: levels 0–9, one char per VOXEL, substitution-on-write, stack moves with riders. Openings = D/W voxels (per-tool heights). Sloped-surface GROUPS unify roofs (flat/shed1/shed2, 1–5ft, per-side enclosure) + stairs (solid/thin, slopes ONLY 45°=5ft or half=2.5ft — crop-clean into voxels). Floors fh 0–2ft. Derived corner-smoothing per level. Selection priority: slice voxels > stairs > roofs. DSL v2: `level N:` blocks + `layer side:/type:/wmat:/fh:` + `roof:`/`stair:` lines authoritative, R/S voxels derived/validated.
 
 ## IN FLIGHT / NEXT
-1. **☐ Lucas may still send rig rounds** — iterate `design/feel-rig/rig.frag`, rebuild, republish SAME artifact URL. When a session passes without structural change → **grammar freeze** → start P7.
-2. **P5 image generation — STRATEGY UPDATE NEEDED (Lucas agrees)**: API key has `limit: 0` for image models (no free tier; web app works). First NB kit-sheet result exists (Lucas ran web app — ask him to save it as `output/gen-outbox/kit-dimetric-sheet.png` if not there). Learnings from it: (a) NB replicated door side ignoring rotation — door_u/door_v need stronger differentiation or per-piece calls; (b) NB watermark sits in the BOTTOM-RIGHT cell — redesign sheets to keep that cell empty/caption (verify exact watermark placement online); (c) **KIT V2 = VOXEL MODULES**: the painter renders walls as base + 1-voxel bands + top cap — art should be generated in exactly those modules (band, cap, base, per-side recess bands, diag half-band, roof cells), not 3-tall monoliths. Staging script preserved: `design/feel-rig/stage_kit_paint.py`.
-3. **DSL v2 loop** (after freeze): multi-level grids + attr layers + roof lines + sides/types — memo `design/DSL-V2-MEMO.md` + the rig's live export is the reference; parser lands in Python + TS twins.
-4. **P7 painter MVP** (module): implements the frozen grammar over the shipped assembler/import; floor = iso-tiles w/ perf gate.
-5. **P8 multiview 8+1, P9 polish** per SCENE-CREATION.md program.
+1. **P7a painter-mvp-1 (module) at Loop 4b** — Loops 0–4a done (`.loop/painter-mvp-1/`: plan 6 rows, arch PASS w/ pinned risks, 34 red unit tests at model/gestures/reassemble-plan/perf seams). NEXT: spawn loop-medium for 4b (green = 93 baseline + 34 new), then Loop 5 (live-Foundry e2e — executor MAY start server, world isoroll-test), Loop 6 ship (keep-trail, contamination fence). Then ☐ Lucas usability session → P7b clarify (groups/opacity/group-ops).
+2. **☐ Lucas: NB web runs** — 3 arm sheets in `output/gen-inbox/` + prompts `src/pipeline/prompts/restyle_arm_{b,bc,a}.md` → results to `output/gen-outbox/` → fire P5.4 QC loop (decision rule pre-registered in RENDER-RESTYLE-MEMO; baseline A0 = Lucas's existing NB-from-guide sheet).
+3. **☐ Lucas merge eyeball queue** (gitflow, nothing merged): content `loop/dsl-v2-python` → `loop/kit-module-renderer`; module `loop/dsl-v2-ts-twin`.
+4. P8 (multiview cardinal) after P5 verdict + P7; P9 last. Loop specs land in ROADMAPs then.
+
+## Orchestration field notes (this execution model works — reuse)
+- Loops ran as background `loop-low/medium/high` agents; orchestrator holds verdicts only. 3 loops shipped ≈1.4M subagent tokens, zero max-tier spawns (max-tier work done inline by orchestrator: Loop 0s, one RETURN-loop=3 ruling).
+- **Base-branch trap**: content `develop` has NO design/ tree — always base content loops on the doc-branch lineage (correction pattern: append-only "Plan Correction (orchestrator)" section).
+- **Module tree contamination**: uncommitted floor-fog-spike dirt in module tree — loops fence it (never touch/commit those paths; pattern in `.loop/dsl-v2-ts-twin/6-ship.md`). T8 facade leftover folded into P7a.
+- **RETURN loop=3 handling**: Loop 5 integration-gap → orchestrator rules inline at max tier (design held, seams sharpened, 4a/4b re-entry at medium). Worked perfectly — groups gap caught by e2e, closed same day.
+- **Executor death (session limit)**: resume = fresh executor reads 4a + partial 4b, reruns test-cmd for true state, continues append-only. Cheap (~90s).
 
 ## Environment facts
-- Foundry v14 server: `node /home/lucas/FoundryVTT/resources/app/main.js --dataPath=/home/lucas/foundrydata-v14` (may still be running, check `curl localhost:30000`); world `isoroll-test` active.
-- Gemini key at `~/.gemini_key` (0600; exported in ~/.bashrc as GEMINI_API_KEY; **no image quota — don't retry API image gen without billing/OpenRouter decision**). Lucas was advised to rotate the key later (it touched chat).
-- Git: everything on stacked feature branches, NOTHING merged to develop (gitflow: Lucas eyeballs merges). Content stack: scene-creation-consolidation → export-manifest → scale-consistency (docs kept landing on its tip). Module: module-walls-import → ts-assembler → floor-fog-spike (+ `refactor/phase-6-cleanup` holds a preserved WIP commit `0c5473d` that predates this program — Lucas's call).
-- Loop executors: spawn `loop-low/medium/high` per `core/flows/loop-engineering.md`; opencode banned in repo code.
-- 200-line hook gate on code files; `.frag`/`.txt` exempt (that's why the rig source is a .frag).
+- Foundry v14: `node /home/lucas/FoundryVTT/resources/app/main.js --dataPath=/home/lucas/foundrydata-v14`; world isoroll-test; check `curl localhost:30000`.
+- Gemini API key: image models limit:0 — web app ONLY (route decided).
+- Loop executors: `core/flows/loop-engineering.md`; opencode banned in repo code.
+- 200-LOC hook: .frag exempt (INBOX→VERIFY routed: scope exemption by path design/**).
 
-## How to work with Lucas on this (learned this session)
-Fast structural rounds on the rig (he tests within minutes — publish same artifact URL every time); design-first, never implementation-ease-first; when his idea conflicts with something existing, surface the conflict and propose the elegant resolution (he accepts big refactors happily — layers, voxel semantics); one-shot quality expected: think the whole round through before editing; he answers clarifying questions gladly (the eaves question).
+## How to work with Lucas (unchanged + new)
+Fast structural rounds; design-first; surface conflicts + propose elegant resolution (he accepts big refactors happily — v15 per-voxel + v16 group unification were HIS pushes); one-shot round quality; answers clarifying questions gladly; unify/reuse over new concepts ("make it simpler, interface AND code"). New: he watches session limits — prefer handoff at loop-file seams over starting big executor runs late.
