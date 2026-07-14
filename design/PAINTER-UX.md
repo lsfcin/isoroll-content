@@ -1,4 +1,5 @@
 # Painter UX — P6.5 interaction design
+> **GRAMMAR FROZEN 2026-07-13 @ rig v16.2** (Lucas: "painter can be freezed", after 19 rounds). The rig source (`feel-rig/rig.frag`) is the NORMATIVE reference implementation for DSL v2 + P7. Changes now require unfreeze + a new round below.
 > Living doc for the "feels like magic" requirement. Prototype-first: iterate here + in the feel rig BEFORE any Foundry painter code (P7 implements what this doc approves).
 
 ## Feel rig (clickable prototype)

@@ -39,7 +39,7 @@ export: kit + scene manifest                  imageOffset, WallDef[]      autoti
 ### The contract (scene format)
 
 Any painter (in-Foundry, standalone, text DSL) targets the same two artifacts:
-1. **Layout grid JSON** — cells: `#` wall, `.` floor, `D` door, `W` window, `S` stairs; directives (`name`, `wall_h`, `cell`). Text DSL in `layout_parse.py` is the reference serialization.
+1. **Layout grid JSON** — **DSL v2, FROZEN 2026-07-13 @ rig v16.2**: multi-level `level N:` blocks (one char per VOXEL: `#` wall, `.` floor, `D`/`W` opening voxels, `/`/`\` diagonals; `R`/`S` group voxels DERIVED, never authored), attr grids `layer side:/type:/wmat:/fh:` (1 char/cell), `roof:`/`stair:` group lines (authoritative: form, dir, incl, z, enclose). Normative reference = `design/feel-rig/rig.frag` (`updateDsl`, `grpBaseData`/`grpCellVoxels`, run merging) + `design/PAINTER-UX.md` rounds 12–19. v1 single-grid syntax (`layout_parse.py`) is superseded — parser v2 lands via loop D1.
 2. **Kit + scene manifest JSON** — per piece: id, yaw/facing (8+1 vocabulary, matches module `Facing`), anchor point, px-per-voxel scale, `boundHeight`, `imageOffset`; per scene: tile placements + `WallDef[]` (validated against module `src/walls/wall-types.d.ts`).
 
 ### Scale-consistency spec
@@ -120,9 +120,9 @@ Full plan approved 2026-07-09 (plan file: `~/.claude/plans/prompts-txt-lately-i-
 | P2 | Seam: `/loops export-manifest` → `/loops module-walls-import` (= loop-engineering `[pilot]`) | content→module | gray l-room live in Foundry: wall count matches layout, vision blocked, `verify:full` green | ☐ eyeball l-room in Foundry |
 | P3 | Scale-consistency fix (shared `s`, manifest field, QC dim check) | content | pytest + QC on existing 4-view demo | — |
 | P4 | TS assembler port of `scene_assemble.py` | module | golden diff TS == Python on l-room | — |
-| P5 | NB kit painting, dimetric batch → postproc → painted l-room | content | IoU ≥ 0.9, residue 0, cross-view dims | ☐ run NB, drop `gen-outbox/`; style 1–5 |
+| P5 | Kit painting — **lane R candidate-primary (2026-07-13): flat-shaded render → NB restyle** (arms b, b+c, a; whole-sheet; web app), test-to-kill vs NB-from-guide baseline per `design/RENDER-RESTYLE-MEMO.md`; P-CTRL/P-Kit = lane-R siblings (conditioning/mesh backend), no longer fallbacks | content | IoU ≥ 0.9 vs source render, side-correctness across 2 yaws, residue 0, cross-view dims | ☐ run NB arms, drop `gen-outbox/`; style 1–5 |
 | P6 | Floor/fog spike: (a) floor-tiles vs (b) background regen → DECIDE here | module | both prototypes render, fog correct, decision logged | ☐ eyeball, co-decide |
-| P6.5 | **Painter UX design** (added 2026-07-09, user request): interaction-design doc (grammar, contextual reactions, keys/mouse/HUD map) + **clickable HTML prototype** (Artifact, real gray-kit sprites, paint-on-grid in browser) — iterate the "magic feel" BEFORE Foundry code; design skills (artifact-design; Figma connector optional if authorized) | design | prototype paints the l-room; interaction doc signed | ☐ play prototype, iterate until it feels like magic |
+| P6.5 ✅ | **Painter UX design — DONE, GRAMMAR FROZEN 2026-07-13 @ rig v16.2** (19 rounds): per-voxel scene model, opening voxels, sloped groups (roofs+stairs unified), floor thickness, selection priority — full log `design/PAINTER-UX.md`; rig = normative reference for DSL v2 + P7 | design | prototype paints the l-room; interaction doc signed | ✅ frozen by Lucas |
 | P7 | Painter MVP: implements the P6.5-approved interaction design — paint/erase + autotile + live re-assembly + auto WallDefs + props basic | module | paint a room in live Foundry → walls/vision/fog correct without reload; interactions match P6.5 doc | ☐ usability session |
 | P8 | Multiview: dimetric view switch (cell remap + resolver facing) → cardinal (guide cams + ☐ NB batch + projection preset) | both | view toggle stable z-order (`dumpZOrderJSON`); cross-view QC | ☐ NB cardinal batch; eyeball 8 views |
 | P9 | Polish: magic-feel pass, door secondary image, door webm | module | e2e + ☐ | ☐ final usability + style verdict |
