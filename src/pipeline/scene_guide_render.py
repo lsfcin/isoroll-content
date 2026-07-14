@@ -18,11 +18,15 @@ def _proj(u, v, z):
 
 
 def _fit(boxes, avail_w, avail_h):
+    if not boxes:
+        # 3-arch.md Amendment (C5-seam+): defense for an all-void scene (no wall/floor/GRP boxes
+        # at all) — min()/max() over an empty list would raise ValueError otherwise.
+        return 1.0, avail_w / 2, avail_h / 2
     xs, ys = [], []
     for b in boxes:
         for u in (b.u0, b.u0 + b.l):
             for v in (b.v0, b.v0 + b.d):
-                for z in (0, b.h):
+                for z in (b.z0, b.z0 + b.h):
                     x, y = _proj(u, v, z)
                     xs.append(x)
                     ys.append(y)
@@ -60,14 +64,17 @@ def _quad(cam, fn, a0, a1, b0, b1):
 
 
 def _faces(box):
-    """Visible faces with this fixed camera: TOP, LONG (v=v0+d), CAP (u=u0+l)."""
-    u0, v0, l, d, h = box.u0, box.v0, box.l, box.d, box.h
+    """Visible faces with this fixed camera: TOP, LONG (v=v0+d), CAP (u=u0+l).
+
+    v2: z0 (base elevation, e.g. level_index * wall_h) offsets every z coordinate so stacked
+    levels render at their real height instead of collapsing onto level 0 (T7)."""
+    u0, v0, l, d, h, z0 = box.u0, box.v0, box.l, box.d, box.h, box.z0
     if l > 0 and d > 0:
-        yield "top", (lambda a, b: (u0 + a, v0 + b, h)), l, d, FACE_TOP
+        yield "top", (lambda a, b: (u0 + a, v0 + b, z0 + h)), l, d, FACE_TOP
     if l > 0 and h > 0:
-        yield "long", (lambda a, b: (u0 + a, v0 + d, b)), l, h, FACE_LONG
+        yield "long", (lambda a, b: (u0 + a, v0 + d, z0 + b)), l, h, FACE_LONG
     if d > 0 and h > 0:
-        yield "cap", (lambda a, b: (u0 + l, v0 + a, b)), d, h, FACE_CAP
+        yield "cap", (lambda a, b: (u0 + l, v0 + a, z0 + b)), d, h, FACE_CAP
 
 
 def _draw_openings(draw, cam, box, fn, face):

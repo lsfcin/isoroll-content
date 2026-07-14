@@ -91,6 +91,7 @@ Skills: loops do isoroll-module devem invocar `/foundry` (router de referência 
 | module-walls-import | module | medium | manifest → `createWallsFromDefs` (`wall-crud.ts`) | export-manifest |
 | module-token-facing | module | medium | seleção de sprite 8-direções (placeholder `object-transform.ts`) | — |
 | f5-token-stances | content | medium | matriz de stances × espinha | module-token-facing |
+| ✓ dsl-v2-python | content | high | DSL v2 (frozen 2026-07-13 @ rig v16.2) no pipeline Python: parser multi-nível + grupos, serializer round-trip, massing v2, manifest/guide-render; plano em `.loop/dsl-v2-python/1-plan.md` (port de `design/feel-rig/rig.frag`) — DONE 2026-07-14: all criteria pass (C1 parse, C2 round-trip, C3 massing boxes, C4 group manifest tiles+HUD, C5 guide-render, C6 pytest green) | rig freeze (P6.5) |
 
 ## Gitflow & recuperação (content e module)
 

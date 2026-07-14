@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """layout_parse.py — text-grid scene layout DSL → validated Layout model (F1 input)."""
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from layout_groups import DIAG, ENCLOSE, ROOF_FORMS, SIDE_NAME, STAIR_TYPES, grp_base_data, grp_cell_voxels
 
 WALL, FLOOR, VOID, DOOR, WINDOW = "#", ".", " ", "D", "W"
 # Stairs are directional (the arrow points toward the ascent) so that grid
@@ -11,8 +14,44 @@ STAIR_N, STAIR_E, STAIR_S, STAIR_W = "^", ">", "v", "<"
 STAIRS = {STAIR_N, STAIR_E, STAIR_S, STAIR_W}
 _STAIR_CW = {STAIR_N: STAIR_E, STAIR_E: STAIR_S, STAIR_S: STAIR_W, STAIR_W: STAIR_N}
 SOLID = {WALL, DOOR, WINDOW}
-KNOWN = SOLID | STAIRS | {FLOOR, VOID}
+# v2 (T2/T3): R/S are group-surface voxel markers, not real grid content — see Group below.
+MARKERS = {"R", "S"}
+KNOWN = SOLID | STAIRS | DIAG | MARKERS | {FLOOR, VOID}
 DEFAULT_WALL_H = 3  # voxels; 1 voxel = 1.5 m side, so walls are 4.5 m tall
+_COMPASS_TO_ARROW = {v: k for k, v in SIDE_NAME.items()}
+
+
+@dataclass
+class Level:
+    """v2 (T2/T3, .loop/dsl-v2-python/3-arch.md) — one `level N:` block: grid + per-cell attr grids.
+
+    NEW dataclass, additive only — not yet wired into Layout/parse_text/rotate_cw/validate (Loop 4b).
+    g: list[str] grid rows. side/type/wmat: dict["r,c"->int|arrow] sparse attr grids. fh: dict["r,c"->int]
+    floor-height overlay (rig.frag lay.side/type/wmat/fh maps).
+    """
+    g: list
+    side: dict = field(default_factory=dict)
+    type: dict = field(default_factory=dict)
+    wmat: dict = field(default_factory=dict)
+    fh: dict = field(default_factory=dict)
+
+
+@dataclass
+class Group:
+    """v2 (T2/T3) — one roof/stair sloped-surface group (rig.frag `grps` entries).
+
+    NEW dataclass, additive only — not yet produced by parse_text (Loop 4b). cells: list[(r,c)]
+    reconstructed from R/S markers per DECISION D3 (3-arch.md). form: index into ROOF_FORMS or
+    STAIR_TYPES (layout_groups.py). dir: arrow char ("^"|">"|"v"|"<"). incl: ft/cell (2.5 or 5 for
+    stairs). z: base height, voxels. enclose: index into ENCLOSE, roof-only (None for stairs).
+    """
+    kind: str  # "roof" | "stair"
+    cells: list
+    form: int
+    dir: str
+    incl: float
+    z: float
+    enclose: int = None
 
 
 @dataclass
@@ -24,6 +63,10 @@ class Layout:
     cols: int = 0
     errors: list = field(default_factory=list)
     warnings: list = field(default_factory=list)
+    # v2 (T2/T3), additive: levels[N] = Level for "level N:" blocks; groups = roof/stair Group list.
+    # Empty for v1 (flat-grid) layouts — .grid/.rows/.cols stay the single source of truth then.
+    levels: dict = field(default_factory=dict)
+    groups: list = field(default_factory=list)
 
     def kind(self, u, v):
         """Cell at column u, row v — VOID outside bounds."""
@@ -32,11 +75,32 @@ class Layout:
         return VOID
 
 
-def rotate_cw(layout, turns=1):
-    """New Layout turned 90° clockwise `turns` times; stair arrows follow."""
-    grid = layout.grid
+def _rotate_grid_cw(grid, turns):
     for _ in range(turns % 4):
         grid = ["".join(_STAIR_CW.get(ch, ch) for ch in col) for col in zip(*grid[::-1])]
+    return grid
+
+
+def rotate_cw(layout, turns=1):
+    """New Layout turned 90° clockwise `turns` times; stair arrows follow.
+
+    v2: rotates every level's grid the same way. Group cells/dir are NOT re-oriented (no current
+    seam exercises rotate_cw on a Layout with groups) — carried over as-is, a known limitation.
+    """
+    turns = turns % 4
+    if layout.levels:
+        new_levels = {
+            lvl: Level(g=_rotate_grid_cw(level.g, turns), side=level.side, type=level.type,
+                       wmat=level.wmat, fh=level.fh)
+            for lvl, level in layout.levels.items()
+        }
+        base_grid = new_levels[min(new_levels)].g
+        out = Layout(layout.name, base_grid, layout.wall_h, len(base_grid),
+                     len(base_grid[0]) if base_grid else 0)
+        out.levels, out.groups = new_levels, layout.groups
+        out.errors, out.warnings = layout.errors, layout.warnings
+        return out
+    grid = _rotate_grid_cw(layout.grid, turns)
     out = Layout(layout.name, grid, layout.wall_h, len(grid), len(grid[0]) if grid else 0)
     out.errors, out.warnings = layout.errors, layout.warnings
     return out
@@ -84,7 +148,13 @@ def validate(layout):
     return layout
 
 
+_HAS_LEVEL = re.compile(r"(?m)^level \d+:$")
+
+
 def parse_text(text, name="layout"):
+    if _HAS_LEVEL.search(text):
+        import layout_dsl_v2  # local import: avoids a layout_parse <-> layout_dsl_v2 import cycle
+        return layout_dsl_v2.parse_text_v2(text, name)
     directives, grid_lines = _split_directives(text.splitlines())
     cols = max((len(line) for line in grid_lines), default=0)
     grid = [line.ljust(cols) for line in grid_lines]

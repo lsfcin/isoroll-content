@@ -24,6 +24,9 @@ def _piece_for(box):
             result = f"{box.openings[0].kind}_{box.axis}"
         else:
             result = "wall"
+    elif box.kind == "GRP":
+        result = "group"  # 3-arch.md Amendment (C4-seam+): no kit sprite yet — assemble()'s
+        # `name not in sprites` guard skips it there; build_manifest still places it (below).
     return result  # steps: unsupported in assembly v1
 
 

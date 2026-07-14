@@ -1,0 +1,6 @@
+from _typeshed import Incomplete
+
+FIXTURES: Incomplete
+
+def test_multilevel_render_is_non_blank() -> None: ...
+def test_groups_only_scene_renders_without_crashing() -> None: ...
