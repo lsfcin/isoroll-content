@@ -85,14 +85,22 @@ def test_arm_a_matches_the_sheet_grid_size():
 
 
 def test_stage_writes_three_arm_sheets_a_manifest_and_the_three_restyle_prompts(tmp_path):
+    # Contract (2026-07-15): gen-inbox holds ONLY the human-fed files (arm
+    # sheets + prompts); masks/meta/manifest land in the sibling masks/ dir.
     out = tmp_path / "gen-inbox"
     _skm().stage(out=str(out))
 
     pngs = sorted(out.glob("*.png"))
     sheets = [p for p in pngs if Image.open(p).width > CELL_PX]
     assert len(sheets) == 3, [p.name for p in pngs]
-
-    assert list(out.glob("*.json")), "expected a sheet manifest json"
+    assert len(pngs) == 3, "gen-inbox must hold nothing but the 3 arm sheets"
+    assert not list(out.glob("*.json")), "machine artifacts must not pollute gen-inbox"
 
     prompts = sorted(p.name for p in out.glob("restyle_arm_*.md"))
     assert prompts == ["restyle_arm_a.md", "restyle_arm_b.md", "restyle_arm_bc.md"]
+
+    masks = tmp_path / "masks"
+    assert (masks / "sheet_manifest.json").exists()
+    facemasks = list(masks.glob("*_facemask.png"))
+    assert facemasks, "per-face masks must land in masks/"
+    assert len(facemasks) == len(list(masks.glob("*_faces.json")))

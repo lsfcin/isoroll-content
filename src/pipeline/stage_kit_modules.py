@@ -77,9 +77,14 @@ def arm_a(panels, ordered_by_panel):
     return canvas
 
 
-def stage(out="output/gen-inbox"):
+def stage(out="output/gen-inbox", out_masks=None):
+    """gen-inbox holds ONLY what Lucas hand-feeds to the NB web app (arm
+    sheets + restyle prompts); machine artifacts (face masks/meta, sheet
+    manifest) go to `out_masks` (default: sibling `masks/` next to `out`)."""
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
+    masks_path = Path(out_masks) if out_masks else out_path.parent / "masks"
+    masks_path.mkdir(parents=True, exist_ok=True)
 
     names = list(km.MODULES)
     s = kmr.shared_scale(names, cell_px=CELL_PX, pad=PAD)
@@ -101,11 +106,11 @@ def stage(out="output/gen-inbox"):
         bbox = (min(xs), min(ys), max(xs), max(ys))
         manifest_panels.append({"module": p["module"], "view": p["view"], "bbox": bbox, "origin": p["origin"]})
     manifest = kmr.build_sheet_manifest(manifest_panels, s)
-    (out_path / "sheet_manifest.json").write_text(json.dumps(manifest, indent=2))
+    (masks_path / "sheet_manifest.json").write_text(json.dumps(manifest, indent=2))
 
     for p in panels:
         idmap, meta = fm.face_mask(p["ordered"], p["img"].size)
-        fm.save_mask(idmap, meta, out_path / f"{p['module']}_{p['view']}")
+        fm.save_mask(idmap, meta, masks_path / f"{p['module']}_{p['view']}")
 
     prompts_dir = Path(__file__).parent / "prompts"
     for arm in ("a", "b", "bc"):
