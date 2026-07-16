@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
-"""test_stage_kit_modules.py — 3 arm sheets staged to output/gen-inbox (C4).
+"""test_stage_kit_modules.py — per-module arm sheets staged to
+output/gen-inbox (C4, C5). AMENDED 2026-07-16 (Loop 4a, arm-a-homography,
+ruling R2/R3 — see .loop/arm-a-homography/1-plan.md): the mega-sheet
+contract ("exactly 3 arm sheets") is a SANCTIONED, user-authorized contract
+change to sheet-per-object (`{module}__{arm}.png` stem pairs), not a fudge.
+Assertions below are amended in place per R2's own instruction ("AMENDED,
+not fudged"); nothing is deleted, the file's coverage (grid blank corner,
+zero/nonzero cyan residue, size agreement, file-count contract) is preserved
+under the new shape.
 
-Seam: stage_kit_modules.py (T5) — does NOT exist yet on this branch, along
-with kit_module_render.py/kit_modules.py it depends on. `_skm()`/`_kmr()`/
-`_km()` import them lazily inside each test's call phase (not at module top
-level) so a missing module reports one clean FAILED per test instead of
-aborting collection for the whole session (see test_kit_modules.py's header
-for the verified reason). guide_marks already exists, so it's imported
-normally at the top.
+Seam: stage_kit_modules.py — arm_b/arm_bc/sheet_grid/arm_a keep their
+existing `(panels)` / `(panels, ordered_by_panel)` call shape (only `arm_a`'s
+signature is explicitly "KEPT" by 3-arch.md T4, but no line proposes changing
+the sibling arm_b/arm_bc/sheet_grid signatures either — they're documented
+as reusing the new `module_sheet` composer internally). What changes is the
+CALLER: `panels` is now expected to be ONE module's 9 view-panels (not every
+module's panels pooled together), producing a 5-col x 2-row grid (10 cells,
+9 used, bottom-right blank) instead of the old 9-col grid. If Loop 4b's
+actual per-arm call shape differs, raise `RETURN loop=4a reason=test-wrong`,
+don't hand-edit these tests.
 
-Added beyond the Carry `tasks:` T7 file list (which only names
-test_kit_modules.py/test_kit_module_render.py) because 3-arch.md's own
-Evaluation > seams section requires a C4 assertion ("3 sheet files exist,
-bottom-right cell all-black, residue(arm_bc)>0 & residue(arm_b)==0") that has
-no home in the other two files — this file is that home.
-
-NOTE for Loop 4b (documented seam decision, not pinned by 3-arch.md): the
-`panels` argument shared by sheet_grid/arm_b/arm_bc/arm_a is a list of dicts
-{module, view, img, ordered, origin} — one entry per rendered panel. The
-architecture names these functions and their intent but not their exact
-calling convention; if Loop 4b's natural shape differs, raise
-`RETURN loop=4a reason=test-wrong`, don't hand-edit this test.
+Grid-cell sampling below deliberately avoids hardcoding gutter/pad pixel
+math (unspecified numerically by 3-arch.md — "uniform pad gutter" has no
+pinned width): it samples the CENTER of the bottom-right grid cell
+(w//5, h//2 pitch), a point guaranteed to fall inside that cell's interior
+regardless of the exact gutter width chosen by Loop 4b.
 """
 
 from PIL import Image
@@ -29,6 +33,7 @@ import guide_marks
 
 CELL_PX = 96
 PAD = 4
+GRID_COLS, GRID_ROWS = 5, 2
 
 
 def _kmr():
@@ -46,60 +51,97 @@ def _skm():
     return stage_kit_modules
 
 
-def _panels():
+def _panels_for(module):
+    """One module's 9 view-panels, scaled with the SAME global shared_scale
+    used across every module (C4 — one s per sheet, never re-measured)."""
     kmr, km = _kmr(), _km()
     names = list(km.MODULES)
     s = kmr.shared_scale(names, cell_px=CELL_PX, pad=PAD)
-    panels = []
-    for name in names:
-        rendered = kmr.render_module(name, s, CELL_PX, PAD)
-        for view, (img, ordered, origin) in rendered.items():
-            panels.append({"module": name, "view": view, "img": img, "ordered": ordered, "origin": origin})
-    return panels
+    rendered = kmr.render_module(module, s, CELL_PX, PAD)
+    return [{"module": module, "view": view, "img": img, "ordered": ordered, "origin": origin}
+            for view, (img, ordered, origin) in rendered.items()]
 
 
-def test_sheet_grid_leaves_the_bottom_right_cell_blank():
-    panels = _panels()
+def _bottom_right_cell_center(sheet):
+    w, h = sheet.size
+    cell_w, cell_h = w // GRID_COLS, h // GRID_ROWS
+    return w - cell_w // 2, h - cell_h // 2
+
+
+def test_per_module_sheet_grid_is_five_by_two_with_a_blank_bottom_right_cell():
+    panels = _panels_for("wall_band")
     sheet = _skm().sheet_grid(panels).convert("RGB")
     w, h = sheet.size
-    cell = sheet.crop((w - CELL_PX, h - CELL_PX, w, h))
-    assert all(px == (0, 0, 0) for px in cell.getdata())
+    # C5/R3: 5 cols x 2 rows (10 cells, 9 views + 1 blank) — NOT the old
+    # 9-col mega-sheet grid. Bounds are generous (any reasonable gutter
+    # width survives) but discriminate 5 cols worth of width from 9.
+    assert 4 * CELL_PX < w <= 5 * CELL_PX + 4 * (CELL_PX // 2), w
+    assert CELL_PX < h <= 2 * CELL_PX + (CELL_PX // 2), h
+
+    cx, cy = _bottom_right_cell_center(sheet)
+    r = min(sheet.size) // (GRID_COLS * 4)
+    region = sheet.crop((cx - r, cy - r, cx + r, cy + r))
+    assert all(px == (0, 0, 0) for px in region.getdata())
 
 
 def test_arm_b_is_blank_technical_with_zero_cyan_residue():
-    sheet = _skm().arm_b(_panels())
+    sheet = _skm().arm_b(_panels_for("roof_cell"))
     assert guide_marks.residue_count(sheet) == 0
 
 
 def test_arm_bc_adds_cyan_symbols_over_arm_b():
-    sheet_bc = _skm().arm_bc(_panels())
+    sheet_bc = _skm().arm_bc(_panels_for("roof_cell"))
     assert guide_marks.residue_count(sheet_bc) > 0
 
 
 def test_arm_a_matches_the_sheet_grid_size():
     skm = _skm()
-    panels = _panels()
+    panels = _panels_for("stair_45")
     ordered_by_panel = {(p["module"], p["view"]): p["ordered"] for p in panels}
     sheet_a = skm.arm_a(panels, ordered_by_panel)
     assert sheet_a.size == skm.sheet_grid(panels).size
 
 
-def test_stage_writes_three_arm_sheets_a_manifest_and_the_three_restyle_prompts(tmp_path):
-    # Contract (2026-07-15): gen-inbox holds ONLY the human-fed files (arm
-    # sheets + prompts); masks/meta/manifest land in the sibling masks/ dir.
+def test_per_module_sheet_has_magenta_gutter_separators():
+    skm = _skm()
+    panels = _panels_for("wall_band")
+    ordered_by_panel = {(p["module"], p["view"]): p["ordered"] for p in panels}
+    sheet = skm.arm_a(panels, ordered_by_panel).convert("RGB")
+    assert any(px == (255, 0, 255) for px in sheet.getdata()), (
+        "R3: magenta panel separators must survive on the composed sheet")
+
+
+def test_stage_writes_one_stem_pair_per_module_per_arm(tmp_path):
+    # Contract (AMENDED 2026-07-16, R2): sheet-per-object, not 3 mega-sheets.
+    km = _km()
+    names = sorted(km.MODULES)
     out = tmp_path / "gen-inbox"
     _skm().stage(out=str(out))
 
     pngs = sorted(out.glob("*.png"))
-    sheets = [p for p in pngs if Image.open(p).width > CELL_PX]
-    assert len(sheets) == 3, [p.name for p in pngs]
-    assert len(pngs) == 3, "gen-inbox must hold nothing but the 3 arm sheets"
+    expected_png_stems = {f"{name}__{arm}" for name in names for arm in ("a", "b", "bc")}
+    assert {p.stem for p in pngs} == expected_png_stems, sorted(p.name for p in pngs)
+    assert len(pngs) == len(names) * 3
+
+    prompts = sorted(out.glob("*_prompt.txt"))
+    expected_prompt_stems = {f"{name}__{arm}_prompt" for name in names for arm in ("a", "b", "bc")}
+    assert {p.stem for p in prompts} == expected_prompt_stems
+    assert len(prompts) == len(names) * 3
+
+    for p in prompts:
+        module, arm = p.name.removesuffix("_prompt.txt").rsplit("__", 1)
+        assert module in names and arm in ("a", "b", "bc"), p.name
+
     assert not list(out.glob("*.json")), "machine artifacts must not pollute gen-inbox"
+    assert len(pngs) + len(prompts) == len(list(out.iterdir())), (
+        "gen-inbox must hold nothing but per-module stem pairs")
 
-    prompts = sorted(p.name for p in out.glob("restyle_arm_*.md"))
-    assert prompts == ["restyle_arm_a.md", "restyle_arm_b.md", "restyle_arm_bc.md"]
 
+def test_stage_still_writes_per_module_view_masks_and_one_manifest(tmp_path):
+    out = tmp_path / "gen-inbox"
     masks = tmp_path / "masks"
+    _skm().stage(out=str(out), out_masks=str(masks))
+
     assert (masks / "sheet_manifest.json").exists()
     facemasks = list(masks.glob("*_facemask.png"))
     assert facemasks, "per-face masks must land in masks/"

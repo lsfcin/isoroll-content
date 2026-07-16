@@ -49,7 +49,9 @@
 | [`scene_guide_sheet.py`](scene_guide_sheet.py) | [`scene_guide_sheet.pyi`](scene_guide_sheet.pyi) | `compose_sheet`, `main` | !/usr/bin/env python3 |
 | [`scene_manifest.py`](scene_manifest.py) | [`scene_manifest.pyi`](scene_manifest.pyi) | `build_manifest`, `count_hud` | !/usr/bin/env python3 |
 | [`sheet_to_tpose.py`](sheet_to_tpose.py) | [`sheet_to_tpose.pyi`](sheet_to_tpose.pyi) | `cell_box`, `extract` | !/usr/bin/env python3 |
-| [`stage_kit_modules.py`](stage_kit_modules.py) | [`stage_kit_modules.pyi`](stage_kit_modules.pyi) | `sheet_grid`, `arm_b`, `arm_bc`, `arm_a`, `stage` | !/usr/bin/env python3 |
+| [`stage_kit_modules.py`](stage_kit_modules.py) | [`stage_kit_modules.pyi`](stage_kit_modules.pyi) | `sheet_grid`, `arm_b`, `arm_bc`, `paint_panel`, `arm_a` | !/usr/bin/env python3 |
+| [`texture_map.py`](texture_map.py) | [`texture_map.pyi`](texture_map.pyi) | `load_textures`, `FAMILY`, `variant`, `face_texture`, `texture_png_path` | !/usr/bin/env python3 |
+| [`texture_warp.py`](texture_warp.py) | [`texture_warp.pyi`](texture_warp.pyi) | `face_axes`, `warp_tiling`, `warp_decal` | !/usr/bin/env python3 |
 | [`tile_guide_matrix.py`](tile_guide_matrix.py) | [`tile_guide_matrix.pyi`](tile_guide_matrix.pyi) | `CellSpec`, `draw_panel`, `draw_caption`, `parse_spec`, `render_cells` | !/usr/bin/env python3 |
 | [`tile_guide_render.py`](tile_guide_render.py) | [`tile_guide_render.pyi`](tile_guide_render.pyi) | `draw_iso_panel`, `draw_square_grid`, `draw_flat_grid`, `row_y` | !/usr/bin/env python3 |
 | [`triposr_mesh.py`](triposr_mesh.py) | [`triposr_mesh.pyi`](triposr_mesh.pyi) | `parse_args`, `main` | [OBSOLETE-MESH] triposr_mesh.py — Generate a 3D mesh from a single concept image using TripoSR. |

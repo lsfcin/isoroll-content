@@ -120,6 +120,21 @@ def render_module(name, s, cell_px, pad):
     return {view: render_panel(faces, view, s, cell_px, pad) for view in VIEWS}
 
 
+def project_face(pts, view, s, cell_px, pad, origin):
+    """screen_poly for arbitrary world `pts` (T3, additive-only) — byte-identical
+    transform to the per-face step inside `ordered_faces` (same yaw-then-project
+    for yN views, same raw orthographic for TOP), so a face's own `ordered` polys
+    and a `project_face`-derived poly (e.g. a recess decal's world quad) always
+    land in the same screen frame. Does NOT touch ordered_faces/render_panel/
+    render_module."""
+    if view == "TOP":
+        ox, oy = origin
+        return [(ox + u * s, oy + v * s) for u, v, _z in pts]
+    deg = int(view[1:])
+    cam = Cam([], cell_px, cell_px, pad, scale=s, origin=origin)
+    return [cam.pt(*_yaw(p, deg, 0.5, 0.5)) for p in pts]
+
+
 def build_sheet_manifest(panels, s):
     """panels: list[{module, view, bbox, origin}] -> {px_per_voxel: s, panels: [...]}."""
     return {"px_per_voxel": s, "panels": [dict(p) for p in panels]}

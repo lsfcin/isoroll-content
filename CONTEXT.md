@@ -117,7 +117,7 @@ isoroll-content/
 | [`ROADMAP-content-gen.md`](ROADMAP-content-gen.md) | — | — | ROADMAP — content-gen: F1 procedural + espinha multiview |
 | [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
 | [`SCENE-CREATION.md`](SCENE-CREATION.md) | — | — | SCENE-CREATION — Canonical Spec |
-| [`SESSION-HANDOFF.md`](SESSION-HANDOFF.md) | — | — | SESSION HANDOFF — scene-creation program (Fable session ended 2026-07-14, post-freeze execution day 1) |
+| [`SESSION-HANDOFF.md`](SESSION-HANDOFF.md) | — | — | SESSION HANDOFF — scene-creation program (Fable session ended 2026-07-16, texture-set day) |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
 | [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | — | — | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
