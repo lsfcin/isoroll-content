@@ -128,3 +128,30 @@ Tests: amended `test_stage_kit_modules.py`'s stage-contract test for arm-a-only 
 27) and added a sheet-dimensions test pinning `CELL_PX == 256`. `make verify-fast`: 123 passed.
 
 Commit: see git log (this section was written into the same commit as the code/asset changes).
+
+## ROUND 2 (Lucas 2026-07-16, board review of 78e08a0 + NB door reference image)
+- R2-1 ALL: aliasing persists → cell 256→512 (4× pixels again) + ENABLE the 2× supersample→LANCZOS
+  path (written in P2, was off). Aliasing is warp stair-stepping more than source res — supersample
+  is the real fix; resolution bump per Lucas's call anyway.
+- R2-2 ALL: draw thin edge lines where adjacent faces have different normals (+ silhouette) — several
+  modules read confusing without face separation. Spec: dark ink stroke ~2px@512 over the warped
+  composite, edges known by construction from face polygons.
+- R2-3 ROOF: Lucas strategy (ADOPTED) — roof modules become COVER ONLY (sloped + flat ridge parts);
+  gable/enclosure = WALL material, composed at assembly as wall modules placed BEHIND the cover and
+  CROPPED by the cover's under-silhouette (mask by construction — we know cover geometry per view;
+  triangular cover over rectangular wall would otherwise show wall tips). Bonus: kills the
+  line-matching problem between sloped shingle courses and gable courses (different materials by
+  design). Crop machinery lands with S4t assembly prototype.
+- R2-4 STAIRS: same 2-stage treatment — stair modules = treads/risers only; side/back enclosure =
+  wall modules behind, cropped along the stair diagonal at assembly.
+- R2-5 DOORS/WINDOWS: standalone slab sheets, NO wall behind (P3 as decided round 1 — was not yet
+  implemented when board was reviewed; Lucas's NB reference image = target spec). Slab 0.1 voxel
+  thick; door 1×2, window 1×1 first; texture front + back (back FLIPPED so hardware matches side);
+  TOP view = thin bar. 10% inset = painter placement metadata, not the sprite.
+- Reference image layout note: Lucas's NB sheet uses a COMPASS 3×3 (NW N NE / W TOP E / SW S SE,
+  numbered labels) — intuitive, but has NO empty cell: the NB watermark landed ON view 9 (SE) in his
+  own example. FLAG raised to Lucas: adopt compass layout + extra caption strip below (watermark
+  absorber), or keep 5×2 with empty cell. Awaiting call; sheets stay 5×2 meanwhile.
+
+## Step 2 scope (executor): R2-1 + R2-2 + R2-5 + cover-only roof/stair modules (R2-3/R2-4 render side).
+Assembly-side crop = S4t.
