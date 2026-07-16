@@ -57,3 +57,33 @@ columns/pillars. Inventory finalized in round 2 AFTER P3+P4 decisions (both chan
 2. P3 round-1 answers (Q1–Q3) → design memo update → implement module changes → gate.
 3. P4 S4t prototype with cut-line board → gate.
 4. P5 inventory from prototype findings → S4b list → Lucas approves → build.
+
+## ROUND 1 ANSWERS (Lucas 2026-07-16)
+- Q1: hole is EMERGENT — wall assembles from 1-voxel columns, hole = column not placed. Hole may stay
+  empty; DM/user optionally places a door/window object there.
+- Q2: door = real thin slab, thickness 0.1 voxel, placed 10% inwards of the hole voxel (placement and
+  thickness are separate; both 10% = "feet" measurement system). Texture pasted on front AND back
+  faces, back FLIPPED so handle/keyhole sits on the same physical edge — physically correct continuity
+  of one object seen from both sides, NOT the forbidden sprite-mirror (orientation band still applies).
+- Q3: windows identical mechanics to doors — full-voxel hole, own slab object, 10% in / 0.1 thick.
+- P4: detail when reached; Lucas anticipates tile-sheet adaptations. P5: inventory after P3+P4.
+
+## P6 (NEW) — normal maps perf + TEXTURE-FIRST strategic fork (Lucas question, round 1)
+Question: (a) normal-map shader too costly for Foundry? (b) if cheap → point NB at TEXTURES instead of
+final sprites — simpler content generation?
+Assessment (a): feasible, moderate risk. Cost drivers: extra texture memory (albedo+normal) and DRAW
+CALLS — naive per-sprite shader breaks PIXI batching. Mitigations: ONE shared shader for the whole
+layer + texture atlas (PIXI batches by shader+texture), cap shader lights at 4-8 nearest, ship as
+module OPTION with plain-sprite fallback (already the S8 plan). Typical VTT scene (hundreds of sprites,
+few lights) is light load vs what Foundry's own lighting layer already does per-pixel.
+Assessment (b): texture-first does NOT require normal maps — grayscale face ramp (FACE_TOP/LONG/CAP)
+is baked flat shading at zero runtime cost; normal maps = optional enhancement (B28 world-normal fix
+rides the same machinery). Texture-first wins: cross-view consistency problem disappears (one texture
+reused everywhere), no silhouette QC, P4 slicing largely DISSOLVES (assembly warps textures directly,
+seams correct by construction), NB task = restyle a flat tiling texture = easiest regime, continuity
+testable by code. Style-ceiling risk: loses NB per-view painterly light/AO; mitigable via painterly
+texture style + baked per-face AO (geometry known at render time) + linework overlay.
+Key fact: arm_a machinery just built IS the texture-first engine — NB-painted textures drop in 1:1 via
+textures.json, replacing linework PNGs. S5 becomes "NB paints ~20 textures" instead of "27 sheets + QC".
+Proposed cheap fork test (post P1/P2): NB restyles 2-3 textures → warp → board, next to a sheet-restyle
+arm. Decision by eyeball + code QC. NOT decided — discussion open.
