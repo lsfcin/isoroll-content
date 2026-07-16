@@ -37,8 +37,11 @@ def _line(x1, y1, x2, y2, w=STROKE):
 
 
 def _joints(r, y0, y1, lo=26, hi=58, slant_p=0.35):
-    """Vertical joints for one course, never inside the edge margins."""
+    """Vertical joints for one course, never inside the edge margins.
+    Monotonic top AND bottom endpoints — joint lines can never cross
+    (Lucas 2026-07-15: lines must not cross on the stones pattern)."""
     out, x = [], 0.0
+    prev_top = prev_bot = 0.0
     while True:
         x += r.uniform(lo, hi)
         if x >= T - EDGE_MARGIN:
@@ -46,7 +49,11 @@ def _joints(r, y0, y1, lo=26, hi=58, slant_p=0.35):
         if x < EDGE_MARGIN:
             continue
         slant = r.uniform(-4, 4) if r.random() < slant_p else 0
-        out.append(_line(x, y0, x + slant, y1))
+        top, bot = x, x + slant
+        if top <= prev_top + 4 or bot <= prev_bot + 4 or bot >= T - EDGE_MARGIN:
+            continue
+        out.append(_line(top, y0, bot, y1))
+        prev_top, prev_bot = top, bot
     return out
 
 
@@ -57,9 +64,6 @@ def floor_stone(seed):
         s.append(_line(0, y, T, y, 2.0))
     for y0, y1 in zip(FLOOR_COURSES, FLOOR_COURSES[1:]):
         s += _joints(r, y0, y1)
-        if r.random() < 0.3:
-            xm = r.uniform(20, T - 20)
-            s.append(_line(xm, y0, xm + r.uniform(10, 24), y1))
     return "".join(s) + "</svg>"
 
 
@@ -107,11 +111,12 @@ def wall_stone_top(seed):
 
 
 def window_1x1():
-    m, c = 14, T / 2
+    """Thin frame (Lucas 2026-07-15): tile repeats side by side for larger
+    windows — repeated thin frames read as mullions, keeping continuity."""
+    m, c = 4, T / 2
     s = [_head(),
-         f'<rect x="{m}" y="{m}" width="{T-2*m}" height="{T-2*m}" fill="white" stroke="{INK}" stroke-width="3"/>',
-         f'<rect x="{m+8}" y="{m+8}" width="{T-2*m-16}" height="{T-2*m-16}" fill="white" stroke="{INK}" stroke-width="{STROKE}"/>',
-         _line(c, m + 8, c, T - m - 8), _line(m + 8, c, T - m - 8, c)]
+         f'<rect x="{m}" y="{m}" width="{T-2*m}" height="{T-2*m}" fill="white" stroke="{INK}" stroke-width="2"/>',
+         _line(c, m, c, T - m), _line(m, c, T - m, c)]
     return "".join(s) + "</svg>"
 
 
@@ -130,11 +135,13 @@ def build_set(out_dir="assets/textures"):
     linework_doors (kept in a sibling module)."""
     import cairosvg
     from linework_doors import DOORS
+    from linework_extra import EXTRA
     out = Path(out_dir)
     (out / "svg").mkdir(parents=True, exist_ok=True)
     (out / "png").mkdir(parents=True, exist_ok=True)
     entries = dict(SET)
     entries.update(DOORS)
+    entries.update(EXTRA)
     manifest = {}
     for name, (maker, kind, dims) in entries.items():
         svg = maker()

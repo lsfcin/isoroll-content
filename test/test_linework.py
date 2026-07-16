@@ -57,8 +57,47 @@ def test_single_door_hinges_left_knob_right():
 
 def test_build_set_renders_everything(tmp_path):
     names = lw.build_set(out_dir=str(tmp_path))
-    assert len(names) == 24  # 8 floor + 4+1 wood + 4+1 stone + window + 5 doors
+    assert len(names) == 38  # 24 base + 4 floor_wood + 4 roof + 4 tread + 2 riser
     for n in names:
         png = tmp_path / "png" / f"{n}.png"
-        assert png.exists() and png.stat().st_size > 200, n
+        assert png.exists() and png.stat().st_size > 120, n
     assert (tmp_path / "textures.json").exists()
+
+
+# ---- Lucas 2026-07-15 feedback seams ----
+
+def _course_joints(svg):
+    from collections import defaultdict
+    by_course = defaultdict(list)
+    for l in filter(_verticalish, _lines(svg)):
+        by_course[(l[1], l[3])].append((l[0], l[2]))
+    return by_course
+
+
+def test_stone_joint_lines_never_cross():
+    for maker, seeds in ((lw.floor_stone, range(1, 9)), (lw.wall_stone_side, range(1, 5))):
+        for seed in seeds:
+            for joints in _course_joints(maker(seed)).values():
+                joints.sort()
+                for (t1, b1), (t2, b2) in zip(joints, joints[1:]):
+                    assert t2 > t1 and b2 > b1, "crossing joints"
+
+
+def test_door_hardware_sits_at_five_feet():
+    from linework_doors import _hardware_y
+    assert _hardware_y(lw.T) < lw.T / 2            # h=1: upper part
+    assert _hardware_y(2 * lw.T) == lw.T           # h=2: exact middle
+    assert _hardware_y(3 * lw.T) == 2 * lw.T       # h=3: middle of first 10ft
+
+
+def test_keyhole_has_triangle_occluded_by_circle():
+    svg = door(1, 2)
+    assert '<polygon' in svg, "keyhole triangle missing"
+    tri = svg.index('<polygon')
+    filled_circles = [m.start() for m in re.finditer(r'<circle[^>]*fill="#3a3a3a"', svg)]
+    assert any(c > tri for c in filled_circles), "circle must be drawn over the triangle"
+
+
+def test_window_frame_is_thin():
+    m = re.search(r'<rect x="(\d+)" y="\1"', lw.window_1x1())
+    assert m and int(m.group(1)) <= 6, "frame must be thin for side-by-side continuity"

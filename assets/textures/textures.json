@@ -262,5 +262,159 @@
       0
     ],
     "continuity": null
+  },
+  "floor_wood_v1": {
+    "svg": "svg/floor_wood_v1.svg",
+    "png": "png/floor_wood_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "floor_wood_v2": {
+    "svg": "svg/floor_wood_v2.svg",
+    "png": "png/floor_wood_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "floor_wood_v3": {
+    "svg": "svg/floor_wood_v3.svg",
+    "png": "png/floor_wood_v3.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "floor_wood_v4": {
+    "svg": "svg/floor_wood_v4.svg",
+    "png": "png/floor_wood_v4.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "roof_shingle_v1": {
+    "svg": "svg/roof_shingle_v1.svg",
+    "png": "png/roof_shingle_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      1,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "roof_shingle_v2": {
+    "svg": "svg/roof_shingle_v2.svg",
+    "png": "png/roof_shingle_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      1,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "roof_shingle_v3": {
+    "svg": "svg/roof_shingle_v3.svg",
+    "png": "png/roof_shingle_v3.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      1,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "roof_shingle_v4": {
+    "svg": "svg/roof_shingle_v4.svg",
+    "png": "png/roof_shingle_v4.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      1,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "stair_tread_v1": {
+    "svg": "svg/stair_tread_v1.svg",
+    "png": "png/stair_tread_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "stair_tread_v2": {
+    "svg": "svg/stair_tread_v2.svg",
+    "png": "png/stair_tread_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "stair_tread_v3": {
+    "svg": "svg/stair_tread_v3.svg",
+    "png": "png/stair_tread_v3.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "stair_tread_v4": {
+    "svg": "svg/stair_tread_v4.svg",
+    "png": "png/stair_tread_v4.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "stair_riser_v1": {
+    "svg": "svg/stair_riser_v1.svg",
+    "png": "png/stair_riser_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      1,
+      0
+    ],
+    "continuity": "horizontal"
+  },
+  "stair_riser_v2": {
+    "svg": "svg/stair_riser_v2.svg",
+    "png": "png/stair_riser_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      1,
+      0
+    ],
+    "continuity": "horizontal"
   }
 }
