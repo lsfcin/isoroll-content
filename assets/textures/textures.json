@@ -416,5 +416,93 @@
       0
     ],
     "continuity": "horizontal"
+  },
+  "grass_v1": {
+    "svg": "svg/grass_v1.svg",
+    "png": "png/grass_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "grass_v2": {
+    "svg": "svg/grass_v2.svg",
+    "png": "png/grass_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "grass_v3": {
+    "svg": "svg/grass_v3.svg",
+    "png": "png/grass_v3.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "grass_v4": {
+    "svg": "svg/grass_v4.svg",
+    "png": "png/grass_v4.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_cobble_v1": {
+    "svg": "svg/road_cobble_v1.svg",
+    "png": "png/road_cobble_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_cobble_v2": {
+    "svg": "svg/road_cobble_v2.svg",
+    "png": "png/road_cobble_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_cobble_v3": {
+    "svg": "svg/road_cobble_v3.svg",
+    "png": "png/road_cobble_v3.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_cobble_v4": {
+    "svg": "svg/road_cobble_v4.svg",
+    "png": "png/road_cobble_v4.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
   }
 }

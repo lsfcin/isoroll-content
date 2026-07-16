@@ -65,9 +65,43 @@ def stair_riser(seed):
     return "".join(s) + "</svg>"
 
 
+def grass(seed):
+    """Ground grass: tuft scatter, NO border lines — omnidirectional
+    continuity (no slab seams on organic ground). Transitions to other
+    ground materials happen via boundary MASKS at assembly (S6), never
+    via per-pair transition textures."""
+    r = random.Random(f"grass:{seed}")
+    s = [_head()]
+    for _ in range(26):
+        x = r.uniform(EDGE_MARGIN, T - EDGE_MARGIN)
+        y = r.uniform(EDGE_MARGIN, T - EDGE_MARGIN)
+        h = r.uniform(5, 9)
+        s.append(_line(x, y, x - h * 0.5, y - h, 1.2))
+        s.append(_line(x, y, x, y - h * 1.15, 1.2))
+        s.append(_line(x, y, x + h * 0.5, y - h * 0.85, 1.2))
+    return "".join(s) + "</svg>"
+
+
+def road_cobble(seed):
+    """Cobble road: small dense stones; ALL course lines drawn including the
+    tile boundary (0 and T) so vertically stacked tiles coincide — a
+    continuous field, borderless like grass. Curbs/edges come from S6
+    boundary masks."""
+    r = random.Random(f"road:{seed}")
+    step = 16
+    s = [_head()]
+    for y in range(0, T + 1, step):
+        s.append(_line(0, y, T, y, 1.2))
+    for y0 in range(0, T, step):
+        s += _joints(r, y0, y0 + step, lo=14, hi=30, slant_p=0.15)
+    return "".join(s) + "</svg>"
+
+
 EXTRA = {
     **{f"floor_wood_v{i}": (lambda i=i: floor_wood(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
     **{f"roof_shingle_v{i}": (lambda i=i: roof_shingle(i), "tiling", (1, 1, 1)) for i in range(1, 5)},
     **{f"stair_tread_v{i}": (lambda i=i: stair_tread(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
     **{f"stair_riser_v{i}": (lambda i=i: stair_riser(i), "tiling", (1, 1, 0)) for i in range(1, 3)},
+    **{f"grass_v{i}": (lambda i=i: grass(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
+    **{f"road_cobble_v{i}": (lambda i=i: road_cobble(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
 }

@@ -35,7 +35,7 @@ def _hardware(kx, ky):
     """Handle (open circle) above a keyhole (circle occluding a thin
     triangle below it). Triangle first, circle drawn on top."""
     s = [f'<circle cx="{kx:.1f}" cy="{ky-12:.1f}" r="5" fill="white" stroke="{INK}" stroke-width="{STROKE}"/>',
-         f'<polygon points="{kx-3.5:.1f},{ky+20:.1f} {kx+3.5:.1f},{ky+20:.1f} {kx:.1f},{ky+6:.1f}" fill="{INK}"/>',
+         f'<polygon points="{kx-3.5:.1f},{ky+15.8:.1f} {kx+3.5:.1f},{ky+15.8:.1f} {kx:.1f},{ky+1.8:.1f}" fill="{INK}"/>',
          f'<circle cx="{kx:.1f}" cy="{ky+6:.1f}" r="4" fill="{INK}"/>']
     return s
 
