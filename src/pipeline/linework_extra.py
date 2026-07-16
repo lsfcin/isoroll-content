@@ -97,6 +97,23 @@ def road_cobble(seed):
     return "".join(s) + "</svg>"
 
 
+def road_dirt(seed):
+    """Dirt road: pebble outlines + short rut dashes, borderless and
+    omnidirectional like grass; edges via S6 boundary masks."""
+    r = random.Random(f"dirt:{seed}")
+    s = [_head()]
+    for _ in range(14):
+        x = r.uniform(EDGE_MARGIN, T - EDGE_MARGIN)
+        y = r.uniform(EDGE_MARGIN, T - EDGE_MARGIN)
+        rad = r.uniform(2, 4.5)
+        s.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rad:.1f}" fill="white" stroke="#3a3a3a" stroke-width="1.2"/>')
+    for _ in range(8):
+        x = r.uniform(EDGE_MARGIN, T - EDGE_MARGIN - 16)
+        y = r.uniform(EDGE_MARGIN, T - EDGE_MARGIN)
+        s.append(_line(x, y, x + r.uniform(7, 15), y + r.uniform(-2, 2), 1.2))
+    return "".join(s) + "</svg>"
+
+
 EXTRA = {
     **{f"floor_wood_v{i}": (lambda i=i: floor_wood(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
     **{f"roof_shingle_v{i}": (lambda i=i: roof_shingle(i), "tiling", (1, 1, 1)) for i in range(1, 5)},
@@ -104,4 +121,5 @@ EXTRA = {
     **{f"stair_riser_v{i}": (lambda i=i: stair_riser(i), "tiling", (1, 1, 0)) for i in range(1, 3)},
     **{f"grass_v{i}": (lambda i=i: grass(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
     **{f"road_cobble_v{i}": (lambda i=i: road_cobble(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
+    **{f"road_dirt_v{i}": (lambda i=i: road_dirt(i), "tiling", (1, 0, 1)) for i in range(1, 5)},
 }

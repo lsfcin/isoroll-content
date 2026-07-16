@@ -504,5 +504,49 @@
       1
     ],
     "continuity": "horizontal"
+  },
+  "road_dirt_v1": {
+    "svg": "svg/road_dirt_v1.svg",
+    "png": "png/road_dirt_v1.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_dirt_v2": {
+    "svg": "svg/road_dirt_v2.svg",
+    "png": "png/road_dirt_v2.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_dirt_v3": {
+    "svg": "svg/road_dirt_v3.svg",
+    "png": "png/road_dirt_v3.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
+  },
+  "road_dirt_v4": {
+    "svg": "svg/road_dirt_v4.svg",
+    "png": "png/road_dirt_v4.png",
+    "type": "tiling",
+    "dims_voxels": [
+      1,
+      0,
+      1
+    ],
+    "continuity": "horizontal"
   }
 }

@@ -57,7 +57,7 @@ def test_single_door_hinges_left_knob_right():
 
 def test_build_set_renders_everything(tmp_path):
     names = lw.build_set(out_dir=str(tmp_path))
-    assert len(names) == 46  # 38 + grass x4 + road_cobble x4
+    assert len(names) == 50  # 42 + grass x4 + road_cobble x4 + road_dirt x4
     for n in names:
         png = tmp_path / "png" / f"{n}.png"
         assert png.exists() and png.stat().st_size > 120, n
