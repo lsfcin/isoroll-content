@@ -68,3 +68,10 @@ Render backend options:
 4. **Web app manual route** ✓.
 
 Next step once (d) is clarified: fold this memo into SCENE-CREATION P5 + ROADMAP-content-gen lane update, stage the test sheets (`design/feel-rig/stage_kit_paint.py` + guide renderer extension), Lucas runs the web-app batch.
+
+## Lucas decided (2026-07-14 addendum)
+
+1. **First NB round waits for real arm (a)** — supersedes the "R-a only in round 2" protocol line above. Rationale: arm (a) as shipped is flat per-material fills (`stage_kit_modules.MAT_COLORS`), not real textures; the texturization idea is the core and must be in round 1. Build: warp actual textures onto each projected face quad — pure 2D homography/affine per face, no 3D runtime; renderer already emits per-face projected polys (`ordered_by_panel`). Needs a texture-asset source decision (interview Lucas at that loop's clarify).
+2. **arm (bc) cyan marks must be geometry-anchored** (fix loop `anchored-kit-marks` in flight): per-face UV-lattice anchors projected through the same `_yaw`+`Cam.pt` as geometry; same physical spot = same symbol in all 9 views; collapse edge-on. Reference example: `Downloads/Isometric Images (7).png`.
+3. **Visual eyeball gate protocol**: every pipeline step that produces an image ends with a visual board (artifact page) reviewed by Lucas BEFORE the next step runs. Applies from now on; the arm_bc marks miss is the motivating incident.
+4. **Killed-lane image relics deleted** (2026-07-14): output/{guides,scene-guides,tile-guides,assembled,kit-guide}/ emptied + gen-inbox old-era `kit-*`/`scene_l-room_*`/`tile_wall5x4_*` files removed; gen-inbox now carries only current-lane artifacts (3 arm sheets, manifest, face masks/JSONs, restyle prompts).

@@ -6,6 +6,23 @@
 
 Build híbrido: **Fable inline** construiu o que tinha decisão arquitetural viva — compilador layout→massing, renderer de guia de cena, marks parametrizados p/ A/B, prompt NB v2, client NB — porque o design do instrumento (guia) e a iteração de prompt exigem julgamento contínuo. **Todo o resto é mecânico após as seams existirem** e ruteia via loop-engineering (`/loops`, executores pinados loop-low/medium): reparo de ambiente utilitário, testes+hardening do postproc, exporters, lane F2, restyle F4, tasks do isoroll-module. opencode/modelos externos: **proibidos em código do repo** (precedente kimi 2026-07: stub corrompido, zero código mergeado); permitidos p/ notebooks Colab e experimentos descartáveis. A/Bs NB: usuário executa (web/API) e eyeballa; modelos baratos processam resultados.
 
+## Plano refinado — content-first (2026-07-15, Fable + Lucas)
+
+Regras permanentes desta fase: **passo-a-passo** (nada encadeia sozinho — cada spawn tem go explícito do Lucas); **gate de eyeball em todo passo que produz imagem** (board artifact antes do próximo passo); geometria por código, nunca por olho de modelo (`core/skills/iso-visual.md`). Decisões D1–D3 + adendo de texturas: `design/RENDER-RESTYLE-MEMO.md`.
+
+| # | Passo | Executor | Gate | Estado |
+|---|-------|----------|------|--------|
+| S1 | `anchored-kit-marks` 4a→4b (arch já PASS) → restage arm_bc | /loops (medium) | eyeball sheets | pronto p/ 4a, aguardando go |
+| S2 | Texturas do Lucas (5 sheets técnicos: floor stone ×8, wall wood/stone c/ top+bottom face, window, doors 1x1..2x3) → `assets/textures/` + spec de ingestão | Lucas + inline | — | aguardando drop dos PNGs |
+| S3 | Skill `/linework` (gerador SVG→PNG seeded, stitch-by-construction, linguagem do Lucas) + taste pass em 1 material | inline | eyeball demo | demo no board 2026-07-15, aguardando veredito |
+| S4 | arm_a REAL: homografia textura→quad por face (todas as 9 peças, stairs/roofs incl.) → restage 3 arms | /loops | eyeball 3 sheets | não iniciado; input = S2 |
+| S5 | NB round 1 — Lucas, web app, **3 arms juntos** (decisão D2) → gen-outbox → QC P5.4 (IoU ≥ 0.9, side-correctness 2 yaws, resíduo, estilo 1–5) | Lucas + loop QC | decisão pré-registrada: promote lane R / kill-log | bloqueado por S1+S4 |
+| S6 | Pós-veredito: vocabulário dimensional nos sheets (portas 1x2x0..2x3x0 do sheet do Lucas), linhas de variantes de textura, spec de slice/costura: crop com margem horizontal + alpha-ramp ~20px entre slices (casa com slices do isoroll-module) | /loops | eyeball | pós-S5 |
+| S7 | Painter close: facade fix (T8, assemble/index re-exports) + Loop 5 e2e Foundry + Loop 6 ship | /loops | usability Lucas (gate P7a) | 4b verde, WIP `3987979`; parked por D3 |
+| P | PARKED — normal maps: geração trivial por construção (mesmo rasterizer dos face masks, fill = normal RGB por yaw); shader custom no IsoSpriteLayer (já é container próprio, fora do canvas.primary); requer prompt flat-albedo p/ evitar double-lighting | — | — | lane futura (ideia memo #1) |
+
+Lucas deve: (a) drop dos 5 PNGs de textura; (b) veredito do demo `/linework` no board; (c) go do S1.
+
 ## Estado (2026-07-07; consolidação 2026-07-09)
 
 - [x] **P0 consolidação (Fable 2026-07-09, branch `feature/scene-creation-consolidation`)**: SCENE-CREATION.md (spec + kill-log + programa), ROADMAP.md podado (árvore S1–S4/EXP/AP/M2–M9 → `archive/ROADMAP-2026H1-strategies.md`), S0 estendido a 8+1 (S0-E7 batch cardinal, deck-ancorado), marks/anchors PARKED em escala de cena (vivos em escala de tile). Merges f1-procedural-spine/postproc-tests/env-utility-repair já constam em develop (verificado no git 2026-07-09) — L20 abaixo mantido como histórico.
@@ -92,6 +109,7 @@ Skills: loops do isoroll-module devem invocar `/foundry` (router de referência 
 | module-token-facing | module | medium | seleção de sprite 8-direções (placeholder `object-transform.ts`) | — |
 | f5-token-stances | content | medium | matriz de stances × espinha | module-token-facing |
 | ✓ dsl-v2-python | content | high | DSL v2 (frozen 2026-07-13 @ rig v16.2) no pipeline Python: parser multi-nível + grupos, serializer round-trip, massing v2, manifest/guide-render; plano em `.loop/dsl-v2-python/1-plan.md` (port de `design/feel-rig/rig.frag`) — DONE 2026-07-14: all criteria pass (C1 parse, C2 round-trip, C3 massing boxes, C4 group manifest tiles+HUD, C5 guide-render, C6 pytest green) | rig freeze (P6.5) |
+| anchored-kit-marks | content | high | trocar o grid screen-space de símbolos do arm_bc por marcas ciano ancoradas na geometria (UV-lattice por face, amostrada no polígono já projetado → mesma transform `_yaw`+`Cam.pt`; símbolo estável por face_id+índice em todas as 9 views; colapsa edge-on). `face_anchors` em kit_module_render + `apply_anchored` canônico em guide_marks; restage gen-inbox. Plano em `.loop/anchored-kit-marks/1-plan.md` | kit-module-renderer |
 
 ## Gitflow & recuperação (content e module)
 
