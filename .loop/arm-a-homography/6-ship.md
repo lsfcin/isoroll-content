@@ -49,7 +49,7 @@ follow-on chain `kit-dimensional-vocabulary` (wall-height variants, full door
 set 1x1x0..2x3x0, slice middle/edge parts — deliberately NOT absorbed into
 this chain per `1-plan.md:58,86`, routed pending Lucas board gate).
 
-commit: 9be2298 pushed: yes (loop/arm-a-homography → origin/loop/arm-a-homography)
+commit: 9d8d3d6 pushed: yes (loop/arm-a-homography → origin/loop/arm-a-homography)
 
 leftovers:
 - `kit-dimensional-vocabulary` (S4b in ROADMAP-content-gen.md): wall-height
