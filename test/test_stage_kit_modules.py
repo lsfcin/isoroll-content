@@ -111,30 +111,49 @@ def test_per_module_sheet_has_magenta_gutter_separators():
         "R3: magenta panel separators must survive on the composed sheet")
 
 
-def test_stage_writes_one_stem_pair_per_module_per_arm(tmp_path):
-    # Contract (AMENDED 2026-07-16, R2): sheet-per-object, not 3 mega-sheets.
+def test_stage_writes_one_stem_pair_per_module_arm_a_only(tmp_path):
+    # Contract (AMENDED 2026-07-16, P1 S4-REVIEW-ROUNDS.md — arm a only):
+    # was "one stem pair per module PER ARM" (27 = 9 modules x 3 arms);
+    # arm_b/arm_bc stay in code (parked, unit-tested above) but no longer
+    # get staged, so gen-inbox now holds 9 stem pairs, not 27.
     km = _km()
     names = sorted(km.MODULES)
     out = tmp_path / "gen-inbox"
     _skm().stage(out=str(out))
 
     pngs = sorted(out.glob("*.png"))
-    expected_png_stems = {f"{name}__{arm}" for name in names for arm in ("a", "b", "bc")}
+    expected_png_stems = {f"{name}__a" for name in names}
     assert {p.stem for p in pngs} == expected_png_stems, sorted(p.name for p in pngs)
-    assert len(pngs) == len(names) * 3
+    assert len(pngs) == len(names)
 
     prompts = sorted(out.glob("*_prompt.txt"))
-    expected_prompt_stems = {f"{name}__{arm}_prompt" for name in names for arm in ("a", "b", "bc")}
+    expected_prompt_stems = {f"{name}__a_prompt" for name in names}
     assert {p.stem for p in prompts} == expected_prompt_stems
-    assert len(prompts) == len(names) * 3
+    assert len(prompts) == len(names)
 
     for p in prompts:
         module, arm = p.name.removesuffix("_prompt.txt").rsplit("__", 1)
-        assert module in names and arm in ("a", "b", "bc"), p.name
+        assert module in names and arm == "a", p.name
 
     assert not list(out.glob("*.json")), "machine artifacts must not pollute gen-inbox"
     assert len(pngs) + len(prompts) == len(list(out.iterdir())), (
         "gen-inbox must hold nothing but per-module stem pairs")
+
+
+def test_stage_sheet_dims_are_four_x_the_prior_64px_cell(tmp_path):
+    # P2 (S4-REVIEW-ROUNDS.md): CELL_PX 64 -> 256 (4x linear). GUTTER is
+    # unchanged, so overall sheet dims are ~4x, not exactly 4x — assert the
+    # cell size itself (the thing that actually changed) plus a generous
+    # bound on the sheet, rather than a brittle exact-pixel equality.
+    skm = _skm()
+    assert skm.CELL_PX == 256
+    out = tmp_path / "gen-inbox"
+    skm.stage(out=str(out))
+    from PIL import Image
+    sheet = Image.open(out / f"{sorted(_km().MODULES)[0]}__a.png")
+    w, h = skm._sheet_size(skm.CELL_PX)
+    assert sheet.size == (w, h)
+    assert w > 4 * (5 * 64 + 4 * 8) * 0.9, "sheet width should be ~4x the old 64px-cell sheet"
 
 
 def test_stage_still_writes_per_module_view_masks_and_one_manifest(tmp_path):

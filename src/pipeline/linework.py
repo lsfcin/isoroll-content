@@ -17,6 +17,9 @@ import random
 from pathlib import Path
 
 T = 128          # px per voxel face edge (SVG is resolution-independent)
+RASTER_SCALE = 2  # P2 (S4-REVIEW-ROUNDS.md): PNG raster density = T*RASTER_SCALE
+                  # px/voxel-unit (>=256), SVG design coords stay at T (no
+                  # texture redesign, only a denser re-rasterization)
 INK = "#3a3a3a"
 STROKE = 1.6
 EDGE_MARGIN = 8  # no vertical joints closer than this to a tiling edge
@@ -146,7 +149,8 @@ def build_set(out_dir="assets/textures"):
     for name, (maker, kind, dims) in entries.items():
         svg = maker()
         (out / "svg" / f"{name}.svg").write_text(svg)
-        cairosvg.svg2png(bytestring=svg.encode(), write_to=str(out / "png" / f"{name}.png"))
+        cairosvg.svg2png(bytestring=svg.encode(), write_to=str(out / "png" / f"{name}.png"),
+                          scale=RASTER_SCALE)
         manifest[name] = {"svg": f"svg/{name}.svg", "png": f"png/{name}.png",
                           "type": kind, "dims_voxels": dims,
                           "continuity": "horizontal" if kind == "tiling" else None}

@@ -1,6 +1,7 @@
 from _typeshed import Incomplete
 
 T: int
+RASTER_SCALE: int
 INK: str
 STROKE: float
 EDGE_MARGIN: int

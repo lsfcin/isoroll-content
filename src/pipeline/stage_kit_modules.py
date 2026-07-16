@@ -12,7 +12,10 @@ module's 9 view-panels (VIEWS order), never every module pooled together.
 Grid is fixed 5 cols x 2 rows (10 cells: 9 views + 1 blank bottom-right
 watermark slot), gutter-separated with magenta (255,0,255) separator lines
 (existing guide_marks convention) — no per-panel autofit, one shared `s`
-across every module/view (C4)."""
+across every module/view (C4).
+
+P1 (S4-REVIEW-ROUNDS.md): `stage()` writes arm_a only now. arm_b/arm_bc
+stay defined + unit-tested, just no longer staged. P2: CELL_PX 64->256."""
 
 import json
 from math import ceil
@@ -27,7 +30,7 @@ import face_masks as fm
 import texture_map
 import texture_warp
 
-CELL_PX = 64
+CELL_PX = 256  # P2: 4x the prior 64px cell (S4-REVIEW-ROUNDS.md)
 PAD = 4
 
 GRID_COLS, GRID_ROWS = 5, 2  # 10 cells for VIEWS' 9 entries + 1 blank
@@ -147,11 +150,10 @@ def arm_a(panels, ordered_by_panel):
 
 
 def stage(out="output/gen-inbox", out_masks=None):
-    """gen-inbox holds ONLY what Lucas hand-feeds to the NB web app
-    (per-module arm sheets + restyle prompts, `{module}__{arm}.png` /
-    `{module}__{arm}_prompt.txt` stem pairs — R2); machine artifacts (face
-    masks/meta, sheet manifest) go to `out_masks` (default: sibling `masks/`
-    next to `out`)."""
+    """gen-inbox holds ONLY what Lucas hand-feeds to the NB web app (P1:
+    arm a only — `{module}__a.png` / `{module}__a_prompt.txt` stem pairs);
+    machine artifacts (face masks/meta, sheet manifest) go to `out_masks`
+    (default: sibling `masks/` next to `out`)."""
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     masks_path = Path(out_masks) if out_masks else out_path.parent / "masks"
@@ -161,7 +163,7 @@ def stage(out="output/gen-inbox", out_masks=None):
     s = kmr.shared_scale(names, cell_px=CELL_PX, pad=PAD)  # ONE global s (C4)
 
     prompts_dir = Path(__file__).parent / "prompts"
-    prompt_bodies = {arm: (prompts_dir / f"restyle_arm_{arm}.md").read_text() for arm in ("a", "b", "bc")}
+    prompt_body_a = (prompts_dir / "restyle_arm_a.md").read_text()
 
     all_panels = []
     for name in names:
@@ -173,12 +175,8 @@ def stage(out="output/gen-inbox", out_masks=None):
             all_panels.append(p)
             ordered_by_panel[(name, view)] = ordered
 
-        arm_b(module_panels).save(out_path / f"{name}__b.png")
-        arm_bc(module_panels).save(out_path / f"{name}__bc.png")
         arm_a(module_panels, ordered_by_panel).save(out_path / f"{name}__a.png")
-
-        for arm in ("a", "b", "bc"):
-            (out_path / f"{name}__{arm}_prompt.txt").write_text(f"# {name}\n\n{prompt_bodies[arm]}")
+        (out_path / f"{name}__a_prompt.txt").write_text(f"# {name}\n\n{prompt_body_a}")
 
     manifest_panels = []
     for p in all_panels:

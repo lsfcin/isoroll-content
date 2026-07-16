@@ -13,6 +13,8 @@ import math
 import numpy as np
 from PIL import Image, ImageDraw
 
+import texture_resample as tr
+
 
 def _cross(a, b):
     return (
@@ -99,15 +101,6 @@ def _decal_texcoords(world_pts, Ah, Av, src_w, src_h):
             for a, b in zip(a_vals, b_vals)]
 
 
-def _tile_source(tex_img, canvas_w, canvas_h):
-    src_w, src_h = tex_img.size
-    canvas = Image.new("RGBA", (canvas_w, canvas_h))
-    for y in range(0, canvas_h, src_h):
-        for x in range(0, canvas_w, src_w):
-            canvas.paste(tex_img, (x, y))
-    return canvas
-
-
 def _perspective_coeffs(dst_pts, src_pts):
     """8 coeffs for Image.transform(..., PERSPECTIVE, coeffs): PIL evaluates
     the coeffs AT the OUTPUT (dst) pixel to find the INPUT (src) pixel to
@@ -158,23 +151,25 @@ def _warp_to_screen(source_img, src_corners, dst_poly):
     correspondence), returned as an RGBA canvas anchored at absolute (0,0) —
     the SAME coordinate frame `dst_poly` itself is already in — masked
     mask-tight to `dst_poly`'s interior. PERSPECTIVE for 4 corners, AFFINE
-    for 3 (gable faces)."""
+    for 3 (gable faces). BICUBIC resample (P2 policy, tr.RESAMPLE)."""
     out_w = int(math.ceil(max(p[0] for p in dst_poly))) + 1
     out_h = int(math.ceil(max(p[1] for p in dst_poly))) + 1
     if len(dst_poly) == 3:
         coeffs = _affine_coeffs(dst_poly, src_corners)
         warped = source_img.transform((out_w, out_h), Image.Transform.AFFINE, coeffs,
-                                       resample=Image.Resampling.BILINEAR)
+                                       resample=tr.RESAMPLE)
     else:
         coeffs = _perspective_coeffs(dst_poly, src_corners)
         warped = source_img.transform((out_w, out_h), Image.Transform.PERSPECTIVE, coeffs,
-                                       resample=Image.Resampling.BILINEAR)
+                                       resample=tr.RESAMPLE)
     return _apply_polygon_mask(warped, dst_poly)
 
 
 def warp_tiling(tex_img, world_pts, screen_poly, dims_voxels):
-    """RGBA cell tile: axes -> texcoords -> tile tex_img -> map tiled-source
-    corners onto screen_poly (PERSPECTIVE/AFFINE) -> mask to screen_poly."""
+    """RGBA cell tile: axes -> texcoords -> tile tex_img -> density-match
+    (P2: tr.match_source_density, so the warp never magnifies a too-small
+    source) -> map tiled-source corners onto screen_poly (PERSPECTIVE/
+    AFFINE) -> mask to screen_poly."""
     tex_img = tex_img.convert("RGBA")
     Ah, Av, _dh, _dv = face_axes(world_pts)
     dims_h = _resolve_dim(dims_voxels, Ah)
@@ -183,16 +178,19 @@ def warp_tiling(tex_img, world_pts, screen_poly, dims_voxels):
     texcoords = _texcoords(world_pts, Ah, Av, dims_h, dims_v, src_w, src_h)
     canvas_w = max(1, math.ceil(max(c[0] for c in texcoords)))
     canvas_h = max(1, math.ceil(max(c[1] for c in texcoords)))
-    tiled = _tile_source(tex_img, canvas_w, canvas_h)
+    tiled = tr.tile_source(tex_img, canvas_w, canvas_h)
+    tiled, texcoords = tr.match_source_density(tiled, texcoords, screen_poly)
     return _warp_to_screen(tiled, texcoords, screen_poly)
 
 
 def warp_decal(tex_img, world_quad, screen_quad):
     """RGBA: same corner machinery (reuses face_axes for the anti-mirror
     chirality), but `dims_voxels` is the opening's own world extent -> exactly
-    1 tile, source NOT tiled/wrapped (outside the source -> transparent)."""
+    1 tile, source NOT tiled/wrapped (outside the source -> transparent).
+    Density-matched (P2) same as warp_tiling."""
     tex_img = tex_img.convert("RGBA")
     Ah, Av, _dh, _dv = face_axes(world_quad)
     src_w, src_h = tex_img.size
     texcoords = _decal_texcoords(world_quad, Ah, Av, src_w, src_h)
+    tex_img, texcoords = tr.match_source_density(tex_img, texcoords, screen_quad)
     return _warp_to_screen(tex_img, texcoords, screen_quad)

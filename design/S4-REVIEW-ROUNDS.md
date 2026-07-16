@@ -87,3 +87,44 @@ Key fact: arm_a machinery just built IS the texture-first engine — NB-painted 
 textures.json, replacing linework PNGs. S5 becomes "NB paints ~20 textures" instead of "27 sheets + QC".
 Proposed cheap fork test (post P1/P2): NB restyles 2-3 textures → warp → board, next to a sheet-restyle
 arm. Decision by eyeball + code QC. NOT decided — discussion open.
+
+## P1+P2 executed (2026-07-16)
+P1: `stage_kit_modules.stage()` now writes ONLY `{module}__a.png` / `{module}__a_prompt.txt`
+(9 stem pairs, one per module) — arm_b/arm_bc functions stay in code, still unit-tested directly
+in test_stage_kit_modules.py, just no longer called from `stage()`. Deleted the 36 stale
+`*__b.png`/`*__bc.png` sheets + prompt txts from output/gen-inbox/ (gitignored) and restaged fresh.
+
+P2: `CELL_PX` 64 → 256 (4× linear) in stage_kit_modules.py; `s` is still recovered from the
+manifest-derived shared scale, never re-measured. Sheets are now 1312×520 (was 352×136) —
+GUTTER stayed at 8px so the total isn't an exact 4×, but the cell itself (the thing that was
+unreadable) is.
+
+Resample policy chosen (texture_warp.py, split into new `texture_resample.py` to stay under the
+per-file line gate): PIL `Image.transform(..., resample=BICUBIC)` everywhere (was BILINEAR), plus
+a source-density guard (`match_source_density`) that BICUBIC-upscales the tiled/decal source before
+the perspective/affine warp whenever the destination screen quad would otherwise force the warp to
+magnify a too-small source (<1 source px per output px) — this was the actual root cause of the
+352×136 "noise" sheets, not just the small cell size.
+
+Linework PNGs were below the 256 px/voxel-unit floor (128 px/voxel-unit, from `linework.T=128` at
+1:1 raster). Added `linework.RASTER_SCALE = 2` and pass `scale=RASTER_SCALE` to `cairosvg.svg2png` —
+SVG design coordinates (courses, joints, door/window proportions) are untouched, only the raster
+density doubled to 256 px/voxel-unit. Regenerated all 50 textures via `linework.build_set()`; only
+`assets/textures/png/*.png` changed (svg/ and textures.json are byte-identical — dims aren't
+recorded in the manifest, so no schema bump needed).
+
+Self-check: rendered `wall_band` and `roof_cell` arm-a sheets at full 256px cell and eyeballed
+(via image read, not model judgment of geometry — iso-visual HARD RULE respected, this was only a
+resample-artifact check). BICUBIC + density-matched source was sufficient: brick coursing and
+shingle tiling read cleanly at both a straight (`y0`) and a sloped/gable (AFFINE) face, no visible
+stair-stepping in the texture content itself. The only jaggedness left is the hard-edged polygon
+mask silhouette (`_apply_polygon_mask`, pinned C7 — must stay pixel-exact with `face_masks.py`),
+which is a separate, intentional contract, not a resample artifact. Decision: did NOT wire in the
+2× supersample→LANCZOS-downsample escalation path — it's written and available
+(`texture_resample.supersample_transform`) but unused, since the conditional trigger ("bicubic
+alone still leaves visible stair-stepping") wasn't met. Re-open if a future sheet still reads noisy.
+
+Tests: amended `test_stage_kit_modules.py`'s stage-contract test for arm-a-only (9 stem pairs, not
+27) and added a sheet-dimensions test pinning `CELL_PX == 256`. `make verify-fast`: 123 passed.
+
+Commit: see git log (this section was written into the same commit as the code/asset changes).
