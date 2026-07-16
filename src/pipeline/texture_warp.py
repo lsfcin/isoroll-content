@@ -151,17 +151,19 @@ def _warp_to_screen(source_img, src_corners, dst_poly):
     correspondence), returned as an RGBA canvas anchored at absolute (0,0) —
     the SAME coordinate frame `dst_poly` itself is already in — masked
     mask-tight to `dst_poly`'s interior. PERSPECTIVE for 4 corners, AFFINE
-    for 3 (gable faces). BICUBIC resample (P2 policy, tr.RESAMPLE)."""
+    for 3 (gable faces). R2-1 (design/S4-REVIEW-ROUNDS.md ROUND 2): routed
+    through `tr.supersample_transform` (2x supersample, BICUBIC, then
+    LANCZOS-downsample) instead of a single BICUBIC sample at output
+    resolution — warp stair-stepping on oblique yaws was the actual
+    remaining aliasing source after the P2 resolution/density-guard pass."""
     out_w = int(math.ceil(max(p[0] for p in dst_poly))) + 1
     out_h = int(math.ceil(max(p[1] for p in dst_poly))) + 1
     if len(dst_poly) == 3:
-        coeffs = _affine_coeffs(dst_poly, src_corners)
-        warped = source_img.transform((out_w, out_h), Image.Transform.AFFINE, coeffs,
-                                       resample=tr.RESAMPLE)
+        warped = tr.supersample_transform(source_img, Image.Transform.AFFINE, (out_w, out_h),
+                                           _affine_coeffs, dst_poly, src_corners)
     else:
-        coeffs = _perspective_coeffs(dst_poly, src_corners)
-        warped = source_img.transform((out_w, out_h), Image.Transform.PERSPECTIVE, coeffs,
-                                       resample=tr.RESAMPLE)
+        warped = tr.supersample_transform(source_img, Image.Transform.PERSPECTIVE, (out_w, out_h),
+                                           _perspective_coeffs, dst_poly, src_corners)
     return _apply_polygon_mask(warped, dst_poly)
 
 

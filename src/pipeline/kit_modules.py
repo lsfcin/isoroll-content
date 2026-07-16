@@ -6,12 +6,21 @@
 axis-aligned and can't express odd-45°-yaw or non-rectangular footprints
 (diag_half, roof_cell). `extrude()` builds box-like modules from a footprint
 polygon; `from_boxes()` reuses `layout_massing.Box` only where box seams
-already exist (stairs), converting each box to faces via `extrude`.
+already exist, converting each box to faces via `extrude` (kept as a public,
+independently-tested seam even though no builder below calls it anymore —
+R2-4 moved stairs to a per-box `extrude`-and-select shape instead, see
+`_stair_cover`).
+
+R2-3/R2-4 (design/S4-REVIEW-ROUNDS.md ROUND 2): roof_cell and the stair
+builders are COVER-ONLY now — enclosure/side faces (roof gable ends + the
+underside soffit; stair side-triangle envelope + the buried back face) are
+struck. They become WALL material composed at assembly (S4t), cropped to the
+cover's silhouette; that crop machinery is out of scope here.
 """
 
 from dataclasses import dataclass
 
-from layout_massing import STAIR_RISE, STEPS, Box
+from layout_massing import STAIR_RISE, STEPS
 
 UNIT_SQUARE = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
 WALL_H = 3.0  # module-local wall height (unit cell, yaw not baked)
@@ -20,29 +29,15 @@ ROOF_H = 0.7  # roof_cell ridge rise
 ROOF_RIDGE_V = 0.3  # off-centre on purpose (two reasons): (1) a ridge at v=0.5 is
 # mirror-symmetric across v, which collapses several of the 8 yaw silhouettes
 # onto each other (test_kit_module_render.py needs >=4/8 distinct bboxes, "no
-# accidental mirror chirality"); (2) the ridge runs along u (not v) so its two
-# gable end-triangles lie in u=const planes — at this 2:1 dimetric camera,
-# those only go x-degenerate (zero screen area) at yaw 135/315, never at the
-# yaw=45 view test_kit_module_render.py's face_mask test actually exercises
-# (a v=const gable, the first design tried, degenerates exactly at 45/225).
-ROOF_EAVE = 0.12  # gable+bottom overhang past the wall line (u<0 / u>1, and the
-# bottom's v range too). Without an overhang every gable/slope/bottom corner
-# is shared exactly with its neighbour, so at SOME yaw the painter's last
-# write (last-write-wins occlusion, by construction) fully subsumes another
-# face's identical footprint -> that face's mask ends up empty, which
-# test_kit_module_render.py's "every ordered id survives in meta" assertion
-# (roof_cell/y45) forbids. The overhang gives every face a sliver only it
-# covers, so no face can ever be a strict screen-space subset of the rest.
-OPENING_MARGIN = 0.15  # horizontal inset so recess carving yields >1 border face
-# (Seam decision, not pinned by 3-arch.md: the doc's door width mirrors
-# `_draw_openings`' full-run-width door, which is exactly 1 unit for a
-# multi-cell wall run. A KIT V2 module is a single 1x1 cell, so a literal
-# full-width opening would leave zero left/right border faces — tying
-# recess_door's face count with plain wall_band's instead of exceeding it
-# (test_kit_modules.py: door_sides > wall_sides). Insetting the opening
-# horizontally satisfies both the qualitative test and the doc's z-span
-# pattern (door floor..2h, window 1h..2h) without contradicting anything
-# 3-arch.md pins numerically.)
+# accidental mirror chirality"); (2) the ridge runs along u (not v), so the
+# two cover slopes (front v<RIDGE_V, back v>RIDGE_V) are different sizes and
+# never coincide screen-exactly at any yaw — no eave overhang needed to keep
+# them from subsuming one another (R2-3: the old gable/bottom eave-overhang
+# rationale no longer applies now that those two faces are gone).
+SLAB_THICK = 0.1  # R2-5: standalone door/window slab thickness (module-local
+# units) — "10% = 'feet' measurement system" per ROUND-1 Q2/Q3 answers. Same
+# constant drives both the slab's own geometry and the painter-placement
+# inset metadata (S7, not this module's concern).
 
 
 @dataclass
@@ -87,38 +82,25 @@ def _base():
     return extrude(UNIT_SQUARE, 0.0, THIN)
 
 
-def _carve_side(a0, a1, b0, b1, w=1.0, h=WALL_H, mat="blank"):
-    """Border quads left after cutting the [a0,a1]x[b0,b1] opening from the v=1 side face."""
-
-    def quad(ua0, ua1, zb0, zb1):
-        return Face([(ua0, 1.0, zb0), (ua1, 1.0, zb0), (ua1, 1.0, zb1), (ua0, 1.0, zb1)], "side", mat)
-
-    faces = []
-    if a0 > 1e-9:
-        faces.append(quad(0.0, a0, 0.0, h))
-    if a1 < w - 1e-9:
-        faces.append(quad(a1, w, 0.0, h))
-    if b0 > 1e-9:
-        faces.append(quad(a0, a1, 0.0, b0))
-    if b1 < h - 1e-9:
-        faces.append(quad(a0, a1, b1, h))
-    return faces
+def _slab(w, h, mat="blank"):
+    """Thin standalone slab: w wide (u) x SLAB_THICK deep (v) x h tall (z)
+    voxels — R2-5 door/window OBJECTS (no wall carving; the wall-with-a-hole
+    is emergent at assembly from column placement, S4t, not this module's
+    concern). `extrude`'s edge order for this footprint puts the two
+    v-normal LARGE faces at side indices 0 (v=0, "front") and 2
+    (v=SLAB_THICK, "back"); the two u-normal THIN edge faces land at indices
+    1 (u=w, right) and 3 (u=0, left) — texture_map.FAMILY tells all four
+    apart by face normal, not by this ordering."""
+    footprint = [(0.0, 0.0), (w, 0.0), (w, SLAB_THICK), (0.0, SLAB_THICK)]
+    return extrude(footprint, 0.0, h, mat)
 
 
-def _wall_with_opening(a0, a1, b0, b1):
-    faces = extrude(UNIT_SQUARE, 0.0, WALL_H)
-    # UNIT_SQUARE edge order: 0=north(v=0) 1=east(u=1) 2=south(v=1) 3=west(u=0);
-    # faces = [top, bottom, side0, side1, side2, side3] — carve side2 (south, v=1).
-    kept = [faces[0], faces[1], faces[2], faces[3], faces[5]]
-    return kept + _carve_side(a0, a1, b0, b1)
+def _door_1x2():
+    return _slab(1.0, 2.0)
 
 
-def _recess_door():
-    return _wall_with_opening(OPENING_MARGIN, 1.0 - OPENING_MARGIN, 0.0, min(2.0, WALL_H))
-
-
-def _recess_window():
-    return _wall_with_opening(OPENING_MARGIN, 1.0 - OPENING_MARGIN, min(1.0, WALL_H), min(2.0, WALL_H))
+def _window_1x1():
+    return _slab(1.0, 1.0)
 
 
 def _diag_half():
@@ -136,48 +118,53 @@ def _diag_half():
 
 
 def _roof_cell():
-    """Triangular-prism wedge: ridge along u at v=ROOF_RIDGE_V, rising to ROOF_H.
-    Gable ends and the underside overhang ROOF_EAVE past the wall line (see the
-    ROOF_EAVE note above) so no face's screen footprint is ever an exact subset
-    of its neighbours'."""
-    e = ROOF_EAVE
+    """Cover-only wedge (R2-3): ridge along u at v=ROOF_RIDGE_V, rising to
+    ROOF_H. Only the two sloped cover quads remain — the gable end triangles
+    and the underside soffit are struck; they become WALL material, composed
+    behind the cover and cropped to its under-silhouette at assembly (S4t)."""
     a, b, c, d = (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)
     r0, r1 = (0.0, ROOF_RIDGE_V, ROOF_H), (1.0, ROOF_RIDGE_V, ROOF_H)
-    ga, gd = (-e, 0.0, 0.0), (-e, 1.0, 0.0)
-    gb, gc = (1 + e, 0.0, 0.0), (1 + e, 1.0, 0.0)
-    bot = [(-e, -e, 0.0), (1 + e, -e, 0.0), (1 + e, 1 + e, 0.0), (-e, 1 + e, 0.0)]
     return [
-        Face(bot, "bottom"),
-        Face([ga, gd, r0], "gable"),
-        Face([gb, gc, r1], "gable"),
         Face([a, b, r1, r0], "slope"),
         Face([r0, r1, c, d], "slope"),
     ]
 
 
-def _stair_treads(rise_scale):
-    boxes = []
+def _stair_cover(rise_scale):
+    """Cover-only per step (R2-4): tread (top) + the single uphill-facing
+    riser side, built directly via `extrude` and index-selected — the
+    side-triangle envelope (left/right, constant-v faces) and the back face
+    buried against the next step (the other constant-u face) are struck;
+    they become WALL material at assembly, same treatment as the roof.
+    `extrude`'s footprint-edge order for [(u0,0),(u1,0),(u1,1),(u0,1)] emits
+    faces = [top, bottom, side0(v=0,strip), side1(u=u1,strip="back"),
+    side2(v=1,strip), side3(u=u0,KEEP="riser")] — so faces[5] is the riser."""
+    faces = []
     for i in range(STEPS):
         height = STAIR_RISE * rise_scale * (i + 1) / STEPS
         u0 = i / STEPS
-        boxes.append(Box(u0, 0.0, 1.0 / STEPS, 1.0, height, "step"))
-    return boxes
+        u1 = u0 + 1.0 / STEPS
+        footprint = [(u0, 0.0), (u1, 0.0), (u1, 1.0), (u0, 1.0)]
+        box_faces = extrude(footprint, 0.0, height, "step")
+        top, bottom, riser = box_faces[0], box_faces[1], box_faces[5]
+        faces += [top, bottom, riser]
+    return faces
 
 
 def _stair_45():
-    return from_boxes(_stair_treads(1.0))
+    return _stair_cover(1.0)
 
 
 def _stair_half():
-    return from_boxes(_stair_treads(0.5))
+    return _stair_cover(0.5)
 
 
 MODULES = {
     "wall_band": _wall_band,
     "top_cap": _top_cap,
     "base": _base,
-    "recess_door": _recess_door,
-    "recess_window": _recess_window,
+    "door_1x2": _door_1x2,
+    "window_1x1": _window_1x1,
     "diag_half": _diag_half,
     "roof_cell": _roof_cell,
     "stair_45": _stair_45,

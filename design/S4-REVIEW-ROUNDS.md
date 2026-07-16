@@ -155,3 +155,78 @@ Commit: see git log (this section was written into the same commit as the code/a
 
 ## Step 2 scope (executor): R2-1 + R2-2 + R2-5 + cover-only roof/stair modules (R2-3/R2-4 render side).
 Assembly-side crop = S4t.
+
+## Step 2 executed (2026-07-16)
+
+R2-1 (resolution + supersample): `CELL_PX` 256 -> 512 (stage_kit_modules.py).
+The 2x supersample->LANCZOS path (`texture_resample.supersample_transform`,
+written but unwired since P2) is now the ONLY resample path inside
+`texture_warp._warp_to_screen` — both PERSPECTIVE and AFFINE warps route
+through it instead of a single BICUBIC sample. `s` is still recovered once
+from the manifest-derived shared scale, never re-measured. Sheets are now
+2592x1032 (5x2 grid at the 512px cell, gutter unchanged).
+
+R2-2 (edge lines): new module `src/pipeline/face_edges.py`. `stroke_edges
+(faces)` walks every face's polygon edges, matches shared 3D corner-pairs
+across faces (geometry by construction, never pixel/silhouette detection),
+and returns the edges to stroke per face: any edge with NO matching
+neighbour (silhouette — open covers like roof_cell/stairs aren't closed
+solids anymore under R2-3/R2-4) or matched to a neighbour with a different
+world normal (a real fold). `paint_panel` strokes a face's edges (dark ink,
+~2px@512, `INK` = linework.py's `#3a3a3a`) right after that face's own
+texture paste, in the SAME far->near `ordered_faces` sequence the painter
+already composites in — a nearer face pasted later naturally overpaints ink
+under it, matching the existing last-write-wins occlusion convention
+instead of a second, inconsistent occlusion test.
+
+R2-5 (standalone door/window slabs): `kit_modules.py` drops recess_door/
+recess_window (wall-carve openings) and `_carve_side`/`_wall_with_opening`/
+`OPENING_MARGIN` with them; adds `door_1x2`/`window_1x1` as standalone
+thin-slab objects (`_slab`: extrude of a w x `SLAB_THICK`=0.1 footprint).
+`texture_map.py` gives the two LARGE v-normal faces (front v=0, back
+v=SLAB_THICK) the object's own decal family (`door_1x2x0`/`window_1x1x0`,
+both already present in textures.json); every other face (thin u-normal
+edges + top/bottom caps) gets plain wood tone + edge lines. `face_texture`
+now also returns `flip_h` (True only on a slab's back face) —
+`stage_kit_modules.paint_panel` mirrors the source PNG (`ImageOps.mirror`)
+before `warp_decal` on that face only, so real-world hardware (handle/
+keyhole) sits on the same physical edge seen from either side
+(physically-correct object continuity, not a sprite mirror). `recess_
+decals()` is gone from texture_map.py; `paint_panel`'s old "composite any
+recess decal" loop is gone too — decal vs tiling texture type now branches
+inside the SAME per-face loop via `spec["type"]`.
+
+R2-3/R2-4 (cover-only roof/stairs, render side): `_roof_cell` keeps only
+the two sloped cover quads (gable end triangles + underside soffit struck);
+`_stair_cover` (replaces the from_boxes-based `_stair_treads`) keeps tread
++ the single uphill riser per step (side-triangle envelope + the back face
+buried against the next step struck). Both become WALL material composed
+behind the cover and cropped to its silhouette at assembly — that crop
+machinery is S4t, out of scope here. `from_boxes`/`extrude` stay untouched,
+independently-tested public seams; nothing calls `from_boxes` internally
+anymore.
+
+Tests: amended test_kit_modules.py (EXPECTED_MODULES, roof/stair
+face-count contracts — comments point at R2-3/R2-4; door/window replace
+the recess tests), test_texture_map.py (roof gable/bottom + stair-sides
+amended, recess_decals tests removed — comment points at
+test_texture_map_slab.py), test_texture_warp.py (`_gable_pts` synthesizes
+a triangle now that no MODULES builder emits a 3-corner face, keeping the
+AFFINE path under test), test_stage_kit_modules.py (`CELL_PX == 512`),
+test_arm_a_texture.py (FIXTURES: recess_door -> door_1x2). New:
+test_texture_map_slab.py (door/window decal id resolution + flip_h
+contract, split out to stay under the per-file line gate), test_face_edges.py
+(stroke_edges geometry contract + one pixel-level integration check that a
+real different-normal boundary paints dark ink — code-asserted, not
+eyeballed, per iso-visual's HARD RULE).
+
+`make verify-fast`: 131 passed.
+
+Restaged gen-inbox: base, diag_half, roof_cell, stair_45, stair_half,
+top_cap, wall_band, door_1x2, window_1x1 (9 stem pairs, arm-a only, sheets
+2592x1032). Deleted the stale recess_door/recess_window sheets + masks.
+
+Not done here (explicitly out of scope, S4t): the roof/stair enclosure
+walls, cropped to the cover's under-silhouette, and the wall-column
+emergent-hole mechanics doors/windows sit in. The compass-vs-5x2 sheet
+layout question (end of ROUND 2 above) is still awaiting Lucas's call.

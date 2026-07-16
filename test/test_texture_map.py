@@ -80,17 +80,23 @@ def test_face_texture_any_side_face_uses_wall_mat_side_family():
     assert _family(tm.face_texture("wall_band", "side", side.pts, "stone")["id"]) == "wall_stone_side"
 
 
-def test_face_texture_roof_slope_and_gable_are_roof_shingle():
+def test_face_texture_roof_slope_is_roof_shingle():
     tm = _tm()
-    for kind in ("slope", "gable"):
-        face = _faces("roof_cell", kind)[0]
-        assert _family(tm.face_texture("roof_cell", kind, face.pts, "blank")["id"]) == "roof_shingle"
+    face = _faces("roof_cell", "slope")[0]
+    assert _family(tm.face_texture("roof_cell", "slope", face.pts, "blank")["id"]) == "roof_shingle"
 
 
-def test_face_texture_roof_bottom_is_floor_stone():
+def test_face_texture_gable_kind_still_maps_to_roof_shingle():
+    # R2-3 (ROUND 2, AMENDED 2026-07-16): roof_cell is cover-only now and no
+    # longer EMITS "gable" faces itself (gable becomes WALL material at
+    # assembly, S4t) — the FAMILY table's kind=="gable" rule is still a
+    # general, valid mapping, exercised with a synthetic triangle instead of
+    # through roof_cell's own output. Roof "bottom" is gone the same way;
+    # the generic kind=="bottom"->floor_stone rule stays covered via stairs
+    # below.
     tm = _tm()
-    bottom = _faces("roof_cell", "bottom")[0]
-    assert _family(tm.face_texture("roof_cell", "bottom", bottom.pts, "blank")["id"]) == "floor_stone"
+    pts = [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.5, 0.5, 1.0)]
+    assert _family(tm.face_texture("roof_cell", "gable", pts, "blank")["id"]) == "roof_shingle"
 
 
 def test_face_texture_stair_top_is_stair_tread_and_bottom_is_floor_stone():
@@ -101,17 +107,19 @@ def test_face_texture_stair_top_is_stair_tread_and_bottom_is_floor_stone():
     assert _family(tm.face_texture("stair_45", "bottom", bottom.pts, "blank")["id"]) == "floor_stone"
 
 
-def test_face_texture_stair_sides_split_between_riser_and_wall_stone_side():
-    # Stair side faces come in two physical orientations: the narrow ‖±u
-    # riser faces and the ‖±v/back faces. Rather than hand-pick which real
-    # face.pts is which (risking a winding-order mistake), assert over ALL
-    # of stair_45's side faces that both families appear and nothing else does.
+def test_face_texture_stair_sides_are_all_riser_after_r2_4_cover_only():
+    # R2-4 (ROUND 2, AMENDED 2026-07-16): stair builders are cover-only now
+    # — only the uphill riser side survives per step; the side-triangle
+    # envelope + the back face buried against the next step are struck
+    # (become WALL material at assembly). wall_stone_side no longer appears
+    # among stair_45's own side faces — still covered generically by
+    # test_face_texture_any_side_face_uses_wall_mat_side_family above.
     tm = _tm()
     families = {
         _family(tm.face_texture("stair_45", "side", f.pts, "blank")["id"])
         for f in _faces("stair_45", "side")
     }
-    assert families == {"stair_riser", "wall_stone_side"}, families
+    assert families == {"stair_riser"}, families
 
 
 def test_face_texture_never_raises_for_an_unmapped_module():
@@ -131,19 +139,11 @@ def test_face_texture_id_type_and_dims_agree_with_textures_json():
     assert spec["dims_voxels"] == textures[spec["id"]]["dims_voxels"]
 
 
-# ---------------------------------------------------------------------- recess_decals
-def test_recess_decals_door_is_the_pinned_id_and_quad():
-    quad = _tm().recess_decals("recess_door")
-    assert quad == [("door_1x2x0", [(0.15, 1.0, 0.0), (0.85, 1.0, 0.0), (0.85, 1.0, 2.0), (0.15, 1.0, 2.0)])]
-
-
-def test_recess_decals_window_is_the_pinned_id_and_quad():
-    quad = _tm().recess_decals("recess_window")
-    assert quad == [("window_1x1x0", [(0.15, 1.0, 1.0), (0.85, 1.0, 1.0), (0.85, 1.0, 2.0), (0.15, 1.0, 2.0)])]
-
-
-def test_recess_decals_is_empty_for_a_module_with_no_opening():
-    assert _tm().recess_decals("wall_band") == []
+# recess_decals (wall-carve opening decals) is GONE — R2-5 (ROUND 2,
+# AMENDED 2026-07-16) replaced recess_door/recess_window with standalone
+# door_1x2/window_1x1 slab OBJECTS. Its coverage (door/window decal id
+# resolution, plus the new back-face flip_h contract) moved to
+# test_texture_map_slab.py.
 
 
 # ---------------------------------------------------------------------- variant (C8)

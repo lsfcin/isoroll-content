@@ -48,7 +48,13 @@ def _side_faces():
 
 
 def _gable_pts():
-    return [f for f in km.MODULES["roof_cell"]() if f.kind == "gable"][0].pts
+    # R2-3 (S4-REVIEW-ROUNDS.md ROUND 2, AMENDED 2026-07-16): roof_cell is
+    # cover-only now — it no longer EMITS "gable" faces (gable becomes WALL
+    # material composed at assembly, S4t), so no MODULES builder produces a
+    # 3-corner face anymore. This synthetic triangle (same shape as the old
+    # roof_cell gable end) keeps the AFFINE 3-corner warp path — still a
+    # real, general texture_warp capability — under test.
+    return [(-0.12, 0.0, 0.0), (-0.12, 1.0, 0.0), (0.0, 0.3, 0.7)]
 
 
 def _solid_png(color, size=(20, 20)):

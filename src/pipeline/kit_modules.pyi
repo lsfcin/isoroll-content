@@ -6,8 +6,7 @@ WALL_H: float
 THIN: float
 ROOF_H: float
 ROOF_RIDGE_V: float
-ROOF_EAVE: float
-OPENING_MARGIN: float
+SLAB_THICK: float
 
 @dataclass
 class Face:

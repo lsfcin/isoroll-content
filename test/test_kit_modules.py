@@ -21,8 +21,12 @@ import pytest
 from layout_massing import STEPS, Box
 
 UNIT_SQUARE = [(0, 0), (1, 0), (1, 1), (0, 1)]
+# R2-5 (S4-REVIEW-ROUNDS.md ROUND 2, AMENDED 2026-07-16): recess_door/
+# recess_window (wall-carve openings) are replaced by standalone slab
+# objects door_1x2/window_1x1 — the wall-with-a-hole is emergent at
+# assembly (S4t), not this module's concern.
 EXPECTED_MODULES = {
-    "wall_band", "top_cap", "base", "recess_door", "recess_window",
+    "wall_band", "top_cap", "base", "door_1x2", "window_1x1",
     "diag_half", "roof_cell", "stair_45", "stair_half",
 }
 
@@ -91,20 +95,33 @@ def test_top_cap_and_base_are_thinner_than_wall_band():
     assert zspan(MODULES["base"]()) < wall_span
 
 
-def test_recess_builders_split_the_opening_side_into_more_faces_than_plain_wall():
+def test_door_and_window_are_standalone_thin_slabs():
+    # R2-5 (ROUND 2, AMENDED 2026-07-16): recess_door/recess_window (wall
+    # carvings) are replaced by standalone slab OBJECTS — a plain extrude of
+    # a w x SLAB_THICK footprint (top, bottom, 2 LARGE front/back faces + 2
+    # THIN left/right edge faces). No relation to wall_band's own face
+    # count anymore (that comparison was the old carve-contract).
     MODULES = _km().MODULES
-    wall_sides = sum(1 for f in MODULES["wall_band"]() if f.kind == "side")
-    door_sides = sum(1 for f in MODULES["recess_door"]() if f.kind == "side")
-    window_sides = sum(1 for f in MODULES["recess_window"]() if f.kind == "side")
-    assert door_sides > wall_sides
-    assert window_sides > wall_sides
+    for name in ("door_1x2", "window_1x1"):
+        faces = MODULES[name]()
+        assert len(faces) == 6, name
+        assert Counter(f.kind for f in faces) == {"top": 1, "bottom": 1, "side": 4}, name
 
 
-def test_recess_door_and_recess_window_are_geometrically_distinct():
+def test_door_1x2_and_window_1x1_are_geometrically_distinct():
     MODULES = _km().MODULES
-    door = [(f.kind, f.pts) for f in MODULES["recess_door"]()]
-    window = [(f.kind, f.pts) for f in MODULES["recess_window"]()]
+    door = [(f.kind, f.pts) for f in MODULES["door_1x2"]()]
+    window = [(f.kind, f.pts) for f in MODULES["window_1x1"]()]
     assert door != window
+
+
+def test_slab_thickness_matches_the_shared_slab_thick_constant():
+    # SLAB_THICK ("10% = 'feet'", ROUND-1 Q2/Q3 answers) drives the slab's
+    # own v-extent, shared with the (future, S7) painter-placement inset.
+    km = _km()
+    for name in ("door_1x2", "window_1x1"):
+        vs = [p[1] for f in km.MODULES[name]() for p in f.pts]
+        assert max(vs) - min(vs) == pytest.approx(km.SLAB_THICK), name
 
 
 def test_diag_half_is_a_thin_rotated_quad_extrusion():
@@ -112,18 +129,24 @@ def test_diag_half_is_a_thin_rotated_quad_extrusion():
     assert kinds == {"top": 1, "bottom": 1, "side": 4}
 
 
-def test_roof_cell_is_a_triangular_prism_wedge():
+def test_roof_cell_is_a_cover_only_wedge():
+    # R2-3 (ROUND 2, AMENDED 2026-07-16): the gable end triangles and the
+    # underside soffit are struck — only the two sloped cover quads remain.
+    # Gable becomes WALL material composed behind the cover at assembly
+    # (S4t); this builder no longer emits it.
     faces = _km().MODULES["roof_cell"]()
-    kinds = Counter(f.kind for f in faces)
-    assert kinds == {"gable": 2, "slope": 2, "bottom": 1}
-    assert len(faces) == 5
+    assert Counter(f.kind for f in faces) == {"slope": 2}
+    assert len(faces) == 2
 
 
-def test_stair_45_and_stair_half_are_built_from_steps_worth_of_boxes():
+def test_stair_45_and_stair_half_are_built_from_steps_worth_of_cover_faces():
+    # R2-4 (ROUND 2, AMENDED 2026-07-16): cover-only — tread + the single
+    # uphill riser per step (3 faces/box), not the old from_boxes 6-face
+    # extrude. The side-triangle envelope + the back face buried against
+    # the next step are struck; they become WALL material at assembly.
     MODULES = _km().MODULES
-    # from_boxes emits 6 faces/box (no face-sharing); STEPS sub-boxes per stair cell (arch T1).
-    assert len(MODULES["stair_45"]()) == STEPS * 6
-    assert len(MODULES["stair_half"]()) == STEPS * 6
+    assert len(MODULES["stair_45"]()) == STEPS * 3
+    assert len(MODULES["stair_half"]()) == STEPS * 3
 
 
 def test_stair_half_rises_to_half_the_height_of_stair_45():

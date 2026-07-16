@@ -6,31 +6,32 @@ already rendered at a fixed cell size (see kit_module_render.render_panel),
 so grid placement is a straight paste — the per-panel centring already
 happened inside render_panel.
 
-Sheet-per-module contract (R2/R3, .loop/arm-a-homography/1-plan.md,
-sanctioned 2026-07-16): `panels` for sheet_grid/arm_b/arm_bc/arm_a is ONE
-module's 9 view-panels (VIEWS order), never every module pooled together.
-Grid is fixed 5 cols x 2 rows (10 cells: 9 views + 1 blank bottom-right
-watermark slot), gutter-separated with magenta (255,0,255) separator lines
-(existing guide_marks convention) — no per-panel autofit, one shared `s`
-across every module/view (C4).
+Sheet-per-module contract (R2/R3, sanctioned 2026-07-16): `panels` for
+sheet_grid/arm_b/arm_bc/arm_a is ONE module's 9 view-panels (VIEWS order),
+never every module pooled together. Grid fixed 5 cols x 2 rows (10 cells:
+9 views + 1 blank watermark slot), gutter + magenta separators (existing
+guide_marks convention) — one shared `s` across every module/view (C4).
 
-P1 (S4-REVIEW-ROUNDS.md): `stage()` writes arm_a only now. arm_b/arm_bc
-stay defined + unit-tested, just no longer staged. P2: CELL_PX 64->256."""
+P1: `stage()` writes arm_a only; arm_b/arm_bc stay defined + unit-tested,
+just no longer staged. CELL_PX: 64 (P2->256, R2-1->512) — aliasing was
+warp stair-stepping more than source res, so R2-1 also enables the
+supersample path in texture_warp.py (S4-REVIEW-ROUNDS.md)."""
 
 import json
 from math import ceil
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 import guide_marks
+import face_edges
 import kit_module_render as kmr
 import kit_modules as km
 import face_masks as fm
 import texture_map
 import texture_warp
 
-CELL_PX = 256  # P2: 4x the prior 64px cell (S4-REVIEW-ROUNDS.md)
+CELL_PX = 512  # R2-1: 2x the prior 256px cell (S4-REVIEW-ROUNDS.md ROUND 2)
 PAD = 4
 
 GRID_COLS, GRID_ROWS = 5, 2  # 10 cells for VIEWS' 9 entries + 1 blank
@@ -77,9 +78,8 @@ def _draw_gutter_lines(canvas, cell_px):
 
 def _shared_s(panels):
     """Recover the module-shared px-per-voxel `s` used to render `panels`,
-    from the cell size actually baked into panels[0]['img'] (C4: one s per
-    sheet, never re-measured from pixels — this is a re-derivation of that
-    same s, not a fresh measurement)."""
+    from the cell size baked into panels[0]['img'] (C4: one s per sheet,
+    never re-measured from pixels — a re-derivation, not a fresh measure)."""
     cell_px = panels[0]["img"].size[0]
     return kmr.shared_scale(list(km.MODULES), cell_px=cell_px, pad=PAD), cell_px
 
@@ -114,23 +114,28 @@ def arm_bc(panels):
 
 
 def paint_panel(module, view, ordered, s, cell_px, pad, origin):
-    """RGBA cell: homography-warp a texture PNG onto every ordered face quad
-    (T4, C1) + composite any recess decal (door/window). Zero MAT_COLORS
-    fills remain."""
+    """RGBA cell: warp a texture onto every ordered face quad (T4, C1) —
+    tiling via warp_tiling, decal (R2-5 slab front/back, flip_h mirrored
+    first) via warp_decal — then stroke that face's edge-ink (R2-2,
+    face_edges.py) right after its own paste, so a nearer face pasted later
+    overpaints ink under it. Zero MAT_COLORS fills remain."""
     faces = km.MODULES[module]()
+    edges = face_edges.stroke_edges(faces)
     cell = Image.new("RGBA", (cell_px, cell_px), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(cell)
     for face_id, kind, mat, poly in ordered:
         i = int(face_id.split(":")[0])
         world_pts = faces[i].pts
         spec = texture_map.face_texture(module, kind, world_pts, mat)
         tex_img = _texture_png(spec["id"])
-        warped = texture_warp.warp_tiling(tex_img, world_pts, poly, spec["dims_voxels"])
+        if spec["type"] == "decal":
+            if spec["flip_h"]:
+                tex_img = ImageOps.mirror(tex_img)
+            warped = texture_warp.warp_decal(tex_img, world_pts, poly)
+        else:
+            warped = texture_warp.warp_tiling(tex_img, world_pts, poly, spec["dims_voxels"])
         cell.paste(warped, (0, 0), warped)
-    for decal_id, world_quad in texture_map.recess_decals(module):
-        screen_quad = kmr.project_face(world_quad, view, s, cell_px, pad, origin)
-        tex_img = _texture_png(decal_id)
-        warped = texture_warp.warp_decal(tex_img, world_quad, screen_quad)
-        cell.paste(warped, (0, 0), warped)
+        face_edges.draw_face_edges(draw, edges.get(i, []), view, s, cell_px, pad, origin, kmr.project_face)
     return cell
 
 

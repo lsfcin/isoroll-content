@@ -140,20 +140,25 @@ def test_stage_writes_one_stem_pair_per_module_arm_a_only(tmp_path):
         "gen-inbox must hold nothing but per-module stem pairs")
 
 
-def test_stage_sheet_dims_are_four_x_the_prior_64px_cell(tmp_path):
-    # P2 (S4-REVIEW-ROUNDS.md): CELL_PX 64 -> 256 (4x linear). GUTTER is
-    # unchanged, so overall sheet dims are ~4x, not exactly 4x — assert the
-    # cell size itself (the thing that actually changed) plus a generous
-    # bound on the sheet, rather than a brittle exact-pixel equality.
+def test_stage_sheet_dims_are_eight_x_the_original_64px_cell(tmp_path):
+    # P2 (S4-REVIEW-ROUNDS.md): CELL_PX 64 -> 256 (4x linear). R2-1 (ROUND 2,
+    # AMENDED 2026-07-16): 256 -> 512 (8x linear from the original 64px
+    # cell) — the P2 resolution bump alone still left visible aliasing, so
+    # this round both doubles the cell again AND enables the 2x
+    # supersample->LANCZOS path in texture_warp.py (the actual fix; the
+    # resolution bump is on top of that). GUTTER is unchanged, so overall
+    # sheet dims are ~8x, not exactly 8x — assert the cell size itself (the
+    # thing that actually changed) plus a generous bound on the sheet,
+    # rather than a brittle exact-pixel equality.
     skm = _skm()
-    assert skm.CELL_PX == 256
+    assert skm.CELL_PX == 512
     out = tmp_path / "gen-inbox"
     skm.stage(out=str(out))
     from PIL import Image
     sheet = Image.open(out / f"{sorted(_km().MODULES)[0]}__a.png")
     w, h = skm._sheet_size(skm.CELL_PX)
     assert sheet.size == (w, h)
-    assert w > 4 * (5 * 64 + 4 * 8) * 0.9, "sheet width should be ~4x the old 64px-cell sheet"
+    assert w > 8 * (5 * 64 + 4 * 8) * 0.9, "sheet width should be ~8x the original 64px-cell sheet"
 
 
 def test_stage_still_writes_per_module_view_masks_and_one_manifest(tmp_path):

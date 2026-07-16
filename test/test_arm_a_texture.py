@@ -26,7 +26,10 @@ import face_masks as fm
 import kit_modules as km
 
 CELL_PX, PAD = 160, 6
-FIXTURES = ["wall_band", "roof_cell", "stair_45", "recess_door"]
+# R2-5 (S4-REVIEW-ROUNDS.md ROUND 2): recess_door/recess_window are gone —
+# door_1x2 is the standalone slab replacement, still a good decal+edge-ink
+# fixture (front/back LARGE decal faces + THIN wood-tone edge faces).
+FIXTURES = ["wall_band", "roof_cell", "stair_45", "door_1x2"]
 
 
 def _kmr():

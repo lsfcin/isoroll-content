@@ -13,6 +13,8 @@ _TEXTURES_JSON = _TEXTURES_ROOT / "textures.json"
 
 _STONE_LIKE_MATS = ("blank", "thatch")
 
+_SLAB_DECAL = {"door_1x2": "door_1x2x0", "window_1x1": "window_1x1x0"}  # R2-5
+
 _TEXTURES_CACHE = None
 
 
@@ -43,9 +45,19 @@ def _face_normal(world_pts):
 
 def FAMILY(module, kind, normal, mat):
     """Family-name table (3-arch.md Architecture, texture_map.py). blank/thatch
-    mat default to stone. Stairs and roof/base get kind-specific overrides
-    that win over the generic top/side rule."""
+    mat default to stone. Slab (door/window), stair, and roof/base get
+    kind-specific overrides that win over the generic top/side rule."""
     eff_mat = "stone" if mat in _STONE_LIKE_MATS else mat
+
+    if module in _SLAB_DECAL:
+        # R2-5: standalone door/window slab. The two LARGE v-normal faces
+        # (front/back) get the object's own decal family (single-member
+        # family — variant() returns it unconditionally); every other face
+        # (the thin u-normal edges + top/bottom caps) is plain wood tone +
+        # edge lines (face_edges.py), never the decal.
+        if kind == "side" and abs(normal[1]) > 0.9:
+            return _SLAB_DECAL[module]
+        return "wall_wood_side"
 
     if module.startswith("stair"):
         if kind == "top":
@@ -95,8 +107,14 @@ def variant(family, world_pts):
 
 
 def face_texture(module, kind, world_pts, mat):
-    """{id, type, dims_voxels} for a face — FAMILY -> variant -> load_textures
-    lookup. Never raises (blank/unmapped module falls back safely)."""
+    """{id, type, dims_voxels, flip_h} for a face — FAMILY -> variant ->
+    load_textures lookup. Never raises (blank/unmapped module falls back
+    safely). `flip_h` (R2-5) is True only for a slab module's BACK large
+    face (normal points +v, the SLAB_THICK side) — texture_warp's caller
+    mirrors the source before warping so the door/window's real-world
+    hardware (handle/keyhole) sits on the same physical edge seen from
+    either side: physically-correct object continuity, not a sprite mirror.
+    False for every other face, including a slab's own front face."""
     normal = _face_normal(world_pts)
     family = FAMILY(module, kind, normal, mat)
     textures = load_textures()
@@ -107,19 +125,10 @@ def face_texture(module, kind, world_pts, mat):
     if spec is None:
         tex_id = "wall_stone_side_v1"
         spec = textures[tex_id]
-    return {"id": tex_id, "type": spec["type"], "dims_voxels": spec["dims_voxels"]}
+    flip_h = module in _SLAB_DECAL and kind == "side" and normal[1] > 0.9
+    return {"id": tex_id, "type": spec["type"], "dims_voxels": spec["dims_voxels"], "flip_h": flip_h}
 
 
 def texture_png_path(texture_id):
     """Absolute path to `texture_id`'s PNG (assets/textures/<png>)."""
     return _TEXTURES_ROOT / load_textures()[texture_id]["png"]
-
-
-def recess_decals(module):
-    """[(decal_id, world_quad)] — pinned opening ids+quads (3-arch.md T1).
-    Quad order [BL,BR,TR,TL] = [(u0,1,z0),(u1,1,z0),(u1,1,z1),(u0,1,z1)]."""
-    if module == "recess_door":
-        return [("door_1x2x0", [(0.15, 1.0, 0.0), (0.85, 1.0, 0.0), (0.85, 1.0, 2.0), (0.15, 1.0, 2.0)])]
-    if module == "recess_window":
-        return [("window_1x1x0", [(0.15, 1.0, 1.0), (0.85, 1.0, 1.0), (0.85, 1.0, 2.0), (0.15, 1.0, 2.0)])]
-    return []
