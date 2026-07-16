@@ -31,16 +31,18 @@ def _hardware_y(h):
     return T * 0.3 if h <= T else h - T
 
 
-def _hardware(kx, ky):
-    """Handle (open circle) above a keyhole (circle occluding a thin
-    triangle below it). Triangle first, circle drawn on top."""
-    s = [f'<circle cx="{kx:.1f}" cy="{ky-12:.1f}" r="5" fill="white" stroke="{INK}" stroke-width="{STROKE}"/>',
-         f'<polygon points="{kx-3.5:.1f},{ky+15.8:.1f} {kx+3.5:.1f},{ky+15.8:.1f} {kx:.1f},{ky+1.8:.1f}" fill="{INK}"/>',
-         f'<circle cx="{kx:.1f}" cy="{ky+6:.1f}" r="4" fill="{INK}"/>']
+def _hardware(kx, ky, keyhole=True):
+    """Handle (open circle), optionally a keyhole below it (circle occluding
+    a thin triangle; triangle first, circle drawn on top). Double doors lock
+    on ONE leaf only."""
+    s = [f'<circle cx="{kx:.1f}" cy="{ky-12:.1f}" r="5" fill="white" stroke="{INK}" stroke-width="{STROKE}"/>']
+    if keyhole:
+        s.append(f'<polygon points="{kx-3.5:.1f},{ky+15.8:.1f} {kx+3.5:.1f},{ky+15.8:.1f} {kx:.1f},{ky+1.8:.1f}" fill="{INK}"/>')
+        s.append(f'<circle cx="{kx:.1f}" cy="{ky+6:.1f}" r="4" fill="{INK}"/>')
     return s
 
 
-def _leaf(x0, x1, h, hinge_left):
+def _leaf(x0, x1, h, hinge_left, keyhole=True):
     """One door leaf: wide frame, panel groups of vertical boards, hinges,
     handle+keyhole centered in the frame band."""
     s = [f'<rect x="{x0:.1f}" y="0" width="{x1-x0:.1f}" height="{h}" fill="white" stroke="{INK}" stroke-width="2.5"/>']
@@ -54,7 +56,7 @@ def _leaf(x0, x1, h, hinge_left):
     for fy in (0.15, 0.5, 0.85):
         s.append(f'<rect x="{hx-3:.1f}" y="{h*fy-7:.1f}" width="6" height="14" fill="{INK}"/>')
     kx = x1 - pad / 2 if hinge_left else x0 + pad / 2
-    s += _hardware(kx, _hardware_y(h))
+    s += _hardware(kx, _hardware_y(h), keyhole)
     return s
 
 
@@ -65,7 +67,7 @@ def door(w_vox, h_vox):
         s += _leaf(0, w, h, hinge_left=True)
     else:
         s += _leaf(0, w / 2, h, hinge_left=True)
-        s += _leaf(w / 2, w, h, hinge_left=False)
+        s += _leaf(w / 2, w, h, hinge_left=False, keyhole=False)
     return "".join(s) + "</svg>"
 
 

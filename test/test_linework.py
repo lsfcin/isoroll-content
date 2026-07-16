@@ -101,3 +101,9 @@ def test_keyhole_has_triangle_occluded_by_circle():
 def test_window_frame_is_thin():
     m = re.search(r'<rect x="(\d+)" y="\1"', lw.window_1x1())
     assert m and int(m.group(1)) <= 6, "frame must be thin for side-by-side continuity"
+
+
+def test_double_doors_have_one_keyhole_only():
+    assert door(1, 2).count('<polygon') == 1
+    assert door(2, 2).count('<polygon') == 1
+    assert door(2, 3).count('<polygon') == 1
