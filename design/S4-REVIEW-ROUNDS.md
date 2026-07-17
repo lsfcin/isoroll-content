@@ -409,3 +409,64 @@ for stair_45/stair_half/roof_cell, TOP view excluded per module since its gap is
   (correct for strips; reads solid after assembly mask fill).
 - Invariant amended: enclosure_mask == lateral-face projection; render ∩ mask ≈ ∅ (stroke tolerance);
   render ∪ mask ⊆ solid silhouette.
+
+## Step 4b executed (2026-07-17)
+
+Mask definition redefined from voxel-silhouette-minus-render to LATERAL-FACE projection, per ROUND 4b.
+
+`kit_modules.py`: `_stair_cover`'s two profile-envelope-cap faces (v=0/v=1 — the two stepped-wedge
+profile side faces of the zigzag solid) are now tagged `STAIR_LATERAL` ("stair_lateral"), split out
+from the back-wall/floor faces, which keep `STAIR_ENCLOSURE` ("stair_enclosure") — self-occlusion
+geometry only, never masked. `roof_cell`'s gable faces already carried their own distinct tag
+("roof_edge", separate from the soffit's "roof_inset") since ROUND 3, so no roof_cell change was
+needed — the split just needed to exist for stairs too.
+
+`enclosure_masks.py` rewritten: new `lateral_faces(module, view, s, cell_px, pad, origin)` projects
+only the tagged mask-source faces (`{km.STAIR_LATERAL, "roof_edge"}`) via `kit_module_render.
+ordered_enclosure_faces` — deliberately NOT backface-culled (a lateral face contributes from both
+sides; edge-on views correctly yield a near-empty or fully-culled-by-subtraction mask). `voxel_
+silhouette`/`_wall_voxel_faces` are gone.
+
+Empirical finding during implementation (not assumed from the design note): raw lateral-face
+projections substantially OVERLAP the module's own render footprint in oblique dimetric views (up to
+~50% of the mask area, and at some views — e.g. stair_45 y225 — the render fully covers the lateral
+footprint, overlap == mask area). This is inherent to projecting a 3D solid's side faces under a
+view where depth collapses onto shared screen pixels; pure "project and rasterize" is NOT disjoint
+from render by itself. `save_enclosure_masks` therefore keeps a subtraction step, unchanged in shape
+from ROUND 4's — `lateral_silhouette MINUS rendered_silhouette` (was `voxel_silhouette MINUS
+rendered_silhouette`) — swapping only the minuend from a synthetic full-height wall voxel (which
+over-covers roof_cell/stairs, painting air) to the solid's own real lateral-face footprint (which by
+construction never extends past the real solid). Verified numerically across all 9 views x 3 modules:
+render ∩ mask == 0 pixels EXACTLY (PIL `ImageChops.subtract` on binary images guarantees this — a
+subtracted pixel is nonzero only where the render is zero), and render ∪ mask ⊆ solid silhouette
+with zero leaks, at every view.
+
+`stage_kit_modules.py`: `save_enclosure_masks` call site unchanged in shape (`ordered` still passed —
+it's the render silhouette to subtract), only the docstring/comment updated to ROUND 4b language.
+
+Tests: amended `test_kit_modules.py` (`test_stair_45_and_stair_half_are_one_zigzag_solid_tread_riser_
+render_only` — enclosure faces now assert `Counter == {"stair_lateral": 2, "stair_enclosure": 2}`
+instead of a flat `{"stair_enclosure"}` x4), `test_kit_module_render.py`
+(`test_ordered_enclosure_faces_are_tagged_stair_enclosure_and_stair_lateral_for_stairs`, renamed from
+the old ROUND-4 test name, asserts both tags now present). Rewrote `test_enclosure_masks.py`'s
+ROUND-4-mandatory invariant test into the three ROUND-4b invariants: (a)
+`test_round4b_enclosure_mask_equals_the_lateral_minus_render_rasterization_by_construction` — an
+end-to-end wiring check, independently recomputing `lateral_faces(...) minus render` and comparing
+pixel-for-pixel against the actual file `stage()` wrote (or its absence, when the recomputed gap is
+empty); (b) `test_round4b_render_and_enclosure_mask_do_not_overlap_beyond_stroke_tolerance` — erodes
+the render silhouette inward by `face_edges.edge_width` and asserts the written mask never bleeds into
+that deep interior; (c) `test_round4b_render_union_enclosure_mask_is_contained_in_the_solid_
+silhouette` — "solid silhouette" = every face of the module projected with NO filtering at all
+(neither backface cull nor render/enclosure split), via the public `kit_module_render.project_face`
+seam, asserting render ∪ mask never leaks past it. `test_stair_behind_view_paints_a_near_zero_sliver_
+relative_to_the_front_view` (render-only, unrelated to the mask redefinition) kept as-is with a
+freshened comment.
+
+`make verify-fast`: 142 passed (was 140 after Step 4; net +2 — one old invariant test replaced by
+three new ones).
+
+Restaged `output/gen-inbox` (unchanged: same 9 stem pairs, arm-a only) and `output/masks`: 20
+`{module}_{view}_enclosure_facemask.png`/`_faces.json` pairs (was up to 24 possible under the old
+per-module x 8-view scheme; 7 views now correctly write nothing — render already fully covers the
+lateral footprint there, e.g. every module's TOP view and each module's two most edge-on/occluded
+yaws — zero-area gaps are the correct output, not missing coverage).

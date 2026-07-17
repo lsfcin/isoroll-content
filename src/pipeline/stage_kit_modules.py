@@ -8,9 +8,10 @@ so grid placement is a straight paste. Sheet-per-module contract (R2/R3):
 (VIEWS order). Grid fixed 5 cols x 2 rows, gutter + magenta separators —
 one shared `s` across every module/view (C4). P1: `stage()` writes arm_a
 only. CELL_PX 512 (R2-1) via the supersample path in texture_warp.py.
-ROUND 3/4 (S4-REVIEW-ROUNDS.md): `stage()` emits per-view enclosure-mask
-PNGs (enclosure_masks.py, ROUND 4: voxel-silhouette-minus-rendered-alpha,
-not per-Face-tag geometry) for modules with stripped stair/roof faces."""
+ROUND 3/4/4b (S4-REVIEW-ROUNDS.md): `stage()` emits per-view enclosure-mask
+PNGs (enclosure_masks.py, ROUND 4b: projected LATERAL faces — stair
+profile-cap sides / roof gable ends) for modules with stripped stair/roof
+faces."""
 
 import json
 from math import ceil
@@ -176,7 +177,7 @@ def stage(out="output/gen-inbox", out_masks=None):
             module_panels.append(p)
             all_panels.append(p)
             ordered_by_panel[(name, view)] = ordered
-            if has_enclosure:  # ROUND 4: voxel-silhouette-minus-rendered-alpha, see enclosure_masks.py
+            if has_enclosure:  # ROUND 4b: lateral faces minus rendered alpha, see enclosure_masks.py
                 enclosure_masks.save_enclosure_masks(name, view, ordered, s, CELL_PX, PAD, origin, masks_path)
 
         arm_a(module_panels, ordered_by_panel).save(out_path / f"{name}__a.png")

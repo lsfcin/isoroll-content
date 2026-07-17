@@ -22,7 +22,7 @@
 | [`calibrate3.py`](calibrate3.py) | [`calibrate3.pyi`](calibrate3.pyi) | `parse_args`, `load_fbx`, `render_one`, `main`, `report` | [OBSOLETE-MESH] calibrate3.py — Sweep camera Z translation at fixed scale=0.020, no constraint rotation. |
 | [`calibrate4.py`](calibrate4.py) | [`calibrate4.pyi`](calibrate4.pyi) | `parse_args`, `load_fbx`, `render_one`, `main`, `report` | [OBSOLETE-MESH] calibrate4.py — Sweep camera shift_y (vertical pan) and ortho_scale (size). |
 | [`calibrate_camera.py`](calibrate_camera.py) | [`calibrate_camera.pyi`](calibrate_camera.pyi) | `parse_args`, `import_fbx`, `apply_solid_material`, `setup_scene`, `make_camera` | [OBSOLETE-MESH] calibrate_camera.py — Batch render to find correct ortho_scale + frame_center_z. |
-| [`enclosure_masks.py`](enclosure_masks.py) | [`enclosure_masks.pyi`](enclosure_masks.pyi) | `voxel_silhouette`, `save_enclosure_masks` | !/usr/bin/env python3 |
+| [`enclosure_masks.py`](enclosure_masks.py) | [`enclosure_masks.pyi`](enclosure_masks.pyi) | `lateral_faces`, `save_enclosure_masks` | !/usr/bin/env python3 |
 | [`face_edges.py`](face_edges.py) | [`face_edges.pyi`](face_edges.pyi) | `stroke_edges`, `edge_width`, `draw_face_edges` | !/usr/bin/env python3 |
 | [`face_masks.py`](face_masks.py) | [`face_masks.pyi`](face_masks.pyi) | `face_mask`, `save_mask` | !/usr/bin/env python3 |
 | [`generate_sheet_template.py`](generate_sheet_template.py) | [`generate_sheet_template.pyi`](generate_sheet_template.pyi) | `load_font`, `total_size`, `cell_origin`, `generate` | !/usr/bin/env python3 |

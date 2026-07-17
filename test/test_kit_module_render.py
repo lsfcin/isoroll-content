@@ -172,13 +172,14 @@ def test_ordered_faces_and_ordered_enclosure_faces_partition_stair_45_modulo_bac
     assert enclosure_ids, "stair_45 must have real enclosure faces to tag"
 
 
-def test_ordered_enclosure_faces_are_tagged_stair_enclosure_for_stairs():
+def test_ordered_enclosure_faces_are_tagged_stair_enclosure_and_stair_lateral_for_stairs():
+    # ROUND 4b: profile-cap sides (mask SOURCE) = "stair_lateral"; back-wall/floor (unmasked) = "stair_enclosure".
     kmr, km = _kmr(), _km()
     faces = km.MODULES["stair_45"]()
     cam = _kmr_cam(kmr, s=8.0)
     enc = kmr.ordered_enclosure_faces(faces, "y45", cam)
     assert enc
-    assert {tag for *_, tag in enc} == {"stair_enclosure"}
+    assert {tag for *_, tag in enc} == {"stair_enclosure", "stair_lateral"}
 
 
 def test_enclosure_faces_reuses_render_modules_per_view_origin_for_pixel_alignment():

@@ -13,8 +13,8 @@ RENDER time; their enclosure faces (roof gable/soffit; stair envelope/back/
 floor) are real `Face` geometry (self-occlusion/silhouette) but `Face.
 enclosure`-tagged — mask-only, never painted. `ordered_faces` filters
 enclosure out AND (ROUND 4) backface-culls on top, for every module. ROUND
-4's mask SOURCE is `enclosure_masks.voxel_silhouette` minus rendered alpha,
-not this tag. ROUND 4 stairs: `_stair_cover` builds ONE zigzag profile
+4b's mask SOURCE is `enclosure_masks.lateral_faces` (profile-cap/gable faces),
+not this tag generally. ROUND 4 stairs: `_stair_cover` builds ONE zigzag profile
 polygon (step outline in the u-z rise plane) extruded across width —
 treads/risers are strips of one connected solid, not stacked boxes.
 """
@@ -27,7 +27,7 @@ UNIT_SQUARE = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
 WALL_H = 3.0  # module-local wall height (unit cell, yaw not baked)
 THIN = 0.12  # top_cap/base z-band thickness
 ROOF_H = 0.7  # roof_cell ridge rise
-STAIR_ENCLOSURE = "stair_enclosure"  # ROUND 3/4 Face.enclosure tag for stairs
+STAIR_ENCLOSURE, STAIR_LATERAL = "stair_enclosure", "stair_lateral"  # back-wall/floor unmasked; profile-cap sides = ROUND 4b mask source
 ROOF_RIDGE_V = 0.3  # off-centre on purpose: v=0.5 is mirror-symmetric across
 # v (collapses yaw silhouettes, test_kit_module_render.py needs >=4/8
 # distinct); ridge runs along u, so the two slopes never coincide at any yaw.
@@ -42,7 +42,7 @@ class Face:
     mat: str = "blank"  # arm-a material tag: "stone"|"wood"|"thatch"|"blank"
     enclosure: str = ""  # ROUND 3: "" = rendered (subject to ROUND 4 backface
     # culling too); non-empty = mask-only, never painted regardless of
-    # facing: "stair_enclosure"|"roof_edge"|"roof_inset". See kit_module_
+    # facing: "stair_enclosure"|"stair_lateral"|"roof_edge"|"roof_inset". See kit_module_
     # render.ordered_faces/ordered_enclosure_faces, enclosure_masks.py.
 
 
@@ -151,16 +151,16 @@ def _stair_profile(rise_scale):
 def _stair_cover(rise_scale):
     """ONE zigzag solid (ROUND 4), not STEPS stacked boxes: extrude
     `_stair_profile` across width (v: 0->1). The two profile copies (v=0/
-    v=1) are mask-only envelope caps; each profile EDGE becomes one
-    v-spanning strip — risers/treads RENDER, back/bottom stay `enclosure=
-    STAIR_ENCLOSURE`. Edge-to-edge connectivity between steps is by
-    construction (one shared polygon), unlike stacked boxes."""
+    v=1) are mask-only envelope caps, tagged `STAIR_LATERAL` (ROUND 4b mask
+    source); each profile EDGE becomes one v-spanning strip — risers/treads
+    RENDER, back/bottom stay `STAIR_ENCLOSURE` (self-occlusion only, never
+    masked). Edge-to-edge connectivity between steps is by construction."""
     profile = _stair_profile(rise_scale)
     n = len(profile)
     n_step_edges = 2 * STEPS  # STEPS risers + STEPS treads
     faces = [
-        Face([(u, 0.0, z) for u, z in profile], "side", "step", enclosure=STAIR_ENCLOSURE),
-        Face([(u, 1.0, z) for u, z in reversed(profile)], "side", "step", enclosure=STAIR_ENCLOSURE),
+        Face([(u, 0.0, z) for u, z in profile], "side", "step", enclosure=STAIR_LATERAL),
+        Face([(u, 1.0, z) for u, z in reversed(profile)], "side", "step", enclosure=STAIR_LATERAL),
     ]
     for i in range(n):
         u0, z0 = profile[i]

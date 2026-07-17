@@ -148,9 +148,10 @@ def test_stair_45_and_stair_half_are_one_zigzag_solid_tread_riser_render_only():
     # profile polygon (2D step outline) extruded across width, not STEPS
     # stacked boxes. 2*STEPS+4 faces total: STEPS risers + STEPS treads
     # RENDER; the two profile envelope caps (v=0/v=1), the back wall, and
-    # the floor-under-tread stay real geometry (self-occlusion/silhouette)
-    # but are tagged enclosure="stair_enclosure" — mask SOURCE moved to
-    # enclosure_masks.voxel_silhouette (not this per-Face tag) in ROUND 4.
+    # the floor-under-tread stay real geometry (self-occlusion/silhouette),
+    # never rendered. ROUND 4b: the two envelope caps are the mask SOURCE
+    # (enclosure_masks.lateral_faces), tagged "stair_lateral"; back wall +
+    # floor stay "stair_enclosure" — self-occlusion only, never masked.
     MODULES = _km().MODULES
     for name in ("stair_45", "stair_half"):
         faces = MODULES[name]()
@@ -160,7 +161,7 @@ def test_stair_45_and_stair_half_are_one_zigzag_solid_tread_riser_render_only():
         assert Counter(f.kind for f in rendered) == {"top": STEPS, "side": STEPS}, name
         enclosure = [f for f in faces if f.enclosure]
         assert len(enclosure) == 4, name
-        assert {f.enclosure for f in enclosure} == {"stair_enclosure"}, name
+        assert Counter(f.enclosure for f in enclosure) == {"stair_lateral": 2, "stair_enclosure": 2}, name
 
 
 def test_stair_half_rises_to_half_the_height_of_stair_45():
