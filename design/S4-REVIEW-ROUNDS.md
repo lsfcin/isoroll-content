@@ -230,3 +230,18 @@ Not done here (explicitly out of scope, S4t): the roof/stair enclosure
 walls, cropped to the cover's under-silhouette, and the wall-column
 emergent-hole mechanics doors/windows sit in. The compass-vs-5x2 sheet
 layout question (end of ROUND 2 above) is still awaiting Lucas's call.
+
+## ROUND 3 (Lucas 2026-07-17, stairs image: rows 1-2 current, 3-4 target, 5-6 orange masks)
+- Verdict on step 2: "this is progress". Stairs = the only real issue: vertical-box construction
+  renders INTERNAL parts between steps.
+- Lucas plan (ADOPTED, with simplification): render ONLY the steps (treads+risers floating in space);
+  enclosure filled at assembly via MASKS occupying exactly the enclosure-face space (his orange
+  regions), computed vs the wall voxel sharing the stair's cell. Roofs same, masks for BOTH cases:
+  edge (gable at run end) and inset enclosures.
+- Simplification (agreed direction): the mask regions ARE the stripped enclosure faces — keep them as
+  mask-only geometry; render emits per-view enclosure-mask PNGs via the existing face_masks machinery
+  (tagged stair_enclosure / roof_edge / roof_inset); assembly warps wall texture DIRECTLY into those
+  polygons with the arm_a homography engine. No wall-sprite-behind + crop; no phantom-voxel
+  intersection needed (faces sit inside the voxel by construction). NB never sees enclosures.
+- Also step 3: fix dangling silhouette stroke past roof plane (edge lines must stroke only edges of
+  faces actually RENDERED, not stripped ones).
