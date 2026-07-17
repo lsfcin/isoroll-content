@@ -87,16 +87,17 @@ def test_face_texture_roof_slope_is_roof_shingle():
 
 
 def test_face_texture_gable_kind_still_maps_to_roof_shingle():
-    # R2-3 (ROUND 2, AMENDED 2026-07-16): roof_cell is cover-only now and no
-    # longer EMITS "gable" faces itself (gable becomes WALL material at
-    # assembly, S4t) — the FAMILY table's kind=="gable" rule is still a
-    # general, valid mapping, exercised with a synthetic triangle instead of
-    # through roof_cell's own output. Roof "bottom" is gone the same way;
-    # the generic kind=="bottom"->floor_stone rule stays covered via stairs
-    # below.
+    # ROUND 3 (AMENDED 2026-07-17): roof_cell carries real "gable" geometry
+    # again (mask-only, Face.enclosure="roof_edge" — never actually painted
+    # by paint_panel, which only iterates render-visible faces) — the
+    # FAMILY table's kind=="gable" rule is exercised through roof_cell's OWN
+    # output now, same convention as every other face-kind test in this
+    # file. roof_cell's "bottom" face (also mask-only, "roof_inset") is
+    # real geometry too; the generic kind=="bottom"->floor_stone rule stays
+    # covered via stairs below.
     tm = _tm()
-    pts = [(0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.5, 0.5, 1.0)]
-    assert _family(tm.face_texture("roof_cell", "gable", pts, "blank")["id"]) == "roof_shingle"
+    gable = _faces("roof_cell", "gable")[0]
+    assert _family(tm.face_texture("roof_cell", "gable", gable.pts, "blank")["id"]) == "roof_shingle"
 
 
 def test_face_texture_stair_top_is_stair_tread_and_bottom_is_floor_stone():
@@ -107,17 +108,21 @@ def test_face_texture_stair_top_is_stair_tread_and_bottom_is_floor_stone():
     assert _family(tm.face_texture("stair_45", "bottom", bottom.pts, "blank")["id"]) == "floor_stone"
 
 
-def test_face_texture_stair_sides_are_all_riser_after_r2_4_cover_only():
-    # R2-4 (ROUND 2, AMENDED 2026-07-16): stair builders are cover-only now
-    # — only the uphill riser side survives per step; the side-triangle
-    # envelope + the back face buried against the next step are struck
-    # (become WALL material at assembly). wall_stone_side no longer appears
-    # among stair_45's own side faces — still covered generically by
+def test_face_texture_stair_sides_are_all_riser_among_rendered_faces():
+    # ROUND 3 (AMENDED 2026-07-17): stair_45's full geometry carries ALL 4
+    # original "side" faces per step again (side0/side1/side2 are back as
+    # real, mask-only "stair_enclosure" geometry — kit_modules is their
+    # source of truth for the enclosure mask) — but paint_panel only ever
+    # calls face_texture on render-visible faces (Face.enclosure == ""), so
+    # filter to those here too: among THOSE, the riser is still the only
+    # "side"-kind face, still mapping to stair_riser. wall_stone_side is
+    # still covered generically by
     # test_face_texture_any_side_face_uses_wall_mat_side_family above.
     tm = _tm()
+    rendered_sides = [f for f in _faces("stair_45", "side") if not f.enclosure]
     families = {
         _family(tm.face_texture("stair_45", "side", f.pts, "blank")["id"])
-        for f in _faces("stair_45", "side")
+        for f in rendered_sides
     }
     assert families == {"stair_riser"}, families
 

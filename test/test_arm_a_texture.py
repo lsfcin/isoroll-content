@@ -104,3 +104,19 @@ def test_arm_a_leaves_no_unpainted_pixel_across_multiple_views():
         alpha = painted.split()[-1]
         leaks = sum(1 for idval, a in zip(idmap.getdata(), alpha.getdata()) if idval > 0 and a == 0)
         assert leaks == 0, (view, leaks)
+
+
+# ---------------------------------------------------------------------- ROUND 3: floating steps
+def test_stair_arm_a_paints_nothing_outside_the_tread_and_riser_mask_union():
+    # ROUND 3 (S4-REVIEW-ROUNDS.md): stair_45 renders ONLY tread+riser
+    # (floating steps) — `ordered`/`idmap` here are already render-only
+    # (kit_module_render.ordered_faces excludes stair_enclosure), so this is
+    # the mirror check to test_arm_a_leaves_no_unpainted_pixel_inside_any_
+    # face_mask_region above: together they pin painted == mask exactly.
+    ordered, origin, size = _panel("stair_45", "y45")
+    idmap, meta = fm.face_mask(ordered, size)
+    assert meta, "stair_45 must still produce a nonempty render mask"
+    painted, _ordered2 = _paint("stair_45", "y45")
+    alpha = painted.split()[-1]
+    stray = sum(1 for idval, a in zip(idmap.getdata(), alpha.getdata()) if idval == 0 and a > 0)
+    assert stray == 0, stray

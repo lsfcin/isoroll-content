@@ -8,14 +8,18 @@ axis-aligned and can't express odd-45°-yaw or non-rectangular footprints
 polygon; `from_boxes()` reuses `layout_massing.Box` only where box seams
 already exist, converting each box to faces via `extrude` (kept as a public,
 independently-tested seam even though no builder below calls it anymore —
-R2-4 moved stairs to a per-box `extrude`-and-select shape instead, see
-`_stair_cover`).
+R2-4 moved stairs to a per-box `extrude`-and-select shape instead).
 
-R2-3/R2-4 (design/S4-REVIEW-ROUNDS.md ROUND 2): roof_cell and the stair
-builders are COVER-ONLY now — enclosure/side faces (roof gable ends + the
-underside soffit; stair side-triangle envelope + the buried back face) are
-struck. They become WALL material composed at assembly (S4t), cropped to the
-cover's silhouette; that crop machinery is out of scope here.
+R2-3/R2-4 (design/S4-REVIEW-ROUNDS.md ROUND 2): roof_cell/stairs are
+cover-only at RENDER time. ROUND 3: their enclosure faces (roof gable ends
++ under-eave soffit; stair side envelope + buried back + floor-under-tread)
+are back as real `Face` geometry, tagged mask-only via `Face.enclosure`
+instead of struck outright — kit_modules stays their single source of
+truth. `kit_module_render.ordered_faces` filters them out of render/paint;
+`ordered_enclosure_faces` is the mask-emission counterpart
+(stage_kit_modules.stage, via face_masks) that picks them back up, grouped
+by kind (`stair_enclosure` / `roof_edge` / `roof_inset`) — Lucas's orange
+mask regions, for assembly (S4t) to warp wall texture into directly.
 """
 
 from dataclasses import dataclass
@@ -31,9 +35,7 @@ ROOF_RIDGE_V = 0.3  # off-centre on purpose (two reasons): (1) a ridge at v=0.5 
 # onto each other (test_kit_module_render.py needs >=4/8 distinct bboxes, "no
 # accidental mirror chirality"); (2) the ridge runs along u (not v), so the
 # two cover slopes (front v<RIDGE_V, back v>RIDGE_V) are different sizes and
-# never coincide screen-exactly at any yaw — no eave overhang needed to keep
-# them from subsuming one another (R2-3: the old gable/bottom eave-overhang
-# rationale no longer applies now that those two faces are gone).
+# never coincide screen-exactly at any yaw.
 SLAB_THICK = 0.1  # R2-5: standalone door/window slab thickness (module-local
 # units) — "10% = 'feet' measurement system" per ROUND-1 Q2/Q3 answers. Same
 # constant drives both the slab's own geometry and the painter-placement
@@ -45,6 +47,11 @@ class Face:
     pts: list  # list[tuple[float,float,float]] — 3-4 CCW corners in u,v,z
     kind: str  # "top"|"side"|"bottom"|"tread"|"riser"|"slope"|"gable"
     mat: str = "blank"  # arm-a material tag: "stone"|"wood"|"thatch"|"blank"
+    enclosure: str = ""  # ROUND 3: "" = rendered normally; non-empty =
+    # mask-only (real geometry, never painted — only emitted as a per-view
+    # enclosure-mask PNG, tagged with this string: "stair_enclosure" |
+    # "roof_edge" | "roof_inset"). See kit_module_render.ordered_faces /
+    # ordered_enclosure_faces and stage_kit_modules.stage.
 
 
 def extrude(footprint, z0, h, mat="blank"):
@@ -118,36 +125,46 @@ def _diag_half():
 
 
 def _roof_cell():
-    """Cover-only wedge (R2-3): ridge along u at v=ROOF_RIDGE_V, rising to
-    ROOF_H. Only the two sloped cover quads remain — the gable end triangles
-    and the underside soffit are struck; they become WALL material, composed
-    behind the cover and cropped to its under-silhouette at assembly (S4t)."""
+    """Ridge along u at v=ROOF_RIDGE_V, rising to ROOF_H. Only the two
+    sloped cover quads RENDER — the gable end triangles ("roof_edge") and
+    the horizontal under-eave soffit ("roof_inset") stay real geometry
+    (ROUND 3) but are tagged mask-only. Together the 5 faces form a closed
+    watertight shell (every edge matches a different-normal neighbour, no
+    accidental coplanar seam) — winding chosen so face_edges.stroke_edges'
+    adjacency matching is exact by construction, no eave-overhang hack
+    needed (nothing here renders alongside the slopes anymore)."""
     a, b, c, d = (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)
     r0, r1 = (0.0, ROOF_RIDGE_V, ROOF_H), (1.0, ROOF_RIDGE_V, ROOF_H)
     return [
         Face([a, b, r1, r0], "slope"),
         Face([r0, r1, c, d], "slope"),
+        Face([a, r0, d], "gable", enclosure="roof_edge"),
+        Face([c, r1, b], "gable", enclosure="roof_edge"),
+        Face([d, c, b, a], "bottom", enclosure="roof_inset"),
     ]
 
 
 def _stair_cover(rise_scale):
-    """Cover-only per step (R2-4): tread (top) + the single uphill-facing
-    riser side, built directly via `extrude` and index-selected — the
-    side-triangle envelope (left/right, constant-v faces) and the back face
-    buried against the next step (the other constant-u face) are struck;
-    they become WALL material at assembly, same treatment as the roof.
-    `extrude`'s footprint-edge order for [(u0,0),(u1,0),(u1,1),(u0,1)] emits
-    faces = [top, bottom, side0(v=0,strip), side1(u=u1,strip="back"),
-    side2(v=1,strip), side3(u=u0,KEEP="riser")] — so faces[5] is the riser."""
+    """Per step: tread (top) + the uphill riser RENDER; the side envelope
+    (v=0/v=1), the back face buried against the next step, and the floor
+    patch under the tread (bottom) stay real geometry (ROUND 3) but tagged
+    `enclosure="stair_enclosure"` — mask-only, so steps read as floating in
+    space instead of a solid vertical box. Reuses `extrude`'s own box
+    winding unchanged (already a correctly-wound closed solid — no
+    reordering needed for face_edges' adjacency matching, unlike the
+    hand-rolled roof). `extrude`'s footprint-edge order for
+    [(u0,0),(u1,0),(u1,1),(u0,1)] emits faces = [top, bottom, side0(v=0),
+    side1(u=u1,"back"), side2(v=1), side3(u=u0,"riser")]."""
     faces = []
     for i in range(STEPS):
         height = STAIR_RISE * rise_scale * (i + 1) / STEPS
         u0 = i / STEPS
         u1 = u0 + 1.0 / STEPS
         footprint = [(u0, 0.0), (u1, 0.0), (u1, 1.0), (u0, 1.0)]
-        box_faces = extrude(footprint, 0.0, height, "step")
-        top, bottom, riser = box_faces[0], box_faces[1], box_faces[5]
-        faces += [top, bottom, riser]
+        top, bottom, side0, side1, side2, riser = extrude(footprint, 0.0, height, "step")
+        for f in (bottom, side0, side1, side2):
+            f.enclosure = "stair_enclosure"
+        faces += [top, bottom, side0, side1, side2, riser]
     return faces
 
 

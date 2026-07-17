@@ -3,19 +3,14 @@
 (blank/blank+cyan/real-texture) and stage them to output/gen-inbox/
 (gitignored) for the render->restyle lane (T4/T4b, C4/C5). Panels arrive
 already rendered at a fixed cell size (see kit_module_render.render_panel),
-so grid placement is a straight paste — the per-panel centring already
-happened inside render_panel.
-
-Sheet-per-module contract (R2/R3, sanctioned 2026-07-16): `panels` for
-sheet_grid/arm_b/arm_bc/arm_a is ONE module's 9 view-panels (VIEWS order),
-never every module pooled together. Grid fixed 5 cols x 2 rows (10 cells:
-9 views + 1 blank watermark slot), gutter + magenta separators (existing
-guide_marks convention) — one shared `s` across every module/view (C4).
-
-P1: `stage()` writes arm_a only; arm_b/arm_bc stay defined + unit-tested,
-just no longer staged. CELL_PX: 64 (P2->256, R2-1->512) — aliasing was
-warp stair-stepping more than source res, so R2-1 also enables the
-supersample path in texture_warp.py (S4-REVIEW-ROUNDS.md)."""
+so grid placement is a straight paste. Sheet-per-module contract (R2/R3):
+`panels` for sheet_grid/arm_b/arm_bc/arm_a is ONE module's 9 view-panels
+(VIEWS order). Grid fixed 5 cols x 2 rows, gutter + magenta separators —
+one shared `s` across every module/view (C4). P1: `stage()` writes arm_a
+only. CELL_PX 512 (R2-1) via the supersample path in texture_warp.py.
+ROUND 3 (S4-REVIEW-ROUNDS.md): `stage()` also emits per-view enclosure-mask
+PNGs (enclosure_masks.py) for the stripped stair/roof faces — never painted
+here, staged alongside the render-visible masks."""
 
 import json
 from math import ceil
@@ -28,6 +23,7 @@ import face_edges
 import kit_module_render as kmr
 import kit_modules as km
 import face_masks as fm
+import enclosure_masks
 import texture_map
 import texture_warp
 
@@ -182,6 +178,11 @@ def stage(out="output/gen-inbox", out_masks=None):
 
         arm_a(module_panels, ordered_by_panel).save(out_path / f"{name}__a.png")
         (out_path / f"{name}__a_prompt.txt").write_text(f"# {name}\n\n{prompt_body_a}")
+
+        # R3: mask-only enclosure faces (never painted above) get tagged masks.
+        origins = {p["view"]: p["origin"] for p in module_panels}
+        for view, enc in kmr.enclosure_faces(name, s, CELL_PX, PAD, origins).items():
+            enclosure_masks.save_enclosure_masks(name, view, enc, CELL_PX, masks_path)
 
     manifest_panels = []
     for p in all_panels:

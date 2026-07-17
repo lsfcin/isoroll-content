@@ -149,3 +149,43 @@ def test_save_mask_writes_the_documented_png_and_json_pair(tmp_path):
     _fm().save_mask(idmap, meta, tmp_path / "wall_band_TOP")
     assert (tmp_path / "wall_band_TOP_facemask.png").exists()
     assert (tmp_path / "wall_band_TOP_faces.json").exists()
+
+
+# ---------------------------------------------------------------------- ROUND 3: enclosure masks
+def test_ordered_faces_and_ordered_enclosure_faces_partition_stair_45_with_no_overlap():
+    # ROUND 3 (S4-REVIEW-ROUNDS.md): every Face a builder returns is either
+    # render-visible (ordered_faces) or mask-only (ordered_enclosure_faces),
+    # never both, never neither.
+    kmr, km = _kmr(), _km()
+    faces = km.MODULES["stair_45"]()
+    cam = _kmr_cam(kmr, s=8.0)
+    rendered_ids = {fid for fid, *_ in kmr.ordered_faces(faces, "y45", cam)}
+    enclosure_ids = {fid for fid, *_ in kmr.ordered_enclosure_faces(faces, "y45", cam)}
+    assert not rendered_ids & enclosure_ids
+    assert rendered_ids | enclosure_ids == {f"{i}:{f.kind}" for i, f in enumerate(faces)}
+    assert enclosure_ids, "stair_45 must have real enclosure faces to tag"
+
+
+def test_ordered_enclosure_faces_are_tagged_stair_enclosure_for_stairs():
+    kmr, km = _kmr(), _km()
+    faces = km.MODULES["stair_45"]()
+    cam = _kmr_cam(kmr, s=8.0)
+    enc = kmr.ordered_enclosure_faces(faces, "y45", cam)
+    assert enc
+    assert {tag for *_, tag in enc} == {"stair_enclosure"}
+
+
+def test_enclosure_faces_reuses_render_modules_per_view_origin_for_pixel_alignment():
+    kmr = _kmr()
+    rendered = _panels_for("roof_cell")
+    origins = {view: origin for view, (_img, _ordered, origin) in rendered.items()}
+    enclosure = kmr.enclosure_faces("roof_cell", 8.0, CELL_PX, PAD, origins)
+    assert set(enclosure) == set(kmr.VIEWS)
+    y45 = enclosure["y45"]
+    assert y45, "roof_cell must have real enclosure faces (gable/bottom)"
+    assert {tag for *_, tag in y45} == {"roof_edge", "roof_inset"}
+
+
+def _kmr_cam(kmr, s):
+    from scene_guide_render import Cam
+    return Cam([], CELL_PX, CELL_PX, PAD, scale=s, origin=(0.0, 0.0))

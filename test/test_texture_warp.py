@@ -48,12 +48,12 @@ def _side_faces():
 
 
 def _gable_pts():
-    # R2-3 (S4-REVIEW-ROUNDS.md ROUND 2, AMENDED 2026-07-16): roof_cell is
-    # cover-only now — it no longer EMITS "gable" faces (gable becomes WALL
-    # material composed at assembly, S4t), so no MODULES builder produces a
-    # 3-corner face anymore. This synthetic triangle (same shape as the old
-    # roof_cell gable end) keeps the AFFINE 3-corner warp path — still a
-    # real, general texture_warp capability — under test.
+    # ROUND 3 (S4-REVIEW-ROUNDS.md): roof_cell's real "gable" faces are back
+    # (mask-only, Face.enclosure="roof_edge" — never rendered, but real
+    # geometry) — texture_warp itself doesn't know or care about enclosure
+    # tags (paint_panel is what filters those out before warping), so this
+    # synthetic triangle stays a fine, general fixture for the AFFINE
+    # 3-corner warp path either way; shape kept close to a real gable end.
     return [(-0.12, 0.0, 0.0), (-0.12, 1.0, 0.0), (0.0, 0.3, 0.7)]
 
 

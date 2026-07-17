@@ -245,3 +245,67 @@ layout question (end of ROUND 2 above) is still awaiting Lucas's call.
   intersection needed (faces sit inside the voxel by construction). NB never sees enclosures.
 - Also step 3: fix dangling silhouette stroke past roof plane (edge lines must stroke only edges of
   faces actually RENDERED, not stripped ones).
+
+## Step 3 executed (2026-07-17)
+
+Floating steps + enclosure masks (stairs/roofs) + edge-stroke fix, per ROUND 3's ADOPTED plan.
+
+`kit_modules.Face` gains a 4th field, `enclosure: str = ""` — "" means rendered normally; a
+non-empty value ("stair_enclosure" | "roof_edge" | "roof_inset") means the Face is real geometry
+(kit_modules stays its single source of truth) but mask-only: never painted, never stroked. `_stair_
+cover` is back to emitting the full 6-face box per step (top, bottom, side0/1/2, riser) — same as
+before R2-4 — but tags bottom/side0/side1/side2 `enclosure="stair_enclosure"`; only tread (top) and
+riser render, so steps read as floating in space. `_roof_cell` is back to 5 faces (2 render slopes +
+2 gable end triangles tagged `"roof_edge"` + 1 horizontal under-eave soffit tagged `"roof_inset"`);
+winding was hand-chosen (not copied from the pre-R2-3 ROOF_EAVE version) so every face's shared edge
+with its neighbour is a correctly-matched, opposite-order pair — the 5 faces now form a closed
+watertight shell (a "tent with a floor"), which made the old ROOF_EAVE anti-subsumption overhang
+unnecessary (nothing renders alongside the slopes anymore, so there's nothing left to subsume).
+
+`kit_module_render.py`: `ordered_faces` and the new `ordered_enclosure_faces` both route through a
+shared private `_project` (same yaw/project/sort as before, now also carrying `f.enclosure` through);
+`ordered_faces` keeps only `enclosure == ""` (render-visible — this is the single choke point that
+keeps mask-only geometry out of render_panel/paint_panel/the existing per-face masks), `ordered_
+enclosure_faces` keeps the complement, returning 5-tuples with the trailing tag. New `enclosure_
+faces(name, s, cell_px, pad, origins)` reprojects a module's mask-only faces per view using the SAME
+per-view origin `render_module` already computed, so an enclosure mask lands pixel-aligned to its
+rendered panel.
+
+New `src/pipeline/enclosure_masks.py` (kept separate from stage_kit_modules.py to stay under the
+per-file line gate): `save_enclosure_masks(module, view, enc_ordered, cell_px, masks_path)` groups
+the tagged faces by `enclosure` kind and writes one `{module}_{view}_{tag}_facemask.png`/`_faces.json`
+pair per non-empty group through the SAME `face_masks.face_mask`/`save_mask` the render-visible masks
+already use — no changes needed to face_masks.py itself. `stage_kit_modules.stage()` calls this right
+after writing each module's arm_a sheet, so enclosure masks land in `masks/` alongside the existing
+per-face masks, tagged by kind exactly as specified (stair_enclosure / roof_edge / roof_inset).
+
+Edge-stroke fix (task 3): no code change was needed in face_edges.py itself — `stroke_edges(faces)`
+is still called with the FULL face list (render + enclosure) so adjacency matching stays geometrically
+correct (a rendered face's edge against a same-normal-but-hidden neighbour, if one existed, would
+correctly stay unstroked), but `paint_panel`'s draw loop only ever iterates `ordered` — which, via the
+`ordered_faces` filter above, only ever contains rendered face ids — so a stripped face's own edges are
+now structurally impossible to draw. The dangling-past-the-roof-plane failure mode (an enclosure face's
+boundary getting stroked into a region with no texture behind it) is closed by construction.
+
+Tests: amended `test_kit_modules.py` (roof_cell/stair face-count + kind Counters, now asserting the
+render/enclosure split and enclosure tags — comments point at ROUND 3), `test_texture_map.py` (gable
+face-kind test now sources real `roof_cell` geometry instead of a synthetic triangle since gable faces
+exist again; stair-sides test filters to render-visible faces before asserting all-riser, since the
+full per-step face list now includes the 3 enclosure sides too), `test_face_edges.py` (open-cover test
+comment updated — roof_cell's 5 faces now form a closed shell, same all-edges-stroked tally for a
+different underlying reason). Added: `test_kit_module_render.py` (`ordered_faces`/`ordered_enclosure_
+faces` partition a module's faces with no overlap; enclosure tags; `enclosure_faces` reuses render_
+module's per-view origin), `test_arm_a_texture.py::test_stair_arm_a_paints_nothing_outside_the_tread_
+and_riser_mask_union` (mirrors the existing "no unpainted pixel inside mask" test in the other
+direction — together they pin painted == mask exactly), `test_face_edges.py::test_no_edge_stroke_
+pixel_lies_outside_the_rendered_faces_dilated_by_stroke_width` (dilates the render-only face-mask
+union by `edge_width` and asserts every INK-colored pixel falls inside it), new `test_enclosure_masks.
+py` (split out for the line gate: enclosure-mask PNGs exist per view for stair_45/stair_half/roof_cell
+with nonzero coverage, tagged correctly; a module with no enclosure faces — wall_band — writes none).
+
+`make verify-fast`: 138 passed.
+
+Restaged gen-inbox: same 9 modules (base, diag_half, door_1x2, roof_cell, stair_45, stair_half,
+top_cap, wall_band, window_1x1), arm-a only, 2592x1032 sheets. New: 36 enclosure-mask PNG/JSON pairs
+in `masks/` (18 stair_enclosure — stair_45 + stair_half x 9 views; 9 roof_edge + 9 roof_inset for
+roof_cell x 9 views), every one checked non-empty (nonzero `getbbox()`).

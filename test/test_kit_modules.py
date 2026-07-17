@@ -129,24 +129,36 @@ def test_diag_half_is_a_thin_rotated_quad_extrusion():
     assert kinds == {"top": 1, "bottom": 1, "side": 4}
 
 
-def test_roof_cell_is_a_cover_only_wedge():
-    # R2-3 (ROUND 2, AMENDED 2026-07-16): the gable end triangles and the
-    # underside soffit are struck — only the two sloped cover quads remain.
-    # Gable becomes WALL material composed behind the cover at assembly
-    # (S4t); this builder no longer emits it.
+def test_roof_cell_renders_only_the_two_slopes_gable_and_bottom_are_mask_only():
+    # ROUND 3 (AMENDED 2026-07-17, S4-REVIEW-ROUNDS.md ROUND 3): the gable
+    # end triangles ("roof_edge") and the underside soffit ("roof_inset")
+    # are back as real geometry — kit_modules is their source of truth for
+    # the enclosure mask — but tagged Face.enclosure so they never render.
     faces = _km().MODULES["roof_cell"]()
-    assert Counter(f.kind for f in faces) == {"slope": 2}
-    assert len(faces) == 2
+    assert Counter(f.kind for f in faces) == {"slope": 2, "gable": 2, "bottom": 1}
+    assert len(faces) == 5
+    rendered = {f.kind for f in faces if not f.enclosure}
+    assert rendered == {"slope"}
+    assert {f.enclosure for f in faces if f.kind == "gable"} == {"roof_edge"}
+    assert {f.enclosure for f in faces if f.kind == "bottom"} == {"roof_inset"}
 
 
-def test_stair_45_and_stair_half_are_built_from_steps_worth_of_cover_faces():
-    # R2-4 (ROUND 2, AMENDED 2026-07-16): cover-only — tread + the single
-    # uphill riser per step (3 faces/box), not the old from_boxes 6-face
-    # extrude. The side-triangle envelope + the back face buried against
-    # the next step are struck; they become WALL material at assembly.
+def test_stair_45_and_stair_half_carry_full_box_geometry_tread_riser_render_only():
+    # ROUND 3 (AMENDED 2026-07-17, S4-REVIEW-ROUNDS.md ROUND 3): each step
+    # is back to a full 6-face box (top, bottom, side0/1/2, riser) — the
+    # side envelope, buried back face, and floor-under-tread stay real
+    # geometry (mask source) but are tagged enclosure="stair_enclosure";
+    # only tread (top) and riser render.
     MODULES = _km().MODULES
-    assert len(MODULES["stair_45"]()) == STEPS * 3
-    assert len(MODULES["stair_half"]()) == STEPS * 3
+    for name in ("stair_45", "stair_half"):
+        faces = MODULES[name]()
+        assert len(faces) == STEPS * 6, name
+        rendered = [f for f in faces if not f.enclosure]
+        assert len(rendered) == STEPS * 2, name
+        assert Counter(f.kind for f in rendered) == {"top": STEPS, "side": STEPS}, name
+        enclosure = [f for f in faces if f.enclosure]
+        assert len(enclosure) == STEPS * 4, name
+        assert {f.enclosure for f in enclosure} == {"stair_enclosure"}, name
 
 
 def test_stair_half_rises_to_half_the_height_of_stair_45():

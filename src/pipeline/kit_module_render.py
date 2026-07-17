@@ -42,21 +42,22 @@ def _yaw(pt, deg, cu, cv):
     return (cu + du * ca - dv * sa, cv + du * sa + dv * ca, z)
 
 
-def ordered_faces(faces, view, cam):
-    """[(face_id, kind, mat, screen_poly)] — canonical seam consumed by render + mask.
-
-    Yaw views: rotate every Face by its yaw about the module centre (0.5,0.5),
-    project through the fixed-scale dimetric `cam`, sort far->near by painter
-    key (centroid_u+centroid_v, centroid_z) ascending. TOP: orthographic
+def _project(faces, view, cam):
+    """Shared per-face projection+sort (R3 split from ordered_faces so both
+    it and ordered_enclosure_faces use byte-identical geometry): rotate
+    every Face by its yaw about the module centre (0.5,0.5), project through
+    the fixed-scale dimetric `cam`, sort far->near by painter key
+    (centroid_u+centroid_v, centroid_z) ascending. TOP: orthographic
     (u*s, v*s) through the same cam's scale+origin, sorted by centroid_z
     ascending. face_id = f"{i}:{kind}" (i = builder face index) is stable
-    across views since it's assigned before sorting."""
+    across views since it's assigned before sorting. Rows carry
+    `f.enclosure` through uncut — callers filter it."""
     rows = []
     if view == "TOP":
         for i, f in enumerate(faces):
             poly = [(cam.ox + u * cam.s, cam.oy + v * cam.s) for u, v, _z in f.pts]
             cz = sum(p[2] for p in f.pts) / len(f.pts)
-            rows.append((cz, f"{i}:{f.kind}", f.kind, f.mat, poly))
+            rows.append((cz, f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure))
     else:
         deg = int(view[1:])
         for i, f in enumerate(faces):
@@ -65,9 +66,27 @@ def ordered_faces(faces, view, cam):
             cu = sum(p[0] for p in pts) / len(pts)
             cv = sum(p[1] for p in pts) / len(pts)
             cz = sum(p[2] for p in pts) / len(pts)
-            rows.append(((cu + cv, cz), f"{i}:{f.kind}", f.kind, f.mat, poly))
+            rows.append(((cu + cv, cz), f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure))
     rows.sort(key=lambda r: r[0])
-    return [(face_id, kind, mat, poly) for _, face_id, kind, mat, poly in rows]
+    return rows
+
+
+def ordered_faces(faces, view, cam):
+    """[(face_id, kind, mat, screen_poly)] — canonical seam consumed by
+    render + mask. RENDER-visible faces only: excludes any Face tagged
+    `enclosure` (ROUND 3 mask-only geometry — see ordered_enclosure_faces)."""
+    return [(fid, k, m, poly) for _, fid, k, m, poly, enc in _project(faces, view, cam) if not enc]
+
+
+def ordered_enclosure_faces(faces, view, cam):
+    """[(face_id, kind, mat, screen_poly, enclosure)] — the complementary
+    mask-only set ordered_faces excludes (ROUND 3: stair_enclosure/
+    roof_edge/roof_inset). Same projection/sort as ordered_faces, so a face
+    id lands at the identical screen position either function returns it
+    from. Never consumed by paint_panel/render_panel — only by the
+    enclosure-mask emission path (stage_kit_modules.stage, via
+    face_masks, grouped by the trailing `enclosure` tag)."""
+    return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc in _project(faces, view, cam) if enc]
 
 
 def panel_extent(faces, view, s=1.0):
@@ -118,6 +137,21 @@ def render_module(name, s, cell_px, pad):
     """dict[view -> (RGBA, ordered, origin)] — 9 entries (VIEWS)."""
     faces = km.MODULES[name]()
     return {view: render_panel(faces, view, s, cell_px, pad) for view in VIEWS}
+
+
+def enclosure_faces(name, s, cell_px, pad, origins):
+    """dict[view -> [(face_id, kind, mat, poly, enclosure)]] — ROUND 3
+    mask-only faces for every view, projected with the SAME per-view
+    `origins` render_module already computed (so a mask lands pixel-aligned
+    to the rendered panel it accompanies). `origins`: dict[view -> (ox,oy)],
+    e.g. {view: origin for view, (_img, _ordered, origin) in
+    render_module(...).items()}."""
+    faces = km.MODULES[name]()
+    result = {}
+    for view in VIEWS:
+        cam = Cam([], cell_px, cell_px, pad, scale=s, origin=origins[view])
+        result[view] = ordered_enclosure_faces(faces, view, cam)
+    return result
 
 
 def project_face(pts, view, s, cell_px, pad, origin):

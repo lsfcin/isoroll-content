@@ -28,6 +28,11 @@ def _skm():
     return stage_kit_modules
 
 
+def _fm():
+    import face_masks
+    return face_masks
+
+
 # ---------------------------------------------------------------------- stroke_edges (pure geometry)
 def test_closed_box_strokes_every_edge_of_every_face():
     # wall_band: top/bottom differ in normal from every side, and adjacent
@@ -41,11 +46,15 @@ def test_closed_box_strokes_every_edge_of_every_face():
 
 
 def test_open_cover_strokes_the_shared_ridge_plus_the_unmatched_silhouette():
-    # roof_cell (R2-3 cover-only): 2 slope faces share the ridge edge at a
-    # different normal (kept) AND each has 3 more edges with no neighbour at
-    # all (gable/bottom were struck — open mesh) which must count as
-    # silhouette (kept too) — so, same as the closed-box case, every edge
-    # survives, just for a different reason (unmatched vs different-normal).
+    # roof_cell (ROUND 3): the 5 faces (2 render slopes + 2 mask-only gable
+    # + 1 mask-only bottom) now form a full closed shell again — every edge
+    # matches exactly one different-normal neighbour (a real fold; no
+    # accidental coplanar seam), so every edge is still stroked, same
+    # end-tally as the R2-3 open-mesh version, just for the "closed solid"
+    # reason this time instead of "unmatched silhouette". stroke_edges
+    # itself doesn't know or care which faces will actually render —
+    # paint_panel's ordered-filter (kit_module_render.ordered_faces) is
+    # what keeps a stripped face's stroke from ever being drawn.
     faces = km.MODULES["roof_cell"]()
     edges = _fe().stroke_edges(faces)
     total_edges = sum(len(f.pts) for f in faces)
@@ -96,3 +105,30 @@ def test_paint_panel_draws_dark_ink_at_a_known_different_normal_boundary():
         for dx in range(-2, 3) for dy in range(-2, 3)
     )
     assert found, (mx, my)
+
+
+# ---------------------------------------------------------------------- ROUND 3: no dangling stroke
+def test_no_edge_stroke_pixel_lies_outside_the_rendered_faces_dilated_by_stroke_width():
+    # ROUND 3 fix (S4-REVIEW-ROUNDS.md): edges must stroke only edges of
+    # faces actually RENDERED in a panel, never a stripped/mask-only face's
+    # (which used to dangle past the render silhouette, e.g. past the roof
+    # plane). roof_cell now carries real gable/bottom geometry again
+    # (enclosure-tagged) — this pins that paint_panel's ink never leaks past
+    # the render-only (slope-only) silhouette even so.
+    from PIL import ImageFilter
+
+    fe, kmr, skm, fm = _fe(), _kmr(), _skm(), _fm()
+    view = "y45"
+    faces = km.MODULES["roof_cell"]()
+    _img, ordered, origin = kmr.render_panel(faces, view, S, CELL_PX, PAD)
+    idmap, _meta = fm.face_mask(ordered, (CELL_PX, CELL_PX))
+    binary = idmap.point(lambda p: 255 if p > 0 else 0)
+    width = fe.edge_width(CELL_PX)
+    dilated = binary.filter(ImageFilter.MaxFilter(2 * width + 1))
+
+    painted = skm.paint_panel("roof_cell", view, ordered, S, CELL_PX, PAD, origin)
+    stray = sum(
+        1 for (r, g, b, _a), m in zip(painted.getdata(), dilated.getdata())
+        if (r, g, b) == fe.INK[:3] and m == 0
+    )
+    assert stray == 0, stray
