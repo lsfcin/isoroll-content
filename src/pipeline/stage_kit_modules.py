@@ -8,9 +8,9 @@ so grid placement is a straight paste. Sheet-per-module contract (R2/R3):
 (VIEWS order). Grid fixed 5 cols x 2 rows, gutter + magenta separators —
 one shared `s` across every module/view (C4). P1: `stage()` writes arm_a
 only. CELL_PX 512 (R2-1) via the supersample path in texture_warp.py.
-ROUND 3 (S4-REVIEW-ROUNDS.md): `stage()` also emits per-view enclosure-mask
-PNGs (enclosure_masks.py) for the stripped stair/roof faces — never painted
-here, staged alongside the render-visible masks."""
+ROUND 3/4 (S4-REVIEW-ROUNDS.md): `stage()` emits per-view enclosure-mask
+PNGs (enclosure_masks.py, ROUND 4: voxel-silhouette-minus-rendered-alpha,
+not per-Face-tag geometry) for modules with stripped stair/roof faces."""
 
 import json
 from math import ceil
@@ -170,19 +170,17 @@ def stage(out="output/gen-inbox", out_masks=None):
     for name in names:
         module_panels = []
         ordered_by_panel = {}
+        has_enclosure = any(f.enclosure for f in km.MODULES[name]())  # ROUND 4 mask gate
         for view, (img, ordered, origin) in kmr.render_module(name, s, CELL_PX, PAD).items():
             p = {"module": name, "view": view, "img": img, "ordered": ordered, "origin": origin}
             module_panels.append(p)
             all_panels.append(p)
             ordered_by_panel[(name, view)] = ordered
+            if has_enclosure:  # ROUND 4: voxel-silhouette-minus-rendered-alpha, see enclosure_masks.py
+                enclosure_masks.save_enclosure_masks(name, view, ordered, s, CELL_PX, PAD, origin, masks_path)
 
         arm_a(module_panels, ordered_by_panel).save(out_path / f"{name}__a.png")
         (out_path / f"{name}__a_prompt.txt").write_text(f"# {name}\n\n{prompt_body_a}")
-
-        # R3: mask-only enclosure faces (never painted above) get tagged masks.
-        origins = {p["view"]: p["origin"] for p in module_panels}
-        for view, enc in kmr.enclosure_faces(name, s, CELL_PX, PAD, origins).items():
-            enclosure_masks.save_enclosure_masks(name, view, enc, CELL_PX, masks_path)
 
     manifest_panels = []
     for p in all_panels:

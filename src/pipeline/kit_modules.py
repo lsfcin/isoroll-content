@@ -1,25 +1,22 @@
 #!/usr/bin/env python3
 """kit_modules.py — KIT V2 module geometry as faces at world origin (T1).
 
-3-arch.md's binding amendment: the shared module representation is a `Face`
-(list of 3-4 CCW (u,v,z) corners), not `layout_massing.Box` — Box is
-axis-aligned and can't express odd-45°-yaw or non-rectangular footprints
-(diag_half, roof_cell). `extrude()` builds box-like modules from a footprint
-polygon; `from_boxes()` reuses `layout_massing.Box` only where box seams
-already exist, converting each box to faces via `extrude` (kept as a public,
-independently-tested seam even though no builder below calls it anymore —
-R2-4 moved stairs to a per-box `extrude`-and-select shape instead).
+3-arch.md: the shared module representation is a `Face` (3-4 CCW (u,v,z)
+corners), not `layout_massing.Box` — Box is axis-aligned and can't express
+odd-45°-yaw or non-rectangular footprints (diag_half, roof_cell). `extrude()`
+builds box-like modules from a footprint polygon; `from_boxes()` reuses
+`layout_massing.Box` only where box seams already exist (public,
+independently-tested seam — no builder below calls it anymore).
 
-R2-3/R2-4 (design/S4-REVIEW-ROUNDS.md ROUND 2): roof_cell/stairs are
-cover-only at RENDER time. ROUND 3: their enclosure faces (roof gable ends
-+ under-eave soffit; stair side envelope + buried back + floor-under-tread)
-are back as real `Face` geometry, tagged mask-only via `Face.enclosure`
-instead of struck outright — kit_modules stays their single source of
-truth. `kit_module_render.ordered_faces` filters them out of render/paint;
-`ordered_enclosure_faces` is the mask-emission counterpart
-(stage_kit_modules.stage, via face_masks) that picks them back up, grouped
-by kind (`stair_enclosure` / `roof_edge` / `roof_inset`) — Lucas's orange
-mask regions, for assembly (S4t) to warp wall texture into directly.
+ROUND 3/4 (design/S4-REVIEW-ROUNDS.md): roof_cell/stairs are cover-only at
+RENDER time; their enclosure faces (roof gable/soffit; stair envelope/back/
+floor) are real `Face` geometry (self-occlusion/silhouette) but `Face.
+enclosure`-tagged — mask-only, never painted. `ordered_faces` filters
+enclosure out AND (ROUND 4) backface-culls on top, for every module. ROUND
+4's mask SOURCE is `enclosure_masks.voxel_silhouette` minus rendered alpha,
+not this tag. ROUND 4 stairs: `_stair_cover` builds ONE zigzag profile
+polygon (step outline in the u-z rise plane) extruded across width —
+treads/risers are strips of one connected solid, not stacked boxes.
 """
 
 from dataclasses import dataclass
@@ -30,28 +27,23 @@ UNIT_SQUARE = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
 WALL_H = 3.0  # module-local wall height (unit cell, yaw not baked)
 THIN = 0.12  # top_cap/base z-band thickness
 ROOF_H = 0.7  # roof_cell ridge rise
-ROOF_RIDGE_V = 0.3  # off-centre on purpose (two reasons): (1) a ridge at v=0.5 is
-# mirror-symmetric across v, which collapses several of the 8 yaw silhouettes
-# onto each other (test_kit_module_render.py needs >=4/8 distinct bboxes, "no
-# accidental mirror chirality"); (2) the ridge runs along u (not v), so the
-# two cover slopes (front v<RIDGE_V, back v>RIDGE_V) are different sizes and
-# never coincide screen-exactly at any yaw.
+STAIR_ENCLOSURE = "stair_enclosure"  # ROUND 3/4 Face.enclosure tag for stairs
+ROOF_RIDGE_V = 0.3  # off-centre on purpose: v=0.5 is mirror-symmetric across
+# v (collapses yaw silhouettes, test_kit_module_render.py needs >=4/8
+# distinct); ridge runs along u, so the two slopes never coincide at any yaw.
 SLAB_THICK = 0.1  # R2-5: standalone door/window slab thickness (module-local
-# units) — "10% = 'feet' measurement system" per ROUND-1 Q2/Q3 answers. Same
-# constant drives both the slab's own geometry and the painter-placement
-# inset metadata (S7, not this module's concern).
+# units) — "10% = 'feet'" per ROUND-1 Q2/Q3; also drives the painter-placement inset metadata (S7).
 
 
 @dataclass
 class Face:
     pts: list  # list[tuple[float,float,float]] — 3-4 CCW corners in u,v,z
-    kind: str  # "top"|"side"|"bottom"|"tread"|"riser"|"slope"|"gable"
+    kind: str  # "top"|"side"|"bottom"|"slope"|"gable"
     mat: str = "blank"  # arm-a material tag: "stone"|"wood"|"thatch"|"blank"
-    enclosure: str = ""  # ROUND 3: "" = rendered normally; non-empty =
-    # mask-only (real geometry, never painted — only emitted as a per-view
-    # enclosure-mask PNG, tagged with this string: "stair_enclosure" |
-    # "roof_edge" | "roof_inset"). See kit_module_render.ordered_faces /
-    # ordered_enclosure_faces and stage_kit_modules.stage.
+    enclosure: str = ""  # ROUND 3: "" = rendered (subject to ROUND 4 backface
+    # culling too); non-empty = mask-only, never painted regardless of
+    # facing: "stair_enclosure"|"roof_edge"|"roof_inset". See kit_module_
+    # render.ordered_faces/ordered_enclosure_faces, enclosure_masks.py.
 
 
 def extrude(footprint, z0, h, mat="blank"):
@@ -90,14 +82,11 @@ def _base():
 
 
 def _slab(w, h, mat="blank"):
-    """Thin standalone slab: w wide (u) x SLAB_THICK deep (v) x h tall (z)
-    voxels — R2-5 door/window OBJECTS (no wall carving; the wall-with-a-hole
-    is emergent at assembly from column placement, S4t, not this module's
-    concern). `extrude`'s edge order for this footprint puts the two
-    v-normal LARGE faces at side indices 0 (v=0, "front") and 2
-    (v=SLAB_THICK, "back"); the two u-normal THIN edge faces land at indices
-    1 (u=w, right) and 3 (u=0, left) — texture_map.FAMILY tells all four
-    apart by face normal, not by this ordering."""
+    """Thin standalone slab: w(u) x SLAB_THICK(v) x h(z) — R2-5 door/window
+    OBJECTS (no wall carving; the hole is emergent at assembly, S4t). The
+    two v-normal LARGE faces land at side indices 0 (front) and 2 (back);
+    the two u-normal THIN edges at 1/3 — texture_map.FAMILY tells them
+    apart by face normal, not this ordering."""
     footprint = [(0.0, 0.0), (w, 0.0), (w, SLAB_THICK), (0.0, SLAB_THICK)]
     return extrude(footprint, 0.0, h, mat)
 
@@ -126,13 +115,11 @@ def _diag_half():
 
 def _roof_cell():
     """Ridge along u at v=ROOF_RIDGE_V, rising to ROOF_H. Only the two
-    sloped cover quads RENDER — the gable end triangles ("roof_edge") and
-    the horizontal under-eave soffit ("roof_inset") stay real geometry
-    (ROUND 3) but are tagged mask-only. Together the 5 faces form a closed
-    watertight shell (every edge matches a different-normal neighbour, no
-    accidental coplanar seam) — winding chosen so face_edges.stroke_edges'
-    adjacency matching is exact by construction, no eave-overhang hack
-    needed (nothing here renders alongside the slopes anymore)."""
+    sloped cover quads RENDER — gable ends ("roof_edge") and the under-eave
+    soffit ("roof_inset") stay real geometry but mask-only. The 5 faces
+    form a closed watertight shell (every edge matches a different-normal
+    neighbour) — winding chosen so face_edges.stroke_edges' adjacency
+    matching is exact by construction."""
     a, b, c, d = (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0)
     r0, r1 = (0.0, ROOF_RIDGE_V, ROOF_H), (1.0, ROOF_RIDGE_V, ROOF_H)
     return [
@@ -144,27 +131,49 @@ def _roof_cell():
     ]
 
 
-def _stair_cover(rise_scale):
-    """Per step: tread (top) + the uphill riser RENDER; the side envelope
-    (v=0/v=1), the back face buried against the next step, and the floor
-    patch under the tread (bottom) stay real geometry (ROUND 3) but tagged
-    `enclosure="stair_enclosure"` — mask-only, so steps read as floating in
-    space instead of a solid vertical box. Reuses `extrude`'s own box
-    winding unchanged (already a correctly-wound closed solid — no
-    reordering needed for face_edges' adjacency matching, unlike the
-    hand-rolled roof). `extrude`'s footprint-edge order for
-    [(u0,0),(u1,0),(u1,1),(u0,1)] emits faces = [top, bottom, side0(v=0),
-    side1(u=u1,"back"), side2(v=1), side3(u=u0,"riser")]."""
-    faces = []
+def _stair_profile(rise_scale):
+    """Zigzag outline in the (u,z) rise plane: STEPS risers (vertical) alt.
+    STEPS treads (horizontal), (0,0)->(1,total_rise), closed by a back edge
+    (u=1, down to z=0), bottom implicit on wrap. CCW matches `extrude`'s
+    convention (normal = edge dir rotated -90 in-plane): risers point
+    down-stair (-u), treads up (+z), back up-stair (+u), bottom down (-z)."""
+    rise = STAIR_RISE * rise_scale
+    pts = [(0.0, 0.0)]
     for i in range(STEPS):
-        height = STAIR_RISE * rise_scale * (i + 1) / STEPS
-        u0 = i / STEPS
-        u1 = u0 + 1.0 / STEPS
-        footprint = [(u0, 0.0), (u1, 0.0), (u1, 1.0), (u0, 1.0)]
-        top, bottom, side0, side1, side2, riser = extrude(footprint, 0.0, height, "step")
-        for f in (bottom, side0, side1, side2):
-            f.enclosure = "stair_enclosure"
-        faces += [top, bottom, side0, side1, side2, riser]
+        u = (i + 1) / STEPS
+        z = rise * (i + 1) / STEPS
+        pts.append((pts[-1][0], z))  # riser i: straight up to this step's height
+        pts.append((u, z))  # tread i: straight across to the next riser
+    pts.append((1.0, 0.0))  # back: straight down (bottom closes the wrap)
+    return pts
+
+
+def _stair_cover(rise_scale):
+    """ONE zigzag solid (ROUND 4), not STEPS stacked boxes: extrude
+    `_stair_profile` across width (v: 0->1). The two profile copies (v=0/
+    v=1) are mask-only envelope caps; each profile EDGE becomes one
+    v-spanning strip — risers/treads RENDER, back/bottom stay `enclosure=
+    STAIR_ENCLOSURE`. Edge-to-edge connectivity between steps is by
+    construction (one shared polygon), unlike stacked boxes."""
+    profile = _stair_profile(rise_scale)
+    n = len(profile)
+    n_step_edges = 2 * STEPS  # STEPS risers + STEPS treads
+    faces = [
+        Face([(u, 0.0, z) for u, z in profile], "side", "step", enclosure=STAIR_ENCLOSURE),
+        Face([(u, 1.0, z) for u, z in reversed(profile)], "side", "step", enclosure=STAIR_ENCLOSURE),
+    ]
+    for i in range(n):
+        u0, z0 = profile[i]
+        u1, z1 = profile[(i + 1) % n]
+        pts = [(u0, 0.0, z0), (u1, 0.0, z1), (u1, 1.0, z1), (u0, 1.0, z0)]
+        if i < n_step_edges and i % 2 == 0:
+            faces.append(Face(pts, "side", "step"))  # riser, renders
+        elif i < n_step_edges:
+            faces.append(Face(pts, "top", "step"))  # tread, renders
+        elif i == n_step_edges:
+            faces.append(Face(pts, "side", "step", enclosure=STAIR_ENCLOSURE))  # back wall
+        else:
+            faces.append(Face(pts, "bottom", "step", enclosure=STAIR_ENCLOSURE))  # floor
     return faces
 
 

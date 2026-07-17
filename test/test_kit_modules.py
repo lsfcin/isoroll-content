@@ -143,21 +143,23 @@ def test_roof_cell_renders_only_the_two_slopes_gable_and_bottom_are_mask_only():
     assert {f.enclosure for f in faces if f.kind == "bottom"} == {"roof_inset"}
 
 
-def test_stair_45_and_stair_half_carry_full_box_geometry_tread_riser_render_only():
-    # ROUND 3 (AMENDED 2026-07-17, S4-REVIEW-ROUNDS.md ROUND 3): each step
-    # is back to a full 6-face box (top, bottom, side0/1/2, riser) — the
-    # side envelope, buried back face, and floor-under-tread stay real
-    # geometry (mask source) but are tagged enclosure="stair_enclosure";
-    # only tread (top) and riser render.
+def test_stair_45_and_stair_half_are_one_zigzag_solid_tread_riser_render_only():
+    # ROUND 4 (S4-REVIEW-ROUNDS.md ROUND 4): each stair is ONE zigzag
+    # profile polygon (2D step outline) extruded across width, not STEPS
+    # stacked boxes. 2*STEPS+4 faces total: STEPS risers + STEPS treads
+    # RENDER; the two profile envelope caps (v=0/v=1), the back wall, and
+    # the floor-under-tread stay real geometry (self-occlusion/silhouette)
+    # but are tagged enclosure="stair_enclosure" — mask SOURCE moved to
+    # enclosure_masks.voxel_silhouette (not this per-Face tag) in ROUND 4.
     MODULES = _km().MODULES
     for name in ("stair_45", "stair_half"):
         faces = MODULES[name]()
-        assert len(faces) == STEPS * 6, name
+        assert len(faces) == 2 * STEPS + 4, name
         rendered = [f for f in faces if not f.enclosure]
         assert len(rendered) == STEPS * 2, name
         assert Counter(f.kind for f in rendered) == {"top": STEPS, "side": STEPS}, name
         enclosure = [f for f in faces if f.enclosure]
-        assert len(enclosure) == STEPS * 4, name
+        assert len(enclosure) == 4, name
         assert {f.enclosure for f in enclosure} == {"stair_enclosure"}, name
 
 

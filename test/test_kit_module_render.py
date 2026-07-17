@@ -151,18 +151,24 @@ def test_save_mask_writes_the_documented_png_and_json_pair(tmp_path):
     assert (tmp_path / "wall_band_TOP_faces.json").exists()
 
 
-# ---------------------------------------------------------------------- ROUND 3: enclosure masks
-def test_ordered_faces_and_ordered_enclosure_faces_partition_stair_45_with_no_overlap():
-    # ROUND 3 (S4-REVIEW-ROUNDS.md): every Face a builder returns is either
-    # render-visible (ordered_faces) or mask-only (ordered_enclosure_faces),
-    # never both, never neither.
+# ---------------------------------------------------------------------- ROUND 3/4: enclosure masks
+def test_ordered_faces_and_ordered_enclosure_faces_partition_stair_45_modulo_backface_culling():
+    # ROUND 3: render-visible (ordered_faces) or mask-only
+    # (ordered_enclosure_faces), never both. ROUND 4 (S4-REVIEW-ROUNDS.md):
+    # ordered_faces now ALSO backface-culls, any module — a render-eligible
+    # (enc=="") face can vanish from BOTH sets (culled, not enclosure). The
+    # old 2-way partition is now 3-way: {rendered, enclosure, culled}.
     kmr, km = _kmr(), _km()
     faces = km.MODULES["stair_45"]()
     cam = _kmr_cam(kmr, s=8.0)
     rendered_ids = {fid for fid, *_ in kmr.ordered_faces(faces, "y45", cam)}
     enclosure_ids = {fid for fid, *_ in kmr.ordered_enclosure_faces(faces, "y45", cam)}
+    all_ids = {f"{i}:{f.kind}" for i, f in enumerate(faces)}
+    renderable_ids = {f"{i}:{f.kind}" for i, f in enumerate(faces) if not f.enclosure}
     assert not rendered_ids & enclosure_ids
-    assert rendered_ids | enclosure_ids == {f"{i}:{f.kind}" for i, f in enumerate(faces)}
+    assert rendered_ids <= renderable_ids
+    culled_ids = renderable_ids - rendered_ids
+    assert rendered_ids | enclosure_ids | culled_ids == all_ids
     assert enclosure_ids, "stair_45 must have real enclosure faces to tag"
 
 

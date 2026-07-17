@@ -5,6 +5,7 @@ UNIT_SQUARE: Incomplete
 WALL_H: float
 THIN: float
 ROOF_H: float
+STAIR_ENCLOSURE: str
 ROOF_RIDGE_V: float
 SLAB_THICK: float
 

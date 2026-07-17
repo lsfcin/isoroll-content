@@ -42,22 +42,41 @@ def _yaw(pt, deg, cu, cv):
     return (cu + du * ca - dv * sa, cv + du * sa + dv * ca, z)
 
 
+def _face_normal(pts):
+    """Cross of the first two edges, un-normalized — sign only matters here."""
+    p0, p1, p2 = pts[0], pts[1], pts[2]
+    v1, v2 = tuple(b - a for a, b in zip(p0, p1)), tuple(b - a for a, b in zip(p1, p2))
+    return (v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0])
+
+
+def _front_facing(pts, view):
+    """ROUND 4 backface cull: normal of `pts` (already yawed for this view)
+    dotted with this fixed dimetric camera's look-toward-viewer axis. Every
+    y{deg} view shares ONE camera fixed at the +u+v+z octant looking toward
+    the origin (yaw rotates the FACE, not the camera) — matches scene_guide
+    _render.Cam/_faces, which only ever draws a box's max-u/max-v/top faces,
+    exactly what (1,1,1) picks out. TOP is a straight-down camera, axis
+    (0,0,1). Edge-on (dot == 0) counts as back-facing (culled)."""
+    n = _face_normal(pts)
+    axis = (0.0, 0.0, 1.0) if view == "TOP" else (1.0, 1.0, 1.0)
+    return (n[0] * axis[0] + n[1] * axis[1] + n[2] * axis[2]) > 1e-9
+
+
 def _project(faces, view, cam):
     """Shared per-face projection+sort (R3 split from ordered_faces so both
     it and ordered_enclosure_faces use byte-identical geometry): rotate
     every Face by its yaw about the module centre (0.5,0.5), project through
     the fixed-scale dimetric `cam`, sort far->near by painter key
     (centroid_u+centroid_v, centroid_z) ascending. TOP: orthographic
-    (u*s, v*s) through the same cam's scale+origin, sorted by centroid_z
-    ascending. face_id = f"{i}:{kind}" (i = builder face index) is stable
-    across views since it's assigned before sorting. Rows carry
-    `f.enclosure` through uncut — callers filter it."""
+    (u*s, v*s), sorted by centroid_z ascending. face_id = f"{i}:{kind}" is
+    stable across views. Rows carry `f.enclosure` AND (ROUND 4) a
+    `front_facing` bool through uncut — callers filter both."""
     rows = []
     if view == "TOP":
         for i, f in enumerate(faces):
             poly = [(cam.ox + u * cam.s, cam.oy + v * cam.s) for u, v, _z in f.pts]
             cz = sum(p[2] for p in f.pts) / len(f.pts)
-            rows.append((cz, f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure))
+            rows.append((cz, f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure, _front_facing(f.pts, view)))
     else:
         deg = int(view[1:])
         for i, f in enumerate(faces):
@@ -66,27 +85,32 @@ def _project(faces, view, cam):
             cu = sum(p[0] for p in pts) / len(pts)
             cv = sum(p[1] for p in pts) / len(pts)
             cz = sum(p[2] for p in pts) / len(pts)
-            rows.append(((cu + cv, cz), f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure))
+            row = ((cu + cv, cz), f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure, _front_facing(pts, view))
+            rows.append(row)
     rows.sort(key=lambda r: r[0])
     return rows
 
 
 def ordered_faces(faces, view, cam):
     """[(face_id, kind, mat, screen_poly)] — canonical seam consumed by
-    render + mask. RENDER-visible faces only: excludes any Face tagged
-    `enclosure` (ROUND 3 mask-only geometry — see ordered_enclosure_faces)."""
-    return [(fid, k, m, poly) for _, fid, k, m, poly, enc in _project(faces, view, cam) if not enc]
+    render + mask. RENDER-visible: excludes `enclosure`-tagged faces (ROUND
+    3) AND (ROUND 4) any face backface-culled at this view, for every
+    module — closed boxes lose hidden faces (previously just overpainted);
+    open covers (stairs/roofs) lose faces with nothing to overpaint them,
+    the actual ROUND 4 bug fix."""
+    return [(fid, k, m, poly) for _, fid, k, m, poly, enc, front in _project(faces, view, cam)
+            if not enc and front]
 
 
 def ordered_enclosure_faces(faces, view, cam):
     """[(face_id, kind, mat, screen_poly, enclosure)] — the complementary
     mask-only set ordered_faces excludes (ROUND 3: stair_enclosure/
-    roof_edge/roof_inset). Same projection/sort as ordered_faces, so a face
-    id lands at the identical screen position either function returns it
-    from. Never consumed by paint_panel/render_panel — only by the
-    enclosure-mask emission path (stage_kit_modules.stage, via
-    face_masks, grouped by the trailing `enclosure` tag)."""
-    return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc in _project(faces, view, cam) if enc]
+    roof_edge/roof_inset), same projection/sort. Returns ALL enclosure
+    faces regardless of facing (not backface-culled — self-occlusion
+    bookkeeping wants the full mask-only geometry). Never consumed by
+    paint_panel/render_panel; ROUND 4's mask SOURCE is enclosure_masks.
+    voxel_silhouette, not this."""
+    return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc, front in _project(faces, view, cam) if enc]
 
 
 def panel_extent(faces, view, s=1.0):

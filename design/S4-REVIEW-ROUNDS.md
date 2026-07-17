@@ -325,3 +325,77 @@ ADOPTED fixes:
 - INVARIANT TEST (code, per view): render_alpha ∪ enclosure_mask == voxel_silhouette exactly — zero
   gap pixels, zero overlap beyond stroke tolerance. Makes this bug class unshippable blind.
 - Hairlines expected to die with the box construction; edge strokes only on rendered (culled-in) faces.
+
+## Step 4 executed (2026-07-17)
+
+All four ROUND 4 fixes, per the ADOPTED plan.
+
+`kit_modules._stair_cover` rebuilds each stair as ONE zigzag profile polygon (`_stair_profile`: STEPS
+risers alternating STEPS treads in the u-z rise plane, closed by a back edge and an implicit bottom
+edge) extruded across the full stair width (v: 0->1) via a bespoke per-edge extrusion (mirrors
+`extrude`'s axis roles with v standing in for z). Each profile EDGE becomes one v-spanning quad strip —
+risers/treads render, the two profile end-caps (v=0/v=1) plus the back-wall and bottom strips stay
+`enclosure="stair_enclosure"` (self-occlusion/silhouette geometry only). Faces per stair: 2*STEPS+4 (was
+STEPS*6 under R2-4's per-step-box scheme) — 2*STEPS render (STEPS risers + STEPS treads, edge-to-edge by
+construction since they're strips of one shared polygon, closing the ROUND-4 "disconnected plates" bug),
+4 stay enclosure. Kind vocabulary reused ("top" for treads, "side" for risers) instead of introducing
+"tread"/"riser" kinds — this lines up with `texture_map.FAMILY`'s existing stair branch (kind=="top" ->
+stair_tread, kind=="side" + normal check -> stair_riser) with zero changes needed to texture_map.py.
+
+`kit_module_render.py`: new `_face_normal`/`_front_facing` — backface cull by world normal · a fixed
+dimetric-camera axis, derived from (and cross-checked against) `scene_guide_render.Cam`/`_faces`, which
+only ever draws a box's max-u/max-v/top faces: that's exactly what dotting against `(1,1,1)` picks out
+for the 8 `y{deg}` views (camera fixed at the +u+v+z octant, yaw rotates the FACE not the camera); TOP is
+a separate straight-down camera, axis `(0,0,1)`. `_project` now threads a `front_facing` bool through
+every row alongside the existing `enclosure` tag. `ordered_faces` (the single choke point already used
+for render/paint/per-face-mask emission) now filters `not enc and front` instead of just `not enc` — this
+is where "all modules benefit" happens: closed boxes (wall_band, top_cap, base, door/window slabs,
+diag_half) drop from painting all 6 faces to painting only the 2-3 that were ever visible anyway (verified
+unchanged output via the existing test suite — hidden faces were previously just overpainted by nearer
+ones, so the visible pixels don't change), stairs/roofs drop faces that have nothing left to overpaint
+them (the actual bug: phantom risers/gables showing through in behind views). `ordered_enclosure_faces`
+is deliberately NOT backface-culled (self-occlusion/silhouette bookkeeping wants the full mask-only
+geometry regardless of facing) — kept as public API, but no longer called anywhere in the mask pipeline.
+
+New `enclosure_masks.voxel_silhouette(view, s, cell_px, pad, origin)`: projects a fresh full-height wall
+voxel (`km.extrude(km.UNIT_SQUARE, 0.0, km.WALL_H)`, i.e. the same shape as `wall_band`) through
+`kit_module_render.ordered_faces` (so it's backface-culled too) at the SAME scale/origin a module's own
+panel was rendered with, then rasterises via `face_masks.face_mask` — pixel-exact with the render-visible
+per-face masks. `save_enclosure_masks(module, view, ordered, s, cell_px, pad, origin, masks_path)` (new
+signature — the old `enc_ordered`-from-`ordered_enclosure_faces` parameter is gone) subtracts the
+module's own rendered silhouette from `voxel_silhouette` via `ImageChops.subtract` on the two binary
+images, writes `{module}_{view}_enclosure_facemask.png`/`_faces.json` through the same `face_masks.
+save_mask` seam, and skips writing when the gap is empty (e.g. every module's TOP view: stairs/roofs
+both cover their full unit footprint from directly above, gap == 0, confirmed empirically). Drops the
+old `stair_enclosure`/`roof_edge`/`roof_inset` tag split entirely — one `enclosure` mask per module+view,
+computed purely geometrically (never from `Face.enclosure` tags, though those tags still exist and still
+keep the geometry out of render — `enclosure_masks.py` doesn't read them at all anymore).
+`stage_kit_modules.stage()` gates the call on `any(f.enclosure for f in km.MODULES[name]())` per module
+(so wall_band/base/top_cap/diag_half/door_1x2/window_1x1 never call it, matching the old "no enclosure
+faces -> nothing written" contract) and threads `ordered`/`s`/`origin` straight from the same
+`render_module` loop already producing the arm_a sheet — no second render pass.
+
+Tests: amended `test_kit_modules.py` (`test_stair_45_and_stair_half_are_one_zigzag_solid_tread_riser_
+render_only` — face counts 2*STEPS+4/2*STEPS/4, comment points at ROUND 4), `test_kit_module_render.py`
+(`test_ordered_faces_and_ordered_enclosure_faces_partition_stair_45_modulo_backface_culling` — the old
+strict 2-way partition is now 3-way: {rendered, enclosure, backface-culled}). Rewrote
+`test_enclosure_masks.py` for the single `enclosure` tag (drops the `stair_enclosure`/`roof_edge`/
+`roof_inset` glob checks) and added the two ROUND-4-mandatory tests:
+`test_round4_rendered_union_enclosure_equals_voxel_silhouette_exactly` (per view, for stair_45/
+stair_half/roof_cell: no rendered pixel lies outside `voxel_silhouette`, and the actual `{enclosure}`
+PNG written by the real `stage()` pipeline unioned with the rendered silhouette reproduces
+`voxel_silhouette` exactly, zero overlap — an end-to-end wiring check, not just the tautological
+subtract-by-construction) and `test_stair_behind_view_paints_a_near_zero_sliver_relative_to_the_front_
+view` (relative min-vs-max painted-area comparison across the 8 yaw views, not a hardcoded pixel count —
+empirically the minimum view paints ~19% of the maximum view's area, comfortably under the 30% bar,
+since all 4 risers share one normal and vanish together in the views that look from the up-stair end,
+leaving only the tread strips). `test_texture_map.py`/`test_texture_warp.py` needed ZERO changes — the
+stair kind-vocabulary choice ("top"/"side", not "tread"/"riser") was chosen specifically to land inside
+their existing FAMILY-table branches.
+
+`make verify-fast`: 140 passed (was 138 after Step 3; net +2 from the two new invariant tests, the
+partition-test rename is a like-for-like swap).
+
+Restaged gen-inbox (same 9 stem pairs, arm-a only) and masks/ (per-face masks unchanged in kind/count;
+enclosure masks now single-tagged — 8 `{module}_{view}_enclosure_facemask.png`/`_faces.json` pairs each
+for stair_45/stair_half/roof_cell, TOP view excluded per module since its gap is empty by construction).
