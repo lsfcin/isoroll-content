@@ -399,3 +399,13 @@ partition-test rename is a like-for-like swap).
 Restaged gen-inbox (same 9 stem pairs, arm-a only) and masks/ (per-face masks unchanged in kind/count;
 enclosure masks now single-tagged — 8 `{module}_{view}_enclosure_facemask.png`/`_faces.json` pairs each
 for stair_45/stair_half/roof_cell, TOP view excluded per module since its gap is empty by construction).
+
+## ROUND 4b (Lucas mid-run clarifications, 2026-07-17)
+- MASKS: simply the LATERAL faces of stairs AND roofs (stairs: two stepped-wedge profile sides;
+  roofs: gable triangles). Supersedes step-4's voxel-minus-render definition (which paints air
+  regions orange in some views). Mask = projected lateral faces, by construction.
+- RENDER: stairs = the SAME tread+riser rectangle pair repeated with diagonal offset — confirmed
+  in a944a30 output (big vertical rectangles gone). Side-on views show treads corner-connected
+  (correct for strips; reads solid after assembly mask fill).
+- Invariant amended: enclosure_mask == lateral-face projection; render ∩ mask ≈ ∅ (stroke tolerance);
+  render ∪ mask ⊆ solid silhouette.
