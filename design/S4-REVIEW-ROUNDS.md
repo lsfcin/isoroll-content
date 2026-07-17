@@ -309,3 +309,19 @@ Restaged gen-inbox: same 9 modules (base, diag_half, door_1x2, roof_cell, stair_
 top_cap, wall_band, window_1x1), arm-a only, 2592x1032 sheets. New: 36 enclosure-mask PNG/JSON pairs
 in `masks/` (18 stair_enclosure — stair_45 + stair_half x 9 views; 9 roof_edge + 9 roof_inset for
 roof_cell x 9 views), every one checked non-empty (nonzero `getbbox()`).
+
+## ROUND 4 (Lucas 2026-07-17 — stairs still wrong; diagnosis confirmed by comparison)
+Render bugs: (1) steps = disconnected plates (derived from stacked boxes); (2) NO backface culling —
+faces painted even when normal points away (phantom plates in behind views); (3) box side faces leak
+white into render (sides are enclosure territory).
+Mask bug: per-face projection of box sides/back/bottom → thin stepped bands; target = FULL region
+between step surface and voxel envelope.
+ADOPTED fixes:
+- Stair geometry = ONE zigzag profile polygon (2D step outline) extruded across width — treads/risers
+  are strips of a single solid; connectivity by construction.
+- Backface culling by world normal · camera direction in the module renderer (all modules benefit).
+- Mask definition = wall_voxel_silhouette(view) − rendered_alpha(view), for stairs AND roofs. One
+  enclosure mask per module+view (roof edge/inset split deferred to assembly if still needed).
+- INVARIANT TEST (code, per view): render_alpha ∪ enclosure_mask == voxel_silhouette exactly — zero
+  gap pixels, zero overlap beyond stroke tolerance. Makes this bug class unshippable blind.
+- Hairlines expected to die with the box construction; edge strokes only on rendered (culled-in) faces.
