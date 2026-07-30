@@ -1,6 +1,7 @@
 # SCENE-CREATION — Canonical Spec
-> Single source of truth for isoroll scene creation: goal, architecture, contract, kill-log, program.
-> Live execution state: [ROADMAP-content-gen.md](ROADMAP-content-gen.md). Superseded strategies: [archive/ROADMAP-2026H1-strategies.md](archive/ROADMAP-2026H1-strategies.md).
+> Single source of truth for isoroll scene creation: goal, architecture, seam, contract, kill-log.
+> **Status-free by rule** — no phases, no task state, no "current focus". What's next lives only in
+> [ROADMAP.md](ROADMAP.md). Superseded strategies: [archive/ROADMAP-2026H1-strategies.md](archive/ROADMAP-2026H1-strategies.md).
 > Runtime counterpart: `../isoroll-module/` (see its ROADMAP.md § Scene Painter track).
 
 ## Goal
@@ -13,10 +14,11 @@ References: Tiny Glade (few tools + contextual grammar = the magic), Townscaper/
 
 | Tier | Requirement | How it's met |
 |------|-------------|--------------|
-| essential | 4+1 views | dimetric kit batch (rotation = cell remapping of same art) |
-| essential | cross-view consistency (geometric AND visual) | geometry: deterministic assembly from layout; visual: kit-sheet single-pass painting + QC (IoU, cross-view dims) |
-| important | outstanding usability ("feels like magic") | painter grammar (below), input redundancy, P9 polish pass |
-| important | 8+1 views | cardinal kit batch (new art regime) + module cardinal projection preset |
+| essential | 8+1 views | one view-table entry per view (projection + backface-cull axis) + the module's cardinal projection preset; dimetric rotation = cell remapping of the same art |
+| essential | cross-view consistency (geometric AND visual) | geometry: deterministic assembly from layout. Visual: free in any render-based arm (a render is consistent by construction); arm A pays for it with cross-view QC (IoU, cross-view dims) |
+| essential | cross-tile continuity (patterns flow across cell joins) | requires cells rendered at their real world position (arm B) — unreachable with reusable sprites, see kill-log |
+| important | outstanding usability ("feels like magic") | painter grammar (below), input redundancy, polish pass |
+| important | content generated without artists | art cost paid once at texture scale (~40 seamless materials, code-verifiable by wrap-seam test) + props as meshes rendered to 9 views; never per-tile painting |
 | desired | door animations | door secondary image (open/closed) first; webm tiles later |
 
 ## Architecture
@@ -34,7 +36,30 @@ export: kit + scene manifest                  imageOffset, WallDef[]      autoti
                                                                           cardinal = 2nd projection preset
 ```
 
-**Kit assembly is the model** (pivot 2026-07-08, see kill-log): the generator (NB) only ever paints tile-sized kit pieces — the regime where it holds geometry. Scenes are composed deterministically from the layout by code (`scene_assemble.py`, later its TS port). Geometry is exact by construction; zero generator calls per scene.
+**Deterministic geometry is the model** (pivot 2026-07-08, see kill-log): a generator never decides where
+anything is. Scenes are composed from the layout by code; geometry is exact by construction, with zero
+generator calls per scene.
+
+### The seam (frozen 2026-07-29)
+
+```
+DSL v2  →  [ RENDERER ]  →  cell sprites + manifest  →  Foundry
+              ^^^^^^^^
+   arms:  A kit-sprite  |  B scene-cell world-uv render  |  C NB-painted textures into A or B
+```
+
+`render_scene(layout, view) -> {cell sprites, manifest}` is the single entry every arm implements. **The
+contract is the structure; the pixels are swappable** — choosing a content arm is an A/B behind this seam,
+never an architecture change. Arm selection state lives in ROADMAP.md, not here.
+
+Two properties are seam-level, not arm-level:
+- **Quality lane = offline bake.** Shipped pixels always come from the offline renderer (supersampled, baked
+  AO, ink). Any in-browser renderer is a preview for painter latency only, never a source of shipped art.
+- **Anything that must rotate passes through geometry.** No exceptions: a rotating asset is a render of
+  known geometry (scene cells, or a mesh for props/characters), never a generated view.
+
+Arm A (kit-sprite) reuses one sprite per module at every cell. Consequence, confirmed in code and not
+negotiable: **reusable sprite and true cross-tile continuity are mutually exclusive** — see kill-log.
 
 ### The contract (scene format)
 
@@ -50,10 +75,11 @@ Problem (confirmed in code): `tile_guide_render.py::fit_scale` autofits each cel
 - QC gains a cross-view dimension check: same piece silhouette dims across views must agree within tolerance.
 - For already-generated autofit sheets: corrective per-cell scale = `s_shared / s_cell`, derivable from recorded dims — document per sheet rather than regenerate.
 
-### 8+1 views — two art regimes
+### 8+1 views
 
-- **Dimetric regime (NW/NE/SW/SE + TOP)**: exists. Rotation = cell remapping of the same kit art (`kit_render.py`); never sprite mirroring (chirality — see kill-log).
-- **Cardinal regime (N/E/S/W)**: walls seen face-on → NEW kit art per piece + a cardinal projection preset in the module (custom projection flags exist). Proportions anchored on the reference deck's conventions (unfolded-net already reverse-engineered in `make_tile_guide.py`/`tile_guide_render.py`, verified vs 2 deck pages). Guide renderer needs a cardinal camera mode; NB batch mirrors the dimetric batch process.
+- **Dimetric (NW/NE/SW/SE + TOP)**: rotation = cell remapping of the same art (`kit_render.py`); never sprite mirroring (chirality — see kill-log).
+- **Cardinal (N/E/S/W)**: walls seen face-on. Under a **deterministic renderer** this is one entry in the view table (projection matrix + backface-cull axis, both already per-view parameters) plus the module's cardinal projection preset, which the existing `customRotation`/`customSkewX`/`customSkewY`/`customRatio` flags already cover. Proportions anchored on the reference deck's conventions (unfolded net reverse-engineered in `make_tile_guide.py`/`tile_guide_render.py`, verified vs 2 deck pages).
+- Cardinal is only a **new art regime** where the pixels come from generated per-piece sheets (arm A + NB). It is nearly free in any render-based arm — which is why 8+1 is in scope from the MVP onward.
 
 ### Floor / background — OPEN design item (spiked, decision still with Lucas)
 
@@ -108,25 +134,19 @@ Confirmed empirically (kill-log): image models hold geometry at TILE scale, not 
 | Local SD1.5/SDXL as primary generator | **DEAD** — ComfyUI demoted to utility rail (rembg, upscale, SAM2, LaMa) | horrible artifacts for characters; architecturally wrong for viewpoint (ROADMAP S, archive) |
 | Per-face sprite relighting at render time | **PARKED** | requires post-hoc face segmentation; flat-lit art + runtime fog/lighting covers it |
 | opencode/external models writing repo code | **BANNED** | kimi 2026-07 corrupted-stub precedent; allowed only for notebooks/disposable experiments |
+| Reusable sprite + true cross-tile continuity, together | **IMPOSSIBLE** (2026-07-29, read from the code) | `texture_warp.py` uses world-absolute texcoords, but `stage_kit_modules.py` renders each module at a module-local origin and `scene_assemble.py` pastes that one sprite at every cell, with `texture_map.variant()` keyed on the module's own world column. Every `wall_band` therefore shows identical stones and no pattern crosses a cell join. Continuity requires rendering each cell at its **real world position** (arm B) |
+| Per-module enclosure masks (stair lateral wedges, roof gables handed to assembly) | **PARKED — container artefact** (2026-07-29) | exists only because a module is rendered in isolation, so enclosure geometry has no wall behind it. In a scene render the stair's lateral face is an ordinary face at its world position, occluded by whatever is actually there. Four review rounds (R2-3 → R4b) were spent on this. Work preserved intact at `92b6c50`; resume only if arm A wins the bake-off |
+| Slice/stitch vocabulary (cap-left / middle-repeat / cap-right), seam alpha ramps, per-material-pair ground transitions | **PARKED — same cause** (2026-07-29) | bookkeeping generated by "reusable sprite" as the unit; dissolves when cells are rendered in place |
+| Tile extraction from a generated whole-scene image | **DEAD** (reaffirmed 2026-07-29) | baked light + perspective won't recombine, no grid registration, no rotation path. Scene generators are an **art bible** (palette, material patches, prop inventory, eyeball target), never an asset source |
 
-## Program — phases (single Fable session oversees; ☐ = Lucas checkpoint)
+## Program
 
-Full plan approved 2026-07-09 (plan file: `~/.claude/plans/prompts-txt-lately-i-ve-been-witty-valiant.md`; canonical home = here + ROADMAP-content-gen.md, per PLANS-LIVE-IN-ROADMAPS).
+Retired 2026-07-29. The P0–P9 phase table made the content strategy a prerequisite for a playable product,
+which stalled the project on arm-A container artefacts. Milestones, gates and arm state now live only in
+[ROADMAP.md](ROADMAP.md). Shipped phases are recorded in [HISTORY.md](HISTORY.md); the frozen decisions they
+produced are still normative here (seam, contract, floor=iso-tiles, painter grammar, LLM-spatial rule) and in
+[`design/`](design/CONTEXT.md) (painter UX grammar @ rig v16.2, render→restyle, S4 rounds in `archive/`).
 
-| Ph | What | Repo | Verify | ☐ Lucas |
-|----|------|------|--------|---------|
-| P0 | Docs consolidation (this file, ROADMAP prune→archive, S0→8+1, goals refresh) | both + brain | links resolve; dead claims only in archive/kill-log | ☐ eyeball pending merge queue |
-| P1 | `core/skills/iso-visual.md` | core | skill loads, referenced by both repos | — |
-| P2 | Seam: `/loops export-manifest` → `/loops module-walls-import` (= loop-engineering `[pilot]`) | content→module | gray l-room live in Foundry: wall count matches layout, vision blocked, `verify:full` green | ☐ eyeball l-room in Foundry |
-| P3 | Scale-consistency fix (shared `s`, manifest field, QC dim check) | content | pytest + QC on existing 4-view demo | — |
-| P4 | TS assembler port of `scene_assemble.py` | module | golden diff TS == Python on l-room | — |
-| P5 | Kit painting — **lane R candidate-primary (2026-07-13): flat-shaded render → NB restyle** (arms b, b+c, a; whole-sheet; web app), test-to-kill vs NB-from-guide baseline per `design/RENDER-RESTYLE-MEMO.md`; P-CTRL/P-Kit = lane-R siblings (conditioning/mesh backend), no longer fallbacks | content | IoU ≥ 0.9 vs source render, side-correctness across 2 yaws, residue 0, cross-view dims | ☐ run NB arms, drop `gen-outbox/`; style 1–5 |
-| P6 | Floor/fog spike: (a) floor-tiles vs (b) background regen → DECIDE here | module | both prototypes render, fog correct, decision logged | ☐ eyeball, co-decide |
-| P6.5 ✅ | **Painter UX design — DONE, GRAMMAR FROZEN 2026-07-13 @ rig v16.2** (19 rounds): per-voxel scene model, opening voxels, sloped groups (roofs+stairs unified), floor thickness, selection priority — full log `design/PAINTER-UX.md`; rig = normative reference for DSL v2 + P7 | design | prototype paints the l-room; interaction doc signed | ✅ frozen by Lucas |
-| P7 | Painter MVP: implements the P6.5-approved interaction design — paint/erase + autotile + live re-assembly + auto WallDefs + props basic | module | paint a room in live Foundry → walls/vision/fog correct without reload; interactions match P6.5 doc | ☐ usability session |
-| P8 | Multiview: dimetric view switch (cell remap + resolver facing) → cardinal (guide cams + ☐ NB batch + projection preset) | both | view toggle stable z-order (`dumpZOrderJSON`); cross-view QC | ☐ NB cardinal batch; eyeball 8 views |
-| P9 | Polish: magic-feel pass, door secondary image, door webm | module | e2e + ☐ | ☐ final usability + style verdict |
-
-Order: P0→P1→P2 strict; P3 ∥ P4 after P2; P5 after P3; P6 after P2; P6.5 anytime after P2 (needs only gray kit — can run early, it's cheap and de-risks P7); P7 after P4+P6+P6.5 (gray kit OK if P5 lags); P8 after P5+P7; P9 last.
-
-**Definition of "solved"**: paint a room inside Foundry → painted-style scene re-renders live in any of 8+1 views → walls/vision/fog/movement correct → assets generated by this pipeline with QC green — one spec, consistent roadmaps, zero contradicting docs.
+**Definition of "solved"** (unchanged): paint a room inside Foundry → the scene re-renders in any of 8+1 views
+→ walls/vision/fog/movement correct → assets produced by this pipeline with QC green — one spec, one live
+roadmap, zero contradicting docs.

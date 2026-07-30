@@ -11,17 +11,23 @@ The long-term product is two things:
 ## Read Order
 
 1. `CONTEXT.md`: onboarding and current intent.
-2. `SCENE-CREATION.md`: canonical scene-creation spec — architecture, contract, kill-log, P0–P9 program.
-3. `ROADMAP-content-gen.md`: live execution state (kit assembly + multiview spine).
+2. `ROADMAP.md`: **the only live-state file** — strategy, decisions D1–D7, milestones, gates.
+3. `SCENE-CREATION.md`: canonical spec (status-free) — goal, seam, contract, kill-log.
 4. `SPECS.md`: current files, code behavior, environment assumptions, and implementation rules.
-5. `ROADMAP.md`: S0 tile decision + housekeeping; superseded strategies in `archive/`.
+5. Frozen decision records in `design/`; what happened in `HISTORY.md`; superseded trees in `archive/`.
 6. Visual work: load `core/skills/iso-visual.md` (conventions + model failure modes + verification rule) before touching guides/kits/sprites.
 
 ## Current Focus
 
-**Scene creation via kit assembly** (see SCENE-CREATION.md): layout DSL → massing → guide render → NB paints tile-sized kit pieces → deterministic scene assembly → manifest export to `isoroll-module`. Generation baseline:
+**MVP-first behind a frozen renderer seam** (replan 2026-07-29 — full rationale in ROADMAP.md):
+`DSL v2 → [renderer] → cell sprites + manifest → Foundry`. The contract is the structure; the pixels are
+swappable between content arms (A kit-sprite, B scene-cell world-uv render, C NB-painted textures). Order:
+freeze the seam → ship something playable in Foundry with deliberately ugly pixels and all 8+1 views → then
+compare arms as an A/B. Baseline:
 
-- **NB (Gemini Flash Image) is the primary generator** — `src/cli/imagegen_client.py` (API + daily ledger) with manual web-app fallback (`gen-inbox`/`gen-outbox` folder contract).
+- Pixels ship from the **offline Python bake** (supersampled + baked AO + ink). Any browser renderer is a
+  painter-latency preview, never a source of shipped art.
+- **NB (Gemini Flash Image) generates textures and decals**, not sprites — `src/cli/imagegen_client.py` (API + daily ledger) with manual web-app fallback (`gen-inbox`/`gen-outbox` folder contract).
 - ComfyUI is a **utility rail only** (rembg, upscale, SAM2, LaMa) — `iso-cli.py` submits workflow JSONs through `/prompt`; local SD generation is dead as primary (SCENE-CREATION.md kill-log).
 - Generated PNGs are gitignored under `assets/`; tracked reference outputs live under `benchmarks/` (each with `manifest.json` — see SPECS.md).
 
@@ -30,11 +36,13 @@ The long-term product is two things:
 - Do not build a generic 3D runtime in Foundry.
 - Do not globally skew the Foundry canvas as the main architecture.
 - Keep runtime and asset generation separate.
-- Aim for a Hades-like production model: controlled offline generation/rendering into 2D sprites, then efficient Foundry playback.
+- Aim for a **Dead-Cells-like production model**, not a Hades-like one: geometry rendered offline into 2D sprites, then efficient Foundry playback. Hades is hand-painted at artist cost; the achievable look here is Feather-3D / Tiny Glade, held by non-photometric shading (flat per-face ramp, no gradients/speculars) plus always-on linework.
 - Treat prompts as an input to a structured asset pipeline, not as the whole pipeline.
-- Scene geometry is deterministic (kit assembly); the generator only ever paints tile-sized pieces.
+- Scene geometry is deterministic; a generator never decides where anything is.
+- **Anything that must rotate passes through geometry** — a rotating asset is a render of known geometry (scene cells, or a mesh for props/characters), never a generated view.
+- Art cost is paid once at **texture scale** (~40 seamless materials) and via meshes for props — never per tile.
 - Geometry is verified by code, never by model eyes; style is verified by human eyeball (`core/skills/iso-visual.md`).
-- Blender remains the fallback lane (P-Kit) if NB fails a reliability gate — `[OBSOLETE-MESH]` scripts quarantined for that purpose.
+- Blender remains the fallback lane (P-Kit) if the Python renderer proves insufficient — `[OBSOLETE-MESH]` scripts quarantined for that purpose.
 
 ## Repository Shape
 
@@ -114,11 +122,10 @@ isoroll-content/
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
 | [`HISTORY.md`](HISTORY.md) | — | — | History |
-| [`ROADMAP-content-gen.md`](ROADMAP-content-gen.md) | — | — | ROADMAP — content-gen: F1 procedural + espinha multiview |
-| [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
+| [`ROADMAP.md`](ROADMAP.md) | — | — | isoroll-content Roadmap |
 | [`SCENE-CREATION.md`](SCENE-CREATION.md) | — | — | SCENE-CREATION — Canonical Spec |
-| [`SESSION-HANDOFF.md`](SESSION-HANDOFF.md) | — | — | SESSION HANDOFF — S4 arm_a homography (session ended 2026-07-17, review-rounds day) |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
 | [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | — | — | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
+| [`archive/S4-REVIEW-ROUNDS.md`](archive/S4-REVIEW-ROUNDS.md) | — | — | S4 REVIEW ROUNDS — Lucas's 5 points on arm_a gate (2026-07-16) |
 <!-- routing:end -->

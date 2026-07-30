@@ -1,5 +1,8 @@
-# RENDER→RESTYLE — P5 strategy revision memo
-> Status: ☐ DISCUSSION with Lucas — no execution before his call. Outcome lands in SCENE-CREATION.md (P5 + kill-log/promotion) and ROADMAP-content-gen lanes.
+# RENDER→RESTYLE — strategy revision memo
+> **FROZEN decision record** (decided 2026-07-13/14, see the two "Lucas decided" sections). Status-free by
+> rule: live state lives only in [../ROADMAP.md](../ROADMAP.md). Phase names below (`P5`, `ROADMAP-content-gen`
+> lanes) are the vocabulary of the retired P0–P9 / S1–S8 plans — the render→restyle idea itself survives the
+> 2026-07-29 replan as **arm C** (NB restyles ~20–40 textures, not 27 per-piece sheets).
 > Requested 2026-07-13: Lucas flags the 3D-texturize-render-restyle idea as "most promising", notes it got lost/ditched — revise and discuss.
 
 ## The idea (Lucas's recap, faithful)

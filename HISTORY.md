@@ -2,6 +2,34 @@
 
 Archive of completed work and resolved issues.
 
+## Completed — 2026-07-29
+
+### MVP-first replan (Lucas + inline)
+- [x] Strategic revisit of the whole scene-creation approach, triggered by Lucas losing confidence in the
+  path while stalled on arm-A stair enclosure masks. Outcome: renderer seam frozen, content strategy
+  demoted from prerequisite to A/B behind it, MVP-first milestone order (SEAM → PLAYABLE → BAKEOFF →
+  RICHNESS). Decisions D1–D7 recorded in ROADMAP.md; new kill-log rows in SCENE-CREATION.md (reusable
+  sprite vs continuity, per-module enclosure masks, slice/seam vocabulary, tile extraction from scene
+  images).
+- [x] Doc restructure: one live-state file (`ROADMAP.md`, absorbed `ROADMAP-content-gen.md`), spec made
+  status-free (`SCENE-CREATION.md`, P0–P9 retired), `SESSION-HANDOFF.md` folded here, `design/S4-REVIEW-
+  ROUNDS.md` moved to `archive/`. Three live docs instead of six — the confusion was three parallel plans
+  with three vocabularies (`P0–P9` / `S1–S8` / `rounds 1–4b`), not file count.
+- [x] arm_a renderer engine merged to `develop` (tag `pre-arm-a`, 64 commits, `make verify-fast` 142
+  passed): `texture_map.py`, `texture_warp.py`, `texture_resample.py`, `face_edges.py`, `face_masks.py`,
+  `kit_module_render.py`. The step-4b enclosure-mask refinements were committed intact (`92b6c50`) before
+  parking the lane, so it can resume whole if arm A wins the bake-off.
+
+### S4 arm_a homography (session 2026-07-17, folded from SESSION-HANDOFF.md)
+- [x] Per-face texture homography shipped through Lucas review rounds 1–4b — full decision log in
+  `archive/S4-REVIEW-ROUNDS.md`. Landed: `texture_map.py` + `texture_warp.py` + `project_face`, arm_a
+  rewrite, per-module sheet composer, 512 px/voxel + 2× supersample→LANCZOS, edge lines on normal-change
+  boundaries, doors/windows as standalone 0.1-voxel slabs (hole = a wall column not placed), roofs/stairs
+  cover-only with enclosure emitted as masks, zigzag stair solid, backface culling for all modules.
+  Board (arm_a, style verdict never given): https://claude.ai/code/artifact/b75e182b-19cb-4e97-896d-f76126a85edb
+- [x] NOBUG verified: stair y45/y225 and roof y135/y315 have ~0 lateral area (edge-on) → enclosure masks
+  correctly absent there by geometry.
+
 ## Completed — 2026-07-05
 
 ### M1 — Stabilize `iso-cli`

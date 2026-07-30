@@ -1,83 +1,125 @@
-# isorolling Roadmap
+# isoroll-content Roadmap
+> **The only live-state file for scene creation.** What's next lives here and nowhere else.
+> Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, seam, contract, kill-log.
+> Frozen decision records: [`design/`](design/CONTEXT.md). What happened: [HISTORY.md](HISTORY.md).
+> Superseded strategy trees: [`archive/`](archive/) — consult the kill-log before resurrecting anything.
 
-Content pipeline roadmap. Keep tasks small and test each milestone end to end.
+## Strategy — MVP-first behind a frozen seam (replan 2026-07-29, Lucas + inline)
 
-> **Canonical spec: [SCENE-CREATION.md](SCENE-CREATION.md)** — architecture, contract, kill-log, phase program (P0–P9).
-> **Live execution state: [ROADMAP-content-gen.md](ROADMAP-content-gen.md)** — F1 kit assembly + multiview spine.
-> **Superseded strategies: [archive/ROADMAP-2026H1-strategies.md](archive/ROADMAP-2026H1-strategies.md)** — Phase C, S1–S4, EXP-A/B/C, AP0–AP5, M2–M9 (pre-pivot SD/ComfyUI/Blender tree). Consult kill-log before resurrecting.
+```
+DSL v2  →  [ RENDERER ]  →  cell sprites + manifest (WallDefs, boundHeight, imageOffset)  →  Foundry
+              ^^^^^^^^
+   swappable arms:  A kit-sprite (exists)  |  B scene-cell world-uv render  |  C NB-painted textures
+```
 
-## Backlog / Ideas
+The **contract is the structure; the pixels are swappable**. Freeze the seam, ship something playable in
+Foundry with the ugliest legitimate pixels, then compare content arms behind the seam as an A/B — never
+as an architecture decision. This replaces the P0–P9 program and the S1–S8 lane table (both retired
+below): those made the content strategy a prerequisite for a playable product, which is what stalled
+the project on per-module enclosure masks for four review rounds.
 
-- **Assess Beakman level-creation process** (INBOX 2026-07-23, ref in refs/REFS.md) — watch the Barrow-and-Blade level-creation reel and decide whether any of their workflow transfers to our kit-assembly / scene-stitching (SCENE-CREATION.md). Small scoping pass, not a build.
-- **Content strategy review** (INBOX 2026-07-20, via telegram) — Lucas unsure the project is well-organized as it's grown; also wants to revisit how stitching is/will be done (scene assembly from kit pieces — see SCENE-CREATION.md). Needs a structure audit pass + stitching-approach re-check, not yet scoped.
-- **Scale-consistency in guide sheets (P3)** (2026-07-10, done) — shared px-per-voxel per sheet w/ `.scale.json` sidecar + QC cross-view dim check; all criteria met, e2e test pass, legacy byte-compat verified.
-- **Env utility repair (2026-07-08, padaria, done)** — `$HOME/ComfyUI/models/{checkpoints,embeddings,loras,upscale_models}` symlinks pointed at `/mnt/workspace/Models/diffusion/*`, which didn't exist (every local CLI command failed at ComfyUI runtime). Created the four target dirs so all symlinks resolve, and downloaded `4xUltrasharp_4xUltrasharpV10.pt` into `upscale_models`. No SD checkpoint downloaded, no service started. Trail: `.loop/env-utility-repair/`.
-- **Multiview via registration marks — mural-painter technique** (INBOX 2026-07) → EXECUTING: sub-roadmap [ROADMAP-content-gen.md](ROADMAP-content-gen.md) (Fable 2026-07-07). STATUS UPDATE 2026-07-09: at SCENE scale the technique is PARKED (single-pass scene generation killed by test — see SCENE-CREATION.md kill-log); marks/anchors remain in use at TILE/kit-sheet scale. The short-paper idea (research the technique in literature) stays alive.
-- ~~**Single-pass full tilemap generation** (INBOX 2026-07)~~ — **DEAD 2026-07-08**: same failure mode as single-pass scene (geometry diverges at scene scale). See SCENE-CREATION.md kill-log. Superseded by kit assembly.
+**Why the pivot** (evidence, not preference): the renderer already uses world-absolute texcoords
+(`texture_warp.py`), but modules are rendered at a module-local origin (`stage_kit_modules.py`) and one
+sprite is pasted at every cell (`scene_assemble.py`), with `texture_map.variant()` keyed on the module's
+own world column. So every `wall_band` in a scene shows identical stones and no pattern can cross a cell
+join. **Reusable sprite and true cross-tile continuity are mutually exclusive** — arm A cannot deliver
+continuity, arm B can, and only a bake-off with a playable product already in hand can price that
+trade-off honestly.
 
----
+### Decisions taken 2026-07-29 (Lucas)
 
-## Strategic Context
+| # | Decision | Consequence |
+|---|---|---|
+| D1 | MVP ships knowingly-ugly pixels (arm A: repeated stones, joins don't flow) | PLAYABLE needs no in-browser renderer and no bake round-trip; look is judged in BAKEOFF, not before |
+| D2 | **Full 8+1 views in the MVP** (not 4+1) | cheap under a deterministic renderer: cardinal = one view-table entry (projection + backface-cull axis) + the module's existing custom-projection flags. The "new art regime" price was an NB-paints-sheets cost and does not apply |
+| D3 | Merge the arm_a renderer engine to `develop` | done (2026-07-29, tag `pre-arm-a`); style-verdict gate moot since the S4t/enclosure lane is parked |
+| D4 | Quality lane = **offline Python bake**; any browser renderer is preview-only | kills the "bad-quality-3D" risk: shipped pixels are always supersampled + AO + ink from the offline renderer |
+| D5 | Aesthetic target = **Feather-3D / Tiny Glade**, not literal Hades | Hades is hand-painted at artist cost. Style rule to hold: non-photometric shading (flat per-face ramp, no gradients/speculars) + linework always on |
+| D6 | Art cost is paid **once at texture scale** (~40 materials), never per tile | ~40 painted materials is AI-able or commissionable; 500 stitched tiles is not. Same logic for props: mesh once, render 9 views |
+| D7 | Perf deferred, with one guard | unique-pixel memory scales with map area × views (draw calls do NOT change between arms). Keep `px_per_voxel` and `chunk` as manifest fields so chunking + per-view lazy bake stay possible without a format break |
 
-**Product:** Hades-like isometric Foundry VTT module (`isoroll-module`) with offline AI art pipeline (this repo).
+## SEAM — freeze the renderer interface (content, small)
 
-**Art layers (L1–L4):**
-- L1: Scenario tiles — floors, walls, furniture, plants (static or near-static)
-- L2: Characters — animated, multi-view (main complexity)
-- L3: Items/props — weapons on ground, pickups
-- L4: Effects — spells, attack FX
+- [ ] `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry; arm A (today's kit
+      assembly) becomes implementation A behind it, code untouched.
+- [ ] Manifest gains `px_per_voxel` + `chunk` fields (D7 guard).
+- [ ] Fixture upgrade: bare l-room → **cabin** (2 rooms, door, window, stair to a platform, roof section,
+      2 materials). The l-room cannot produce a meaningful style verdict — no stairs, no roof, one material.
+- [ ] Golden test: manifest + assembled PNG for the cabin fixture.
+- Gate: `make verify-fast` green; golden diff stable. No eyeball needed (no new pixels).
 
-**Aesthetic target:** Drawn/illustrated feel (not 3D-rendered, not cel-shaded 3D). Reference: Hades, Bastion, Transistor; not Pillars of Eternity.
+## PLAYABLE — ugly, complete, in Foundry (module-heavy, zero generation)
 
-**Generator strategy (verified web 2026-07):** NB (Gemini Flash Image, free ~500/day) = primary generation; NB2 (~20/day) reserve. ComfyUI = **utility rail only** (rembg, upscale 4xUltrasharp, SAM2, LaMa) — local SD generation is dead as primary (kill-log). Fallbacks if NB fails a gate: Hunyuan3D-2mini / TripoSR for mesh (P-Kit lane, reuses `[OBSOLETE-MESH]` blender scripts), Qwen-Image-Edit / Flux Kontext GGUF for edit, Colab/Kaggle for big jobs.
+- [ ] content: cardinal camera entries in the view table (projection + cull axis) → bake the cabin sprite
+      set + manifest, all **9 views** (D2), from arm A with the existing 50 linework textures.
+- [ ] module: close painter MVP (`loop/painter-mvp-1@3987979`, WIP, 16 dirty).
+- [ ] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin.
+- [ ] module: view switching across 8+1 (dimetric = cell remap; cardinal = projection preset via the
+      existing `customRotation`/`customSkewX`/`customSkewY`/`customRatio` flags).
+- [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
+- [ ] module: 8-direction token sprite selection (placeholder in `object-transform.ts`).
+- ☐ **Gate (Lucas):** paint a room in live Foundry, walk a token, rotate through all 9 views. Walls,
+      vision, fog and z-order correct. **Look is explicitly not judged here.**
 
-**Scene creation:** kit assembly — NB paints tile-sized kit pieces only; scenes composed deterministically from layout. Full spec: [SCENE-CREATION.md](SCENE-CREATION.md).
+## BAKEOFF — content arms compared behind the frozen seam
 
-**Hardware:** RTX 3050 6GB VRAM. Overnight batch runs are an asset — use them.
+- [ ] arm A: as-is (baseline, already baked by PLAYABLE).
+- [ ] arm B: scene-cell world-uv render — each cell rendered at its **real world position**, cropped by
+      its own face mask. Continuity exact by construction. Invariant test: crop-and-recompose ==
+      full-scene render, pixel-identical.
+- [ ] arm C: NB-restyled textures (~3 first: wall stone, floor wood, roof shingle) dropped into whichever
+      arm wins geometry. Code gate before eyeball: half-shift wrap-seam energy test per texture.
+- [ ] Pre-registered decision rule: Lucas style score 1–5 **and** a code continuity check (cross-cell
+      seam energy). Winner becomes the default arm; losers get a kill-log line.
+- ☐ **Gate (Lucas):** three arms boarded side by side on the identical cabin geometry.
 
----
+## RICHNESS — after a winner exists
 
-## S0 — Multiview Pipeline Decision ✓ DECIDED for tiles (2026-07-03; extended to 8+1 2026-07-09)
+- [ ] Props + characters: image→3D (Hunyuan3D 2.1 / TripoSR, see refs/REFS.md) → render 9 views with the
+      **same** camera/light/palette as the scene. Multiview by geometry, never by generation.
+- [ ] Lighting/atmosphere pass: baked AO, ink linework, edge highlight, colour grade, clutter density —
+      this is where the perceived style budget actually lives (D5).
+- [ ] Normal maps as a module option (S8 lane, unchanged rationale) — only if the lighting pass wants it.
+- [ ] Scene generators (HunyuanWorld / NB scene images) as **art bible, not asset**: harvest palette,
+      crop material patches → make tileable, extract prop inventory, use as the eyeball target. Never
+      extract tiles from them (kill-log).
 
-**Decision (full spec: `SPECS.md → ## Chosen Pipeline`):**
-- [x] Tile view count: base **4+1** (NW/NE/SW/SE + TOP), **extended 2026-07-09 to 8+1 program** (user decision, plan rev.3): dimetric regime first (existing), **cardinal regime (N/E/S/W) as a second art batch** — new kit art per piece (walls face-on) + cardinal projection preset in the module. Cardinal proportions anchored on the reference deck (`pipeline/prompts/reference/isometric_images.pdf`); scale-consistency spec applies to both regimes (SCENE-CREATION.md).
-- [x] Route: **NB-5G** — Nano Banana guided 5-view grid. Concept view (approved) + script-generated schematic guide + prompt → 5-panel grid → split → QC with ≤2 per-view regens. NB primary because accessible to all user tiers; paid cloud GPU rejected.
-- [x] 3D-lift evaluated: TripoSR/Hunyuan demoted to fallback. For boxy walls, Blender parametric kit + texture projection beats mesh reconstruction anyway — but activates only if NB benchmark fails.
-- [x] Walls are two-faced; guide encodes faces via grayscale screen-role ramp (S0-E1c).
-- [x] Reliability gate: 10-asset benchmark, pass = ≥8/10 accepted within ≤2 per-view regens.
-- [ ] Tokens (8 facings) — separate design session; NB cardinal weakness returns there.
+## Parked / rerouted by this replan
 
-**Execution tasks (done log — details in git history / HISTORY.md):**
-- [x] S0-E1a 6-cell layout decided; S0-E1 `make_tile_guide.py` + `tile_guide_render.py` (unfolded-net cardinal convention from the deck, verified vs 2 reference pages); S0-E1b explicit TOP cells; S0-E1c grayscale value ramp + magenta linework; S0-E2 prompt templates.
-- [x] S0-E6 multi-object batch design (pillar over L-corner; abut on cell edges, never co-cell); S0-E6-fix door/window → jambs + LINTEL + flat leaves (`d=0`); S0-E6-floors sizes 2/3/5/10/20/40; S0-E6-fix2/3/4 chirality: orientation band on pivot edge for all chiral tiles (door hinge, stairs spiral), "rotate never mirror"; S0-E6-fix5 NB sheet postproc rework (`sheet_grid.py` + `sheet_utils.py` + `nb_sheet_processor.py`).
-- [ ] S0-E3 extend `cli/sprite_splitter.py` — 5-panel layouts → `tiles/{name}/{name}_{facing}.png` + rembg.
-- [ ] S0-E6a run NB calls: batch A (structure, 9), B (openings, 12) — verify hinge-band handedness holds; escalate to engine-side rotation if not.
-- [ ] S0-E6b run NB calls: batch C (stairs, 10), D (furniture, 15), E (decorative, 11) + floor set.
-- [ ] S0-E6c go/no-go: does the text-only style paragraph hold consistency across separately-generated batches, or is an image anchor needed despite bleed risk.
-- [ ] **S0-E7 (NEW, 8+1): cardinal batch** — cardinal guide camera mode in the guide renderer (deck-anchored proportions) → NB batches A–E for N/E/S/W → same postproc/QC. After dimetric batches prove the process (P8 of the program).
-- [ ] S0-E4 benchmark: 10 varied wall assets. User runs NB calls, session prepares inputs + records per-view pass/fail in `benchmarks/multiview-nb/manifest.json`.
-- [ ] S0-E5 go/no-go writeup. Pass → NB-5G confirmed + desired-tier recipe. Fail → Blender parametric wall kit design session (P-Kit).
-- [ ] (engine-side, isoroll-module repo) door/window leaf-swing rotation+pivot + big-floor-tile placement — tracked in module ROADMAP Scene Painter track.
+| Was | Where it went |
+|---|---|
+| P0–P9 program (SCENE-CREATION) | retired → milestones above; the spec keeps only goal/seam/contract/kill-log |
+| S1–S8 lane table (ROADMAP-content-gen.md) | file deleted, absorbed here; per-lane fates below |
+| S1 `anchored-kit-marks` | stays PARKED (was already) — marks only ever mattered for NB-paints-sheets |
+| S4 enclosure masks / S4t / S4b dimensional vocabulary | **PARKED, container-specific to arm A.** Work committed intact (`92b6c50`) so the lane resumes whole if arm A wins BAKEOFF |
+| S5 NB round on 27 sheets | superseded by arm C (~20–40 textures instead of 27 sheets + cross-view QC) |
+| S6 slice/stitch vocabulary + seam alpha ramps + per-pair ground transitions | dissolves under arm B; revisit only if arm A wins |
+| S7 painter close + P7b (9 views, world-normal lighting bug) | folded into PLAYABLE |
+| S8 normal maps | folded into RICHNESS |
+| S0-E4/E5/E6a/E6b/E6c NB tile batches | parked with the NB-sheet regime; the S0 8+1 decision itself survives as D2 |
+| Cross-view sprite QC (IoU, cross-view dims) | dissolves under arm B (a render is consistent by construction); arm A keeps it while it is the baseline |
 
----
+## Backlog
 
-## M0 — Repository Baseline ✓ (completed items → HISTORY.md)
+- **Assess Beakman level-creation process** (INBOX 2026-07-23, ref in refs/REFS.md) — watch the
+  Barrow-and-Blade reel, decide what transfers. Small scoping pass, not a build.
+- ~~**Content strategy review**~~ (INBOX 2026-07-20) — **RESOLVED by this replan** (2026-07-29): the
+  structure audit is the seam + doc restructure; the stitching re-check is arm B vs arm A in BAKEOFF.
+- **Brightness QC post-batch** — opaque-mean < 10 → flag (PIL, cheap). Would have caught the 32 black
+  frames of 2026-05-27 immediately.
+- **`getdata` deprecated (Pillow 14)** — `sheet_grid.py:63`, `sheet_qc.py:34`, and the test suite.
 
-- [ ] Add a short `README.md` once the CLI contract stabilizes.
+## Chores (independent of scene creation)
 
-## M1 — Stabilize `iso-cli` (partially done → HISTORY.md)
+- [ ] `README.md` once the CLI contract stabilizes.
+- [ ] `iso-cli`: `--seed` for reproducible generations; `argparse` instead of manual `sys.argv` indexing;
+      `doctor` command (ComfyUI connectivity, `COMFY_DIR`, required node classes); output tracking via
+      ComfyUI `/history` + `prompt_id`; batch mode (multiple prompts / seed range).
+- [ ] `cli/sprite_splitter.py`: 5-panel layouts → `tiles/{name}/{name}_{facing}.png` + rembg (character
+      lane, unaffected by the replan).
 
-- [ ] Add `--seed` for reproducible generations.
-- [ ] Improve CLI parsing with `argparse` (the `iso-cli.py` dispatcher still uses manual `sys.argv` indexing via `get_arg()`).
-- [ ] Add `doctor` command: checks ComfyUI connectivity, `COMFY_DIR`, and required node classes.
-- [ ] Switch output tracking from filesystem snapshot to ComfyUI `/history` API with `prompt_id`.
-- [ ] Add batch mode: accept multiple prompts or a seed range, submit all, collect all outputs.
+## Verification
 
----
-
-## Pointers
-
-- Asset packaging / manifest schema work (was M5) → lives in the `export-manifest` loop + SCENE-CREATION.md contract.
-- Foundry runtime (was M6–M8: projection, 8-direction switching, sorting, occlusion, top-view) → **built or tracked in `isoroll-module`** (slicing/depth-sort done; multiview = program P8).
-- Autotile piece taxonomy + junction rules (was AP1-T) → absorbed into SCENE-CREATION.md § Painter grammar; details in archive.
-- Characters/animations (was AP2–AP3, S1–S4 order table) → next design session after tiles ship; NB cardinal weakness returns for tokens (S0 last item).
+`make verify-fast` green (142 tests at the replan). Geometry by code, never by model eyes; style by Lucas's
+eyeball on a board before any step that produced images advances — both rules in `core/skills/iso-visual.md`.
+Gitflow: `main` ← `develop` ← `feature/*`; every image-producing step ends on a board.
