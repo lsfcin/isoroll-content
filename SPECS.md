@@ -474,6 +474,54 @@ columns at junctions (T4 trick). Blender kit only if the benchmark fails.
 **Desired-tier deliverable (v1):** recipe only — guide PNG template + copy-paste
 prompt + short instructions shipped with module/docs. No API integration in module yet.
 
+### Scale corrective factor (for pre-scale-consistency sheets)
+
+Sheets generated before shared-scale mode landed (scale-consistency loop) used
+**per-cell autofit**: each panel picked its own `s_cell` = px-per-voxel that
+best fills its 320×320 cell. That means the SAME wall reads at different
+apparent sizes across panels (a 5×3×2 wall's `NE` face and its `TOP` face are
+each individually maximized, not drawn at one shared scale) — the defect this
+loop fixes going forward via `render_cells(shared_scale=True)`.
+
+For an EXISTING autofit sheet, a **per-cell corrective factor** lets you rescale
+any panel to what it would have been under shared-scale, using only the
+recorded `{stem}.scale.json` sidecar (no re-measuring pixels):
+
+```
+s_cell = bbox_w / content_extent_w        # panel's own implied px-per-voxel
+corrective = s_shared / s_cell            # = px_per_voxel / s_cell
+```
+
+where `bbox_w = bbox[2] - bbox[0]` (the panel's recorded content bbox width),
+`content_extent_w` is that panel's voxel-unit content width (`content_extent()`
+in `panel_geometry.py`, keyed by orientation), and `s_shared` is the sidecar's
+top-level `px_per_voxel` (recorded as `s_shared` even on legacy sheets — see
+`sheet_qc.cross_view_dims`). Multiply the panel's pixel content by `corrective`
+to bring it onto the sheet's shared scale.
+
+**Worked example** — a real `guide.scale.json` from `make_tile_guide.py --width 4
+--height 3 --depth 1 --layout 6cell --legacy-autofit` (per-cell autofit, so the
+sidecar's panel bboxes disagree — the exact case this factor corrects):
+
+```
+px_per_voxel (s_shared): 51.6364
+panel NE: bbox=[350.909, 18.0, 609.091, 302.0], orientation=NE, w=4, d=1, h=3
+  content_extent("NE", 4, 1, 3) -> (w_u=5.0, h_u=5.5)
+  s_cell = (609.091-350.909) / 5.0 = 51.6364
+  corrective = 51.6364 / 51.6364 = 1.0   # NE happens to be the constraining
+                                          # panel here, so it's already at s_shared
+panel TOP: bbox=[658.0, 124.5, 942.0, 195.5], orientation=TOP, w=4, d=1, h=3
+  content_extent("TOP", 4, 1, 3) -> (w_u=4, h_u=1)
+  s_cell = (942.0-658.0) / 4 = 71.0
+  corrective = 51.6364 / 71.0 ≈ 0.7272   # TOP autofit bigger than shared scale
+                                          # (thin content, little to constrain
+                                          # it) — its pixels must shrink by this
+                                          # factor to read at the sheet's scale
+```
+
+Each panel needs its own corrective factor — this is exactly the inconsistency
+shared-scale mode (default ON) eliminates for new sheets.
+
 ### Characters (L2) — TBD (next design session)
 
 - Primary path: TBD (S3 3D-lift vs NB-based — token facings are 8, so NB's

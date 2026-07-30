@@ -1,21 +1,51 @@
 # ROADMAP — content-gen: F1 procedural + espinha multiview
 > Sub-roadmap de [ROADMAP.md](ROADMAP.md). Sessão Fable 2026-07-07. Status vivo — atualizar a cada loop/merge.
+> **Spec canônica + programa P0–P9: [SCENE-CREATION.md](SCENE-CREATION.md)** (Fable 2026-07-09, plano aprovado — painter dentro do Foundry, 8+1 desde já em 2 regimes de arte, seam pilot P2 = `export-manifest` → `module-walls-import`).
 
 ## Decisão de execução (inline × /loops)
 
 Build híbrido: **Fable inline** construiu o que tinha decisão arquitetural viva — compilador layout→massing, renderer de guia de cena, marks parametrizados p/ A/B, prompt NB v2, client NB — porque o design do instrumento (guia) e a iteração de prompt exigem julgamento contínuo. **Todo o resto é mecânico após as seams existirem** e ruteia via loop-engineering (`/loops`, executores pinados loop-low/medium): reparo de ambiente utilitário, testes+hardening do postproc, exporters, lane F2, restyle F4, tasks do isoroll-module. opencode/modelos externos: **proibidos em código do repo** (precedente kimi 2026-07: stub corrompido, zero código mergeado); permitidos p/ notebooks Colab e experimentos descartáveis. A/Bs NB: usuário executa (web/API) e eyeballa; modelos baratos processam resultados.
 
-## Estado (2026-07-07)
+## Plano refinado — content-first (2026-07-15, Fable + Lucas)
+
+Regras permanentes desta fase: **passo-a-passo** (nada encadeia sozinho — cada spawn tem go explícito do Lucas); **gate de eyeball em todo passo que produz imagem** (board artifact antes do próximo passo); geometria por código, nunca por olho de modelo (`core/skills/iso-visual.md`). Decisões D1–D3 + adendo de texturas: `design/RENDER-RESTYLE-MEMO.md`.
+
+| # | Passo | Executor | Gate | Estado |
+|---|-------|----------|------|--------|
+| S1 | ~~`anchored-kit-marks` 4a→4b~~ **PARKED (Lucas 2026-07-15)**: marks devem funcionar COMO TEXTURA (símbolos ciano desenhados numa textura, warpados por homografia junto — mesma maquinaria do arm_a), não como camada própria. Loop congelado em arch-PASS (trail em `.loop/anchored-kit-marks/`); reabrir só se arm_a falhar side-correctness | — | — | PARKED |
+| S2 | Texturas do Lucas (5 sheets técnicos: floor stone ×8, wall wood/stone c/ top+bottom face, window, doors 1x1..2x3) → `assets/textures/` + spec de ingestão | Lucas + inline | — | aguardando drop dos PNGs |
+| S3 | `/linework`: conjunto SVG COMPLETO cobrindo o vocabulário do painter (floor stone ×8, wall wood/stone side+top, window, doors 1x1x0..2x3x0) — **stop point acordado**. Gramática do floor (Lucas 2026-07-15): bordas horizontais fechadas (linha no topo/base do tile — divisão entre sprites adjacentes nessa direção), SEM juntas verticais na borda (continuidade horizontal entre variantes, pedras atravessam) | inline | eyeball set completo | demo aprovado c/ notas; set em produção |
+| S4 | arm_a REAL: homografia textura→quad por face (todas as 9 peças, stairs/roofs incl.) → restage arms. Ingestão via **UV-map JSON por sheet** (região px → id semântico + tipo tiling/decal + alinhamento). Plano: `.loop/arm-a-homography/1-plan.md`; revisões iterativas do Lucas: `design/S4-REVIEW-ROUNDS.md` (rounds 1–4b) | /loops + inline | eyeball sheets (board) | **arm_a done @ 3837d2a** — `texture_map.py`+`texture_warp.py`+`enclosure_masks.py`; `make verify-fast` 142/142 verde. Aplicado via review rounds: arm a only (b/bc unstaged), 512 px/voxel + 2× supersample, edge lines, portas/janelas = slabs 0.1-voxel standalone (hole = coluna não-colocada), roofs/stairs cover-only, stairs = tiras tread+riser repetidas com offset diagonal + backface-culling, enclosure masks = faces laterais (assembly preenche com wall). **PENDENTE: veredito de estilo do Lucas no board** (https://claude.ai/code/artifact/b75e182b-19cb-4e97-896d-f76126a85edb); branch pushed, aguardando merge |
+| S4b | Follow-on (routed do S4, `.loop/arm-a-homography/1-plan.md:86`): **vocabulário dimensional** — variantes de altura de parede, set completo de portas 1x1x0..2x3x0, partes de slice meio/borda; NÃO absorvido em S4 (multiplicaria kit_modules, estouraria o cap do loop) | /loops | go do Lucas no board (pendente) | não iniciado; pending Lucas board gate |
+| S4t | **Dry-run sem NB** (Lucas 2026-07-15): usar o próprio sheet esquemático-texturizado como se fosse output do NB → crop por manifest → assembly de cena → prova que o resto do pipeline funciona antes de qualquer geração | inline ou /loops | eyeball cena montada | após S4 |
+| S5 | NB round 1 — Lucas, web app, **3 arms juntos** (decisão D2) → gen-outbox → QC P5.4 (IoU ≥ 0.9, side-correctness 2 yaws, resíduo, estilo 1–5) | Lucas + loop QC | decisão pré-registrada: promote lane R / kill-log | bloqueado por S1+S4 |
+| S6 | Pós-veredito: vocabulário dimensional nos sheets (portas 1x2x0..2x3x0 do sheet do Lucas), linhas de variantes de textura, spec de slice/costura: crop com margem horizontal + alpha-ramp ~20px entre slices (casa com slices do isoroll-module). **Transições de solo (Lucas 2026-07-15): grass/road/stone conectam via MÁSCARAS de borda na assembly (borda irregular + cantos, ~4-8 máscaras, O(1) e agnóstica a par de materiais) — NUNCA texturas de transição por par (O(N²)); curbs/beiras de estrada saem das mesmas máscaras** | /loops | eyeball | pós-S5 |
+| S7 | Painter close: facade fix (T8, assemble/index re-exports) + Loop 5 e2e Foundry + Loop 6 ship. **+P7b backlog (Lucas 2026-07-15): (a) painter deve suportar as 9 views (8 yaws + TOP); (b) BUG de iluminação — luz gira JUNTO com a câmera (shading por papel de TELA: FACE_LONG/CAP fixos por view); correto = shading por normal de MUNDO com sol fixo (face sul mantém seu tom quando a câmera gira) — mesma maquinaria do S8 normal maps** | /loops | usability Lucas (gate P7a) | 4b verde, WIP `3987979`; parked por D3 |
+| S8 | **Normal maps — GO (Lucas 2026-07-15)**: implementar como OPÇÃO do isoroll-module. Geração trivial por construção (rasterizer dos face masks, fill = normal RGB por yaw); shader custom no IsoSpriteLayer (container próprio, fora do canvas.primary) amostrando albedo+normal+luzes do Foundry; requer variante de prompt flat-albedo p/ evitar double-lighting | /loops (content gen + module shader) | eyeball em cena real | sequenciado pós-S5/S6 |
+
+Lucas deve: (a) drop dos 5 PNGs de textura; (b) veredito do demo `/linework` no board; (c) go do S1.
+
+## Estado (2026-07-07; consolidação 2026-07-09)
+
+- [x] **P0 consolidação (Fable 2026-07-09, branch `feature/scene-creation-consolidation`)**: SCENE-CREATION.md (spec + kill-log + programa), ROADMAP.md podado (árvore S1–S4/EXP/AP/M2–M9 → `archive/ROADMAP-2026H1-strategies.md`), S0 estendido a 8+1 (S0-E7 batch cardinal, deck-ancorado), marks/anchors PARKED em escala de cena (vivos em escala de tile). Merges f1-procedural-spine/postproc-tests/env-utility-repair já constam em develop (verificado no git 2026-07-09) — L20 abaixo mantido como histórico.
+- [ ] Matriz A/B guia-v2 (abaixo): **REESCOPADA** — foi desenhada pro single-pass de cena (morto). Válida apenas onde marks seguem vivos: kit sheets / tile scale. Rodar só o subconjunto que informar a pintura do kit (V3 opacity, V5 prompt); V1/V2/V4 em escala de cena = mortos.
 
 - [x] Gitflow: `develop` + `feature/f1-procedural-spine` (content); module já tem `develop`.
 - [x] F1 core inline: `layout_parse.py` + `layout_massing.py` + `guide_marks.py` + `scene_guide_render.py` + `scene_guide_sheet.py` — l-room renderizado nas 4 rotações + plan + marks (painter por célula; runs mesclados ficam pro manifest).
 - [x] Smoke test chave Gemini: key VÁLIDA, lista `gemini-2.5-flash-image`/`3.1-flash-image`/`3.1-flash-lite-image`; geração 429 (quota free do DIA esgotada em todos os buckets — reseta meia-noite Pacific ≈ 4h Recife). Test-to-kill pronto pra disparar pós-reset ou via web app.
-- [ ] Test-to-kill F1 (guia cena → NB ≤2 chamadas) — pacote pronto em `output/gen-inbox/` (`scene_l-room_guide.png` + prompt); rodar via web app OU `mv-scene` sem `--manual` pós-reset da quota
+- [x] **Test-to-kill F1 EXECUTADO (2026-07-08, web app): single-pass de cena MORTA.** Estilo PASS (pedra/musgo/tochas, 5 painéis coesos). Geometria FAIL: footprint divergente entre painéis (NE nem era a mesma sala), NB releu símbolos flutuantes como legenda/callouts (desenhou círculos ciano como anotação + caption alucinada "corrected footprint"). Confirmado: NB segura geometria em escala de TILE, não de CENA.
+- [x] **Pivô (regra pré-registrada): F1 = KIT ASSEMBLY (tinyglade real).** NB pinta só kit sheets por peça (tarefa tile-sized, regime validado); `scene_assemble.py` monta a cena deterministicamente do layout — geometria e paredes exatas por construção, zero NB por cena. Implementado: `kit_render.py` (6 peças camera-fixed + manifest de alinhamento; rotação = remapeamento de célula, nunca do sprite), `scene_assemble.py` (painter per-cell), demo l-room 4 views em `output/assembled/` ✓.
+- [x] Guia v2 (ajustes do usuário 2026-07-08): wall_h=3 (voxel 1.5m → 4.5m), porta 1×2×0 vazada exata, janela 1×1×0 (z 1..2), **marks ancorados** (`scene_anchors.py`: âncoras 3D estáveis — cantos/aberturas/runs — projetadas por view, mesmo id = mesmo símbolo em toda view; modo default do `mv-scene`).
+- [ ] Próximo experimento NB (tile-sized, ~6-12 chamadas): pintar o kit — braço A: `mv-tile` por peça; braço B: kit-sheet único (6 peças numa imagem = 1 estilo garantido). Depois: assembly com sprites pintados + rembg + normalização pela silhueta do guia.
+- [ ] Leftover técnico: QC de brightness pós-batch (opaque-mean < 10 → flag; PIL, barato) — teria pego os 32 frames pretos de 2026-05-27 na hora (INBOX 2026-07-14, roteado 2026-07-16)
+- [ ] Leftover técnico: `getdata` deprecado (Pillow 14) em `sheet_grid.py:63`, `sheet_qc.py:34`, `test/test_sheet_grid.py` — padaria futura (`residue_count` já corrigido via histogram).
 - [x] Loop `env-utility-repair` (padaria): SHIPPED `feature/env-utility-repair` (ead36e2) — symlinks resolvem, 4xUltrasharp 64MB baixado, SD ckpts fora de escopo. Verificado no filesystem.
 - [x] Loop `postproc-tests` (standard): SHIPPED `feature/postproc-tests` (331d184→f2a9cbe, empilhada em feature/f1-procedural-spine) — `src/cli/sheet_qc.py` (IoU silhueta + resíduo), pytest 8/8 verde, e2e guia→marks→output-sujo→split+QC ok. Roteamento auditado: opus×2, sonnet×3, haiku×2, zero max-tier.
 - [ ] Merges em develop: aguardando eyeball do usuário (gitflow) — ordem: f1-procedural-spine → postproc-tests → env-utility-repair; tag `pre-<slug>` antes de cada merge
 
 ## Papéis de ferramenta (verificado web 2026-07)
+
+**Lane R — render→restyle (2026-07-13, candidata a PRIMÁRIA):** render flat-shaded dos módulos de kit (voxel modules) → NB restyle whole-sheet (braços b/b+c/a) — test-to-kill pré-registrado em `design/RENDER-RESTYLE-MEMO.md`, baseline = sheet NB-from-guide existente. **Execução (loop-engineering):** plano em `.loop/kit-module-renderer/1-plan.md` (branch `loop/kit-module-renderer`, base `loop/dsl-v2-python`) — renderer flat-shaded KIT V2 (8 yaws+TOP) + máscaras por face + 3 arm sheets → gen-inbox. **P-CTRL e P-Kit viram IRMÃOS da lane R** (não mais fallbacks): P-CTRL = conditioning alternativo (Flux+ControlNet hospedado, fal.ai/Replicate ~US$0,02-0,05/img, depth/lineart do MESMO render; LayerDiffuse p/ alpha nativo); P-Kit = backend de mesh (Blender) só se flat-shaded python não bastar. F4 `mv-restyle` absorvido pela lane R. OpenRouter = rota paga só se quota free esgotar.
 
 NB (Gemini 2.5 Flash Image, free ~500/dia) = geração primária; NB2 (~20/dia) reserva. ComfyUI = **trilho utilitário só** (rembg, upscale 4xUltrasharp, SAM2 tiny/small, LaMa) — geração local SD1.5 deu artefatos horríveis p/ personagens e é arquiteturalmente errada p/ viewpoint (ROADMAP.md S). Fallbacks se NB falhar: Hunyuan3D-2mini (5GB, fork 2GP p/ 6GB) / TripoSR (~6GB) p/ mesh; Qwen-Image-Edit GGUF Q2-Q4 / Flux Kontext Q4 (6GB, lento) p/ edit; Colab T4 16GB ~15-30h/sem + Kaggle 30h/sem p/ jobs grandes. WFC/grammar (CPU) p/ decoração procedural futura.
 
@@ -67,18 +97,22 @@ OUTPUT: same 3x2 grid, same panel geometry and scale, pure black background insi
 NEGATIVE: no cyan symbols, no magenta lines, no text or labels, no extra objects, no ground shadows, no perspective (dimetric only), no mirrored panels.
 ```
 
+Skills: loops do isoroll-module devem invocar `/foundry` (router de referência v14) antes de tocar código; sessões futuras: considerar importar skills externas da comunidade (ComfyUI/imagem) pra `core/skills/`.
+
 ## Delegação /loops (todas `base: develop` no Carry; ver gitflow abaixo)
 
 | slug | repo | tier | escopo | depende de |
 |---|---|---|---|---|
 | env-utility-repair | content | low (padaria) | consertar symlinks `~/ComfyUI/models/*` → destino real + baixar SÓ utilitários (rembg, 4xUltrasharp, SAM2 small, LaMa); SD ckpts NÃO | — |
 | postproc-tests | content | medium | pytest p/ `sheet_grid`/`sheet_postproc`/QC novo + hardening do split | F1 core |
-| export-manifest | content | medium | exporter naming+manifest (tiles+`WallDef[]`) validado contra `wall-types.d.ts` | F1 core |
+| ✓ export-manifest | content | medium | exporter naming+manifest (tiles+`WallDef[]`) validado contra `wall-types.d.ts` | F1 core | DONE: all criteria pass, CLI export with round-trip validation working |
 | f2-segment-lane | content | medium | workflows SAM2+LaMa + verbo decompose | env-utility-repair |
 | f4-restyle | content | medium | verbo restyle sobre a espinha (sheet existente → NB) | nb client |
 | module-walls-import | module | medium | manifest → `createWallsFromDefs` (`wall-crud.ts`) | export-manifest |
 | module-token-facing | module | medium | seleção de sprite 8-direções (placeholder `object-transform.ts`) | — |
 | f5-token-stances | content | medium | matriz de stances × espinha | module-token-facing |
+| ✓ dsl-v2-python | content | high | DSL v2 (frozen 2026-07-13 @ rig v16.2) no pipeline Python: parser multi-nível + grupos, serializer round-trip, massing v2, manifest/guide-render; plano em `.loop/dsl-v2-python/1-plan.md` (port de `design/feel-rig/rig.frag`) — DONE 2026-07-14: all criteria pass (C1 parse, C2 round-trip, C3 massing boxes, C4 group manifest tiles+HUD, C5 guide-render, C6 pytest green) | rig freeze (P6.5) |
+| anchored-kit-marks | content | high | trocar o grid screen-space de símbolos do arm_bc por marcas ciano ancoradas na geometria (UV-lattice por face, amostrada no polígono já projetado → mesma transform `_yaw`+`Cam.pt`; símbolo estável por face_id+índice em todas as 9 views; colapsa edge-on). `face_anchors` em kit_module_render + `apply_anchored` canônico em guide_marks; restage gen-inbox. Plano em `.loop/anchored-kit-marks/1-plan.md` | kit-module-renderer |
 
 ## Gitflow & recuperação (content e module)
 

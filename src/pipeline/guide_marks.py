@@ -106,7 +106,7 @@ def residue_count(img, tol=60):
     r, g, b = px.split()
     near = lambda ch, target: ch.point(lambda p: 255 if abs(p - target) <= tol else 0)
     mask = ImageChops.multiply(ImageChops.multiply(near(r, 0), near(g, 255)), near(b, 255))
-    return sum(1 for p in mask.getdata() if p)
+    return mask.histogram()[255]
 
 
 def tile_panels(img, layout_name):

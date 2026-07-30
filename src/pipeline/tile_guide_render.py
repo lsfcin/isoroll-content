@@ -3,6 +3,11 @@
 
 from PIL import Image, ImageDraw
 
+from panel_geometry import (  # noqa: F401 — re-exported for callers/tests (tgr.*)
+    MIN_THICK, TOP_FOLD_RATIO, PAD,
+    _corner, _bbox, fit_scale, content_extent, panel_fit_scale,
+)
+
 # Grayscale value ramp by screen face-role (top / long / cap): a box shaded this
 # way reads as lit-from-above, so any value that bleeds into NB output reinforces
 # lighting. Front=back=FACE_LONG, both caps=FACE_CAP — identity is by label, not hue.
@@ -15,43 +20,16 @@ SILHOUETTE  = MAGENTA
 GRID_LINE   = MAGENTA
 SIL_WIDTH   = 5
 GRID_WIDTH  = 2
-# Flat object (one zero dim) keeps this thickness (fraction of a cell) in TOP view.
-MIN_THICK   = 0.18
 # Orientation cue: dark band this wide (fraction of object width) on the pivot
 # edge of a chiral tile, so its handedness is visible and NB stops mirror-flipping.
 HINGE_BAND_FRAC = 0.16
 
-# Unit-scale corner offsets (2:1 dimetric — 26.57°). Real pixels = these * s.
-_UX, _UY, _UZ = 1.0, 0.5, 1.0
-TOP_FOLD_RATIO = _UY / _UZ
 
-
-def _corner(u, v, z):
-    x = (u - v) * _UX
-    y = (u + v) * _UY - z * _UZ
-    return x, y
-
-
-def _bbox(l, d, h):
-    xs, ys = [], []
-    for u in (0, l):
-        for v in (0, d):
-            for z in (0, h):
-                x, y = _corner(u, v, z)
-                xs.append(x)
-                ys.append(y)
-    return min(xs), max(xs), min(ys), max(ys)
-
-
-def fit_scale(l, d, h, avail_w, avail_h):
-    minx, maxx, miny, maxy = _bbox(l, d, h)
-    return min(avail_w / (maxx - minx or 1), avail_h / (maxy - miny or 1))
-
-
-def _origin_for_cell(l, d, h, cell_box, pad):
+def _origin_for_cell(l, d, h, cell_box, pad=PAD, s=None):
     cx, cy, cw, ch = cell_box
     avail_w, avail_h = cw - 2 * pad, ch - 2 * pad
-    s = fit_scale(l, d, h, avail_w, avail_h)
+    if s is None:
+        s = fit_scale(l, d, h, avail_w, avail_h)
     minx, maxx, miny, maxy = _bbox(l, d, h)
     ox = pad - minx * s + (avail_w - (maxx - minx) * s) / 2
     oy = pad - miny * s + (avail_h - (maxy - miny) * s) / 2
@@ -92,19 +70,22 @@ def _draw_band(draw, l, d, h, is_east, s, ox, oy):
     draw.polygon(poly, fill=FACE_CAP)
 
 
-def draw_iso_panel(img, l, d, h, view, cell_box, pad=18, mark_edge=False):
+def draw_iso_panel(img, l, d, h, view, cell_box, pad=PAD, mark_edge=False, s=None):
     """One dimetric box view (NW/NE/SW/SE). NE/SW use the base geometry; NW/SE
     h-flip it (mirror of a valid hexagon stays valid). A zero dim leaves a single
     flat quad (leaf). Faces fill first, then the optional orientation band, then
     magenta strokes on top — so layout linework stays crisp over the band. With
-    mark_edge, the band marks the pivot edge (screen-left front / -right back)."""
+    mark_edge, the band marks the pivot edge (screen-left front / -right back).
+    s=None autofits (byte-identical to the legacy path); otherwise draws at the
+    forced px-per-voxel scale. Returns the content's GEOMETRIC px-bbox (polygon
+    extremes, not silhouette-stroke pixels), sheet-absolute."""
     is_north = "N" in view
     is_east = "E" in view
     needs_mirror = is_north != is_east
     cx, cy, cw, ch = cell_box
     scratch = Image.new("RGB", (cw, ch), (0, 0, 0))
     sdraw = ImageDraw.Draw(scratch)
-    s, ox, oy = _origin_for_cell(l, d, h, (0, 0, cw, ch), pad)
+    s, ox, oy = _origin_for_cell(l, d, h, (0, 0, cw, ch), pad, s)
 
     faces = []
     if l > 0 and h > 0:
@@ -120,20 +101,27 @@ def draw_iso_panel(img, l, d, h, view, cell_box, pad=18, mark_edge=False):
     for fn, sa, sb, _color in faces:
         _quad_stroke(sdraw, fn, sa, sb, s, ox, oy)
 
+    minx, maxx, miny, maxy = _bbox(l, d, h)
+    x0, y0, x1, y1 = ox + minx * s, oy + miny * s, ox + maxx * s, oy + maxy * s
+
     if needs_mirror:
         scratch = scratch.transpose(Image.FLIP_LEFT_RIGHT)
+        x0, x1 = cw - x1, cw - x0
     img.paste(scratch, (cx, cy))
+    return (x0 + cx, y0 + cy, x1 + cx, y1 + cy)
 
 
-def draw_square_grid(draw, cols, rows, color, cell_box, pad=18):
+def draw_square_grid(draw, cols, rows, color, cell_box, pad=PAD, s=None):
     """Orthographic plan view (TOP, straight down); each cell a square. A zero on
     either axis renders a thin MIN_THICK bar instead of collapsing to a line, so a
-    flat plane (door leaf, shutter) keeps a minimal visible thickness from above."""
+    flat plane (door leaf, shutter) keeps a minimal visible thickness from above.
+    s=None autofits; otherwise draws at the forced px-per-voxel scale. Returns the
+    sheet-absolute content px-bbox."""
     cx, cy, cw, ch = cell_box
     avail_w, avail_h = cw - 2 * pad, ch - 2 * pad
     cols_u = cols if cols > 0 else MIN_THICK
     rows_u = rows if rows > 0 else MIN_THICK
-    cell_s = min(avail_w / cols_u, avail_h / rows_u)
+    cell_s = s if s is not None else min(avail_w / cols_u, avail_h / rows_u)
     grid_w, grid_h = cols_u * cell_s, rows_u * cell_s
     ox = cx + (cw - grid_w) / 2
     oy = cy + (ch - grid_h) / 2
@@ -146,16 +134,19 @@ def draw_square_grid(draw, cols, rows, color, cell_box, pad=18):
         y = oy + r * cell_s
         draw.line([(ox, y), (ox + grid_w, y)], fill=GRID_LINE, width=GRID_WIDTH)
     draw.rectangle([ox, oy, ox + grid_w, oy + grid_h], outline=SILHOUETTE, width=SIL_WIDTH)
+    return (ox, oy, ox + grid_w, oy + grid_h)
 
 
-def draw_flat_grid(draw, cols, rows, body_color, top_rows, cell_box, pad=18):
+def draw_flat_grid(draw, cols, rows, body_color, top_rows, cell_box, pad=PAD, s=None):
     """Orthographic elevation, unfolded-net style: the top `top_rows` rows are the
-    TOP face folded flat above the body (FACE_TOP), shorter by TOP_FOLD_RATIO."""
+    TOP face folded flat above the body (FACE_TOP), shorter by TOP_FOLD_RATIO.
+    s=None autofits; otherwise draws at the forced px-per-voxel scale. Returns the
+    sheet-absolute content px-bbox."""
     cx, cy, cw, ch = cell_box
     avail_w, avail_h = cw - 2 * pad, ch - 2 * pad
     body_rows = rows - top_rows
     row_units = body_rows + top_rows * TOP_FOLD_RATIO
-    cell_s = min(avail_w / cols, avail_h / row_units)
+    cell_s = s if s is not None else min(avail_w / cols, avail_h / row_units)
     top_row_h = cell_s * TOP_FOLD_RATIO
     grid_w = cols * cell_s
     grid_h = top_rows * top_row_h + body_rows * cell_s
@@ -177,3 +168,4 @@ def draw_flat_grid(draw, cols, rows, body_color, top_rows, cell_box, pad=18):
         y = row_y(r)
         draw.line([(ox, y), (ox + grid_w, y)], fill=GRID_LINE, width=GRID_WIDTH)
     draw.rectangle([ox, oy, ox + grid_w, oy + grid_h], outline=SILHOUETTE, width=SIL_WIDTH)
+    return (ox, oy, ox + grid_w, oy + grid_h)

@@ -11,21 +11,19 @@ The long-term product is two things:
 ## Read Order
 
 1. `CONTEXT.md`: onboarding and current intent.
-2. `SPECS.md`: current files, code behavior, environment assumptions, and implementation rules.
-3. `ROADMAP.md`: milestones and next tasks.
-4. `.gitignore`: shows what is source versus generated output.
+2. `SCENE-CREATION.md`: canonical scene-creation spec — architecture, contract, kill-log, P0–P9 program.
+3. `ROADMAP-content-gen.md`: live execution state (kit assembly + multiview spine).
+4. `SPECS.md`: current files, code behavior, environment assumptions, and implementation rules.
+5. `ROADMAP.md`: S0 tile decision + housekeeping; superseded strategies in `archive/`.
+6. Visual work: load `core/skills/iso-visual.md` (conventions + model failure modes + verification rule) before touching guides/kits/sprites.
 
 ## Current Focus
 
-The immediate work is `src/cli/iso-cli.py`, a small CLI that submits ComfyUI API workflows for character image generation.
+**Scene creation via kit assembly** (see SCENE-CREATION.md): layout DSL → massing → guide render → NB paints tile-sized kit pieces → deterministic scene assembly → manifest export to `isoroll-module`. Generation baseline:
 
-The current generation baseline is:
-
-- ComfyUI receives a workflow JSON through `/prompt`.
-- `iso-cli.py` picks a workflow by profile name — filename selection only, no profile-JSON tuning layer (see SPECS.md `## Render Profiles`).
-- The workflow handles the real node graph.
-- Generated PNGs are gitignored under `assets/chars/`.
-- Tracked reference outputs live directly in per-comparison folders under `benchmarks/` (each with its own `manifest.json` — see SPECS.md).
+- **NB (Gemini Flash Image) is the primary generator** — `src/cli/imagegen_client.py` (API + daily ledger) with manual web-app fallback (`gen-inbox`/`gen-outbox` folder contract).
+- ComfyUI is a **utility rail only** (rembg, upscale, SAM2, LaMa) — `iso-cli.py` submits workflow JSONs through `/prompt`; local SD generation is dead as primary (SCENE-CREATION.md kill-log).
+- Generated PNGs are gitignored under `assets/`; tracked reference outputs live under `benchmarks/` (each with `manifest.json` — see SPECS.md).
 
 ## Core Product Decisions
 
@@ -34,8 +32,9 @@ The current generation baseline is:
 - Keep runtime and asset generation separate.
 - Aim for a Hades-like production model: controlled offline generation/rendering into 2D sprites, then efficient Foundry playback.
 - Treat prompts as an input to a structured asset pipeline, not as the whole pipeline.
-- Use ComfyUI as the local image-generation hub for now.
-- Later, introduce Blender or another controlled renderer for consistent 8-direction and animation output.
+- Scene geometry is deterministic (kit assembly); the generator only ever paints tile-sized pieces.
+- Geometry is verified by code, never by model eyes; style is verified by human eyeball (`core/skills/iso-visual.md`).
+- Blender remains the fallback lane (P-Kit) if NB fails a reliability gate — `[OBSOLETE-MESH]` scripts quarantined for that purpose.
 
 ## Repository Shape
 
@@ -106,20 +105,20 @@ isoroll-content/
 |--------------|-------------|
 | [`assets/`](assets/CONTEXT.md) | Generated art output — characters and tiles. Not curated reference material (see |
 | [`benchmarks/`](benchmarks/CONTEXT.md) | Curated, tracked comparison images (checkpoint/anatomy/model tests) and QC dev o |
+| [`design/`](design/CONTEXT.md) | — |
+| [`output/`](output/CONTEXT.md) | — |
 | [`refs/`](refs/CONTEXT.md) | Captured references for isoroll-content — tier-1 links in [REFS.md](REFS.md); pr |
 | [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts. G |
+| [`test/`](test/CONTEXT.md) | — |
 
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
 | [`HISTORY.md`](HISTORY.md) | — | — | History |
 | [`ROADMAP-content-gen.md`](ROADMAP-content-gen.md) | — | — | ROADMAP — content-gen: F1 procedural + espinha multiview |
 | [`ROADMAP.md`](ROADMAP.md) | — | — | isorolling Roadmap |
+| [`SCENE-CREATION.md`](SCENE-CREATION.md) | — | — | SCENE-CREATION — Canonical Spec |
+| [`SESSION-HANDOFF.md`](SESSION-HANDOFF.md) | — | — | SESSION HANDOFF — S4 arm_a homography (session ended 2026-07-17, review-rounds day) |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
 | [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
-| [`test/conftest.py`](test/conftest.py) | [`test/conftest.pyi`](test/conftest.pyi) | — | !/usr/bin/env python3 |
-| [`test/fixtures.py`](test/fixtures.py) | [`test/fixtures.pyi`](test/fixtures.pyi) | `magenta_grid_sheet`, `cyan_squares`, `clean_image`, `filled_mask`, `alpha_blob` | !/usr/bin/env python3 |
-| [`test/test_grid_drift.py`](test/test_grid_drift.py) | [`test/test_grid_drift.pyi`](test/test_grid_drift.pyi) | `test_detect_grid_snaps_to_drifted_interior_lines` | !/usr/bin/env python3 |
-| [`test/test_guide_marks.py`](test/test_guide_marks.py) | [`test/test_guide_marks.pyi`](test/test_guide_marks.pyi) | `test_residue_count_in_expected_band_for_k_squares`, `test_residue_count_zero_on_clean_image` | !/usr/bin/env python3 |
-| [`test/test_sheet_grid.py`](test/test_sheet_grid.py) | [`test/test_sheet_grid.pyi`](test/test_sheet_grid.pyi) | `test_detect_grid_matches_even_division_no_drift`, `test_strip_linework_removes_magenta_keeps_blob_body`, `test_strip_linework_keeps_interior_near_white_pixel` | !/usr/bin/env python3 |
-| [`test/test_sheet_qc.py`](test/test_sheet_qc.py) | [`test/test_sheet_qc.pyi`](test/test_sheet_qc.pyi) | `test_silhouette_iou_identical_masks_near_one`, `test_silhouette_iou_disjoint_masks_low` | !/usr/bin/env python3 |
+| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | — | — | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
 <!-- routing:end -->

@@ -45,9 +45,8 @@ Commands:
     --prompt   <text>                 generation prompt for SD context in tiles (required)
     --rembg                           also strip background
     --out      <dir>                  copy result here
-
   mv-tile | mv-scene | mv-restyle   multiview generation via guides + registration marks (each has -h)
-
+  export-manifest --layout <file>  layout DSL + kit → scene manifest JSON (see -h for flags)
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
   python iso-cli.py ipadapter-ref ../../assets/chars/rogue/concept/rogue_concept_clean.png \\
@@ -188,6 +187,7 @@ def main() -> None:
         from multiview_commands import run_mv_command
         run_mv_command(command, args[1:])
 
+    elif command == "export-manifest": from export_commands import run_export; run_export(args[1:])
     else:
         print(f"[FAIL] Unknown command: {command}")
         print(HELP)

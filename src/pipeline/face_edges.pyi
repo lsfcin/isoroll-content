@@ -1,0 +1,9 @@
+from _typeshed import Incomplete
+
+INK: Incomplete
+REF_CELL_PX: int
+REF_WIDTH: int
+
+def stroke_edges(faces): ...
+def edge_width(cell_px): ...
+def draw_face_edges(draw, edges, view, s, cell_px, pad, origin, project_face) -> None: ...

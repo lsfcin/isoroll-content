@@ -3,7 +3,8 @@
 
 from dataclasses import dataclass, field
 
-from layout_parse import DOOR, FLOOR, SOLID, STAIRS, STAIR_E, STAIR_N, STAIR_S, STAIR_W, WINDOW
+from layout_groups import grp_base_data, grp_cell_voxels
+from layout_parse import DOOR, FLOOR, Layout, SOLID, STAIRS, STAIR_E, STAIR_N, STAIR_S, STAIR_W, WINDOW
 
 STEPS = 4  # sub-boxes per stair cell
 STAIR_RISE = 1.0  # total stair height, grid units
@@ -26,6 +27,7 @@ class Box:
     kind: str  # "wall" | "floor" | "step"
     openings: list = field(default_factory=list)
     axis: str = "u"  # wall-run axis; openings pierce across it
+    z0: float = 0.0  # v2 (T5, DECISION D1): base elevation — level_index * wall_h; 0.0 = v1 back-compat
 
 
 def _run_openings(layout, u0, v0, length, axis):
@@ -123,10 +125,41 @@ def _stair_boxes(layout):
     return boxes
 
 
+def _massing_one_level(layout, merge):
+    walls = _merged_wall_boxes if merge else _cell_wall_boxes
+    return _floor_boxes(layout) + _stair_boxes(layout) + walls(layout, layout.wall_h)
+
+
+def _group_boxes(layout):
+    """3-arch.md Amendment (C3-seam+): one "GRP" box per group cell (D3), z0/h == that cell's
+    grp_cell_voxels span (D0: per-cell Z-run — groups have no run-merge concept, so this ignores
+    `merge`). Box position: v0==r, u0==c (layout.kind(u,v) convention: grid[v][u])."""
+    boxes = []
+    for group in layout.groups:
+        base = grp_base_data(group)
+        for (r, c) in group.cells:
+            vox_lo, vox_hi = grp_cell_voxels(base, group, r, c)
+            boxes.append(Box(c, r, 1, 1, vox_hi - vox_lo, "GRP", z0=vox_lo))
+    return boxes
+
+
 def massing(layout, merge=True):
     """All boxes for one layout orientation, unsorted (renderer sorts per view).
 
     merge=True (export/manifest lane) fuses wall runs; merge=False (render lane)
-    keeps 1x1 cell boxes so simple (u+v) painter sorting is exact."""
-    walls = _merged_wall_boxes if merge else _cell_wall_boxes
-    return _floor_boxes(layout) + _stair_boxes(layout) + walls(layout, layout.wall_h)
+    keeps 1x1 cell boxes so simple (u+v) painter sorting is exact.
+
+    v2 (T5): when `layout` came from a "level N:" DSL, stack every level's boxes, each offset by
+    z0 = level_index * wall_h (DECISION D1: single-level v1 layouts keep z0 == 0.0 unchanged);
+    group (roof/stair) cells add "GRP" boxes on top, independent of level stacking."""
+    if layout.levels:
+        boxes = []
+        for lvl in sorted(layout.levels):
+            grid = layout.levels[lvl].g
+            sub = Layout(layout.name, grid, layout.wall_h, len(grid), len(grid[0]) if grid else 0)
+            for box in _massing_one_level(sub, merge):
+                box.z0 = lvl * layout.wall_h
+                boxes.append(box)
+        boxes.extend(_group_boxes(layout))
+        return boxes
+    return _massing_one_level(layout, merge)
