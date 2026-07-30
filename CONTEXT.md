@@ -119,12 +119,12 @@ isoroll-content/
 | [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts. G |
 | [`test/`](test/CONTEXT.md) | — |
 
-| File | Interface | API | Description |
-|------|-----------|-----|-------------|
-| [`ROADMAP.md`](ROADMAP.md) | — | — | isoroll-content Roadmap |
-| [`SCENE-CREATION.md`](SCENE-CREATION.md) | — | — | SCENE-CREATION — Canonical Spec |
-| [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |
-| [`SPECS.md`](SPECS.md) | — | — | isorolling Specs |
-| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | — | — | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
-| [`archive/S4-REVIEW-ROUNDS.md`](archive/S4-REVIEW-ROUNDS.md) | — | — | S4 REVIEW ROUNDS — Lucas's 5 points on arm_a gate (2026-07-16) |
+| File | Description |
+|------|-------------|
+| [`ROADMAP.md`](ROADMAP.md) | isoroll-content Roadmap |
+| [`SCENE-CREATION.md`](SCENE-CREATION.md) | SCENE-CREATION — Canonical Spec |
+| [`SETUP.md`](SETUP.md) | isorolling Setup |
+| [`SPECS.md`](SPECS.md) | isorolling Specs |
+| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
+| [`archive/S4-REVIEW-ROUNDS.md`](archive/S4-REVIEW-ROUNDS.md) | S4 REVIEW ROUNDS — Lucas's 5 points on arm_a gate (2026-07-16) |
 <!-- routing:end -->

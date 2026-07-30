@@ -6,10 +6,11 @@ tiles are per-cell (render lane, merge=False); walls are per merged run (export
 lane, merge=True). See .loop/export-manifest/3-arch.md for the full contract.
 """
 
+import kit_assets
 from layout_groups import DIAG
 from layout_massing import STAIR_RISE, massing
 from layout_parse import DOOR, FLOOR, STAIRS, WALL, WINDOW, load, rotate_cw
-from scene_assemble import _piece_for, load_kit_meta
+from scene_assemble import load_kit_meta, piece_of
 from scene_guide_render import VIEW_TURNS
 
 
@@ -30,17 +31,20 @@ def build_manifest(layout, kit_dir, view="NW"):
 
     tiles = []
     for box in massing(turned, merge=False):
-        name = _piece_for(box)
+        name, mat, direction = piece_of(box)
         if name is None:
             continue
-        # 3-arch.md Amendment (C4-seam+): GRP boxes place a tile even without a kit sprite yet
-        # (e.g. "group") — imageOffset degrades to a neutral [0,0] rather than KeyError-ing.
-        piece = manifest["pieces"].get(name)
+        # 3-arch.md Amendment (C4-seam+): a box places a tile even when this kit has no sprite for
+        # it yet — imageOffset degrades to a neutral [0,0] rather than KeyError-ing.
+        resolved = kit_assets.resolve(manifest["pieces"], name, mat, direction)
+        piece = manifest["pieces"].get(resolved) if resolved else None
         ox, oy = piece["origin"] if piece else (0, 0)
         w, h = piece["size"] if piece else (1, 1)
         tiles.append({
             "piece": name,
-            "asset": f"{name}.png",
+            "mat": mat,
+            "dir": direction,
+            "asset": kit_assets.asset_name(manifest["pieces"], name, mat, direction),
             "facing": view,
             "u": box.u0,
             "v": box.v0,
@@ -56,6 +60,8 @@ def build_manifest(layout, kit_dir, view="NW"):
                 if ch in STAIRS:
                     tiles.append({
                         "piece": "stair",
+                        "mat": "",
+                        "dir": "",
                         "asset": "stair.png",
                         "facing": view,
                         "u": u,
@@ -86,6 +92,10 @@ def build_manifest(layout, kit_dir, view="NW"):
         "scene": layout.name,
         "view": view,
         "pxPerVoxel": px_per_unit,
+        # D7 guard: unique-pixel memory scales with map area x views, so chunking and per-view lazy
+        # bake must stay reachable WITHOUT a format break. This manifest is chunk (0,0) covering the
+        # whole grid; a chunked bake changes only these numbers, never the shape of the file.
+        "chunk": {"index": [0, 0], "cols": cols, "rows": rows},
         "tiles": tiles,
         "walls": walls,
     }

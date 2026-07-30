@@ -6,14 +6,15 @@
 
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
+| [`bake_commands.py`](bake_commands.py) | [`bake_commands.pyi`](bake_commands.pyi) | `run_bake` | ← add first-line comment |
 | [`blender_commands.py`](blender_commands.py) | [`blender_commands.pyi`](blender_commands.pyi) | `blender_stylize`, `blender_ipadapter` | blender_commands.py — Blender render stylization commands: Path A and Path A+B hybrid. |
 | [`comfy_client.py`](comfy_client.py) | [`comfy_client.pyi`](comfy_client.pyi) | `get_comfy_dir`, `get_output_dir`, `upload_image`, `send_prompt`, `snapshot_pngs` | ComfyUI API client helpers for the isoroll pipeline. |
-| [`export_commands.py`](export_commands.py) | [`export_commands.pyi`](export_commands.pyi) | `run_export` | !/usr/bin/env python3 |
+| [`export_commands.py`](export_commands.py) | [`export_commands.pyi`](export_commands.pyi) | `run_export` | export_commands.py — export-manifest verb: layout + kit → scene manifest JSON. |
 | [`gen_commands.py`](gen_commands.py) | [`gen_commands.pyi`](gen_commands.pyi) | `gen_character`, `style_concept`, `ipadapter_ref` | gen_commands.py — Generation commands: txt2img, style-concept, IP-Adapter ref. |
 | [`image_commands.py`](image_commands.py) | [`image_commands.pyi`](image_commands.pyi) | `detail_image`, `face_restore` | image_commands.py — Image processing commands: upscale, rembg, face restore. |
-| [`imagegen_client.py`](imagegen_client.py) | — | `generate`, `drop_manual`, `collect_manual` | !/usr/bin/env python3 |
+| [`imagegen_client.py`](imagegen_client.py) | — | `generate`, `drop_manual`, `collect_manual` | imagegen_client.py — Nano Banana (Gemini image) client: API call, daily ledger, manual web-app fallback contract. |
 | [`iso-cli.py`](iso-cli.py) | [`iso-cli.pyi`](iso-cli.pyi) | `get_arg`, `main` | iso-cli — isoroll content pipeline CLI. Run with -h for usage. |
-| [`multiview_commands.py`](multiview_commands.py) | [`multiview_commands.pyi`](multiview_commands.pyi) | `run_mv_command` | !/usr/bin/env python3 |
+| [`multiview_commands.py`](multiview_commands.py) | [`multiview_commands.pyi`](multiview_commands.pyi) | `run_mv_command` | multiview_commands.py — mv-tile / mv-scene / mv-restyle verbs: render guide, fill prompt template, call the image provider or stage manual. |
 | [`sheet_grid.py`](sheet_grid.py) | [`sheet_grid.pyi`](sheet_grid.pyi) | `magenta_mask`, `white_mask`, `line_mask`, `detect_boundaries`, `detect_grid` | !/usr/bin/env python3 |
 | [`sheet_postproc.py`](sheet_postproc.py) | [`sheet_postproc.pyi`](sheet_postproc.pyi) | `parse_watermark_region`, `parse_args`, `run`, `main` | !/usr/bin/env python3 |
 | [`sheet_qc.py`](sheet_qc.py) | [`sheet_qc.pyi`](sheet_qc.pyi) | `silhouette_mask`, `mask_iou`, `silhouette_iou`, `cross_view_dims` | !/usr/bin/env python3 |

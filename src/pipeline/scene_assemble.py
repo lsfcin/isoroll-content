@@ -7,6 +7,8 @@ from pathlib import Path
 
 from PIL import Image
 
+import kit_assets
+import view_table
 from layout_massing import massing
 from layout_parse import load as load_layout
 from layout_parse import rotate_cw
@@ -15,19 +17,26 @@ from scene_guide_render import VIEW_TURNS, Cam
 MARGIN = 16
 
 
-def _piece_for(box):
-    result = None
+def piece_of(box):
+    """(piece, material, direction) for a box — the SEMANTIC tile identity, kit-independent.
+
+    Which sprite file that becomes is kit_assets' job: a kit may carry one "wall", or a "wall__stone"
+    and a "wall__wood", or oriented "roof_N".."roof_W", and the layout must not have to know which.
+    """
     if box.kind == "floor":
-        result = "floor"
-    elif box.kind == "wall":
-        if box.openings:
-            result = f"{box.openings[0].kind}_{box.axis}"
-        else:
-            result = "wall"
-    elif box.kind == "GRP":
-        result = "group"  # 3-arch.md Amendment (C4-seam+): no kit sprite yet — assemble()'s
-        # `name not in sprites` guard skips it there; build_manifest still places it (below).
-    return result  # steps: unsupported in assembly v1
+        return ("floor", box.mat, "")
+    if box.kind == "wall":
+        piece = f"{box.openings[0].kind}_{box.axis}" if box.openings else "wall"
+        return (piece, box.mat, "")
+    if box.kind == "GRP":
+        kind, _sep, direction = box.grp.partition(":")
+        return (kind or "group", "", direction)
+    return (None, "", "")  # steps: unsupported in assembly v1
+
+
+def _piece_for(box):
+    """Piece name only — the pre-existing seam, kept for callers that don't resolve assets."""
+    return piece_of(box)[0]
 
 
 def load_kit_meta(kit_dir):
@@ -50,18 +59,33 @@ def load_kit(kit_dir):
     return manifest, sprites
 
 
+def paint_key(family, box):
+    """Painter order, far -> near: ground flats first, then the family's own depth key.
+
+    The flats-first flag is pre-existing (merged runs extending past a nearer flat produced
+    cover-through slivers); what is new is that depth comes from view_table, so a cardinal view
+    sorts by its own camera axis instead of the dimetric u+v, and z0 finally participates — a
+    second-storey wall is nearer the viewer than the ground it stands over.
+    """
+    return (box.h > 0, view_table.depth_key(family, box.u0, box.v0, box.z0))
+
+
 def assemble(layout, view, kit_dir):
     """One assembled scene view (RGB on black). Geometry exact by construction — no generation involved."""
     manifest, sprites = load_kit(kit_dir)
-    cam = Cam([], 0, 0, 0, scale=manifest["px_per_unit"], origin=(0.0, 0.0))
+    family = view_table.family(view)
+    cam = Cam([], 0, 0, 0, scale=manifest["px_per_unit"], origin=(0.0, 0.0), family=family)
     turned = rotate_cw(layout, VIEW_TURNS[view])
-    boxes = sorted(massing(turned, merge=False), key=lambda b: (b.h > 0, b.u0 + b.v0))
+    boxes = sorted(massing(turned, merge=False), key=lambda box: paint_key(family, box))
     placements, xs, ys = [], [], []
     for box in boxes:
-        name = _piece_for(box)
-        if name is None or name not in sprites:
+        piece, mat, direction = piece_of(box)
+        if piece is None:
             continue
-        px, py = cam.pt(box.u0, box.v0, 0)
+        name = kit_assets.resolve(sprites, piece, mat, direction)
+        if name is None:
+            continue
+        px, py = cam.pt(box.u0, box.v0, box.z0)
         ox, oy = manifest["pieces"][name]["origin"]
         left, top = px - ox, py - oy
         w, h = sprites[name].size

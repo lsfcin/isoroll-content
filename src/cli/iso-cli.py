@@ -47,6 +47,8 @@ Commands:
     --out      <dir>                  copy result here
   mv-tile | mv-scene | mv-restyle   multiview generation via guides + registration marks (each has -h)
   export-manifest --layout <file>  layout DSL + kit → scene manifest JSON (see -h for flags)
+  bake-scene --layout <file>       THE SEAM: arm-A cell sprites + a manifest per view, all 8+1
+    --out <dir>  --views <list>  --arm <a>  --skip-kit  --preview   (see -h)
 Examples:
   python iso-cli.py gen-character "dark fantasy rogue" --profile quality
   python iso-cli.py ipadapter-ref ../../assets/chars/rogue/concept/rogue_concept_clean.png \\
@@ -54,13 +56,7 @@ Examples:
       --out ../../assets/chars/rogue/stances/neutral-idle
   python iso-cli.py detail-image ../../assets/chars/rogue/stances/neutral-idle/pathB_00002_SE.png \\
       --rembg --out ../../assets/chars/rogue/stances/neutral-idle
-  python iso-cli.py blender-stylize ../../assets/chars/rogue/_renders/neutral-idle/frame_0001_SE.png \\
-      --prompt "dark fantasy rogue, hooded assassin, teal cloak" \\
-      --out ../../assets/chars/rogue/stances/neutral-idle
-  python iso-cli.py blender-ipadapter ../../assets/chars/rogue/_renders/neutral-idle/frame_0001_SE.png \\
-      --concept ../../assets/chars/rogue/concept/rogue_concept_v2.png \\
-      --prompt "dark fantasy rogue, hooded assassin, teal-blue cloak, black leather armor, SE isometric view" \\
-      --out ../../assets/chars/rogue/stances/neutral-idle
+  python iso-cli.py bake-scene --layout src/pipeline/layouts/cabin.txt --out output/scenes --preview
 """
 
 
@@ -188,6 +184,7 @@ def main() -> None:
         run_mv_command(command, args[1:])
 
     elif command == "export-manifest": from export_commands import run_export; run_export(args[1:])
+    elif command == "bake-scene": from bake_commands import run_bake; run_bake(args[1:])
     else:
         print(f"[FAIL] Unknown command: {command}")
         print(HELP)

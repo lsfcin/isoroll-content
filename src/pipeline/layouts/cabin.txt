@@ -1,0 +1,36 @@
+name: cabin
+wall_h: 2
+
+level 0:
+##########
+#...#....#
+#...D....#
+#..S#....W
+#...#....#
+#...#....#
+###D######
+layer type:
+1111111111
+1...1....1
+1...0....1
+1..0100001
+1...1....1
+1...1....1
+1110111111
+
+level 1:
+#####
+#...#
+#..S#
+#...#
+#####
+
+level 2:
+          
+     RRRR
+     RRRR
+     RRRR
+     RRRR
+     RRRR
+stair: 2,3 3,3 form=solid dir=N incl=5ft z=0
+roof: 1,5 5,8 form=flat dir=N incl=5ft z=2 enclose=none

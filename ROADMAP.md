@@ -67,15 +67,22 @@ that grammar is already bought: **reuse rig v16.2, do not re-derive it.**
 
 Single user-visible outcome. The seam gets frozen by carrying the cabin all the way into Foundry.
 
-- [ ] content: `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry; arm A (today's
-      kit assembly) becomes implementation A behind it, code untouched.
-- [ ] content: manifest gains `px_per_voxel` + `chunk` fields (D7 guard).
-- [ ] content: fixture upgrade bare l-room → **cabin** (2 rooms, door, window, stair to a platform, roof
-      section, 2 materials). The l-room cannot produce a meaningful style verdict — no stairs, no roof,
-      one material.
-- [ ] content: golden test on the cabin (manifest + assembled PNG).
-- [ ] content: cardinal camera entries in the view table (projection + cull axis) → bake the cabin sprite
-      set + manifest, all **9 views** (D2), from arm A with the existing 50 linework textures.
+- [x] content: `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry (`src/pipeline/
+      render_scene.py`); arm A is implementation A behind it, in `ARMS`. Sprite sets are per projection
+      FAMILY, not per view — the 4 dimetric views are cell remaps of one set, the 4 cardinal ones of
+      another, so 3 sets cover all 9. CLI: `iso-cli.py bake-scene --layout <file> [--preview]`.
+- [x] content: manifest gains `chunk` (index + cols/rows) beside the existing `pxPerVoxel` (D7 guard) —
+      a chunked bake changes those numbers, never the file's shape.
+- [x] content: fixture upgrade bare l-room → **cabin** (`src/pipeline/layouts/cabin.txt`): 2 rooms,
+      interior + exterior door, window, stair up to a platform, flat roof section, stone + wood walls.
+- [x] content: golden test on the cabin (`test/test_cabin_golden.py`) — manifest goldened exactly, one
+      view per family; the assembled PNG is held by invariants + determinism rather than a brittle
+      multi-megabyte pixel golden (it is a QC preview, not a shipped asset).
+- [x] content: cardinal camera entries in the view table (`src/pipeline/view_table.py`: projection matrix
+      + cull axis per family) → cabin baked in all **9 views** (D2) from arm A with the 50 linework
+      textures. Three rotation loose ends had to be fixed first — group cells/ascent arrows, the
+      per-cell attr overlays (materials) and ragged level frames were not being rotated, so any view
+      but SW was quietly wrong.
 - [ ] module: close painter MVP (`loop/painter-mvp-1@3987979`, WIP, 16 dirty).
 - [ ] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin.
 - [ ] module: view switching across 8+1 (dimetric = cell remap; cardinal = projection preset via the
