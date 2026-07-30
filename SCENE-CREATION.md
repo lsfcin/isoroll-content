@@ -143,7 +143,7 @@ Confirmed empirically (kill-log): image models hold geometry at TILE scale, not 
 
 Retired 2026-07-29. The P0–P9 phase table made the content strategy a prerequisite for a playable product,
 which stalled the project on arm-A container artefacts. Milestones, gates and arm state now live only in
-[ROADMAP.md](ROADMAP.md). Shipped phases are recorded in [HISTORY.md](HISTORY.md); the frozen decisions they
+[ROADMAP.md](ROADMAP.md). The frozen decisions those phases
 produced are still normative here (seam, contract, floor=iso-tiles, painter grammar, LLM-spatial rule) and in
 [`design/`](design/CONTEXT.md) (painter UX grammar @ rig v16.2, render→restyle, S4 rounds in `archive/`).
 

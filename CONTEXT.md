@@ -14,7 +14,7 @@ The long-term product is two things:
 2. `ROADMAP.md`: **the only live-state file** — strategy, decisions D1–D7, milestones, gates.
 3. `SCENE-CREATION.md`: canonical spec (status-free) — goal, seam, contract, kill-log.
 4. `SPECS.md`: current files, code behavior, environment assumptions, and implementation rules.
-5. Frozen decision records in `design/`; what happened in `HISTORY.md`; superseded trees in `archive/`.
+5. Frozen decision records in `design/`; superseded trees in `archive/`.
 6. Visual work: load `core/skills/iso-visual.md` (conventions + model failure modes + verification rule) before touching guides/kits/sprites.
 
 ## Current Focus
@@ -121,7 +121,6 @@ isoroll-content/
 
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
-| [`HISTORY.md`](HISTORY.md) | — | — | History |
 | [`ROADMAP.md`](ROADMAP.md) | — | — | isoroll-content Roadmap |
 | [`SCENE-CREATION.md`](SCENE-CREATION.md) | — | — | SCENE-CREATION — Canonical Spec |
 | [`SETUP.md`](SETUP.md) | — | — | isorolling Setup |

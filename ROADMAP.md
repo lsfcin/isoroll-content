@@ -1,7 +1,7 @@
 # isoroll-content Roadmap
 > **The only live-state file for scene creation.** What's next lives here and nowhere else.
 > Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, seam, contract, kill-log.
-> Frozen decision records: [`design/`](design/CONTEXT.md). What happened: [HISTORY.md](HISTORY.md).
+> Frozen decision records: [`design/`](design/CONTEXT.md).
 > Superseded strategy trees: [`archive/`](archive/) — consult the kill-log before resurrecting anything.
 
 ## Strategy — MVP-first behind a frozen seam (replan 2026-07-29, Lucas + inline)
