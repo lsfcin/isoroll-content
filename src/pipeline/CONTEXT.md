@@ -22,18 +22,18 @@
 | [`calibrate3.py`](calibrate3.py) | [`calibrate3.pyi`](calibrate3.pyi) | `parse_args`, `load_fbx`, `render_one`, `main`, `report` | [OBSOLETE-MESH] calibrate3.py — Sweep camera Z translation at fixed scale=0.020, no constraint rotation. |
 | [`calibrate4.py`](calibrate4.py) | [`calibrate4.pyi`](calibrate4.pyi) | `parse_args`, `load_fbx`, `render_one`, `main`, `report` | [OBSOLETE-MESH] calibrate4.py — Sweep camera shift_y (vertical pan) and ortho_scale (size). |
 | [`calibrate_camera.py`](calibrate_camera.py) | [`calibrate_camera.pyi`](calibrate_camera.pyi) | `parse_args`, `import_fbx`, `apply_solid_material`, `setup_scene`, `make_camera` | [OBSOLETE-MESH] calibrate_camera.py — Batch render to find correct ortho_scale + frame_center_z. |
-| [`enclosure_masks.py`](enclosure_masks.py) | [`enclosure_masks.pyi`](enclosure_masks.pyi) | `lateral_faces`, `save_enclosure_masks` | !/usr/bin/env python3 |
+| [`enclosure_masks.py`](enclosure_masks.py) | [`enclosure_masks.pyi`](enclosure_masks.pyi) | `composite_enclosure`, `save_enclosure_masks` | !/usr/bin/env python3 |
 | [`face_edges.py`](face_edges.py) | [`face_edges.pyi`](face_edges.pyi) | `stroke_edges`, `edge_width`, `draw_face_edges` | !/usr/bin/env python3 |
 | [`face_masks.py`](face_masks.py) | [`face_masks.pyi`](face_masks.pyi) | `face_mask`, `save_mask` | !/usr/bin/env python3 |
 | [`generate_sheet_template.py`](generate_sheet_template.py) | [`generate_sheet_template.pyi`](generate_sheet_template.pyi) | `load_font`, `total_size`, `cell_origin`, `generate` | !/usr/bin/env python3 |
-| [`guide_marks.py`](guide_marks.py) | [`guide_marks.pyi`](guide_marks.pyi) | `MarkParams`, `apply_marks`, `residue_count`, `tile_panels`, `main` | !/usr/bin/env python3 |
-| [`kit_module_render.py`](kit_module_render.py) | [`kit_module_render.pyi`](kit_module_render.pyi) | `ordered_faces`, `ordered_enclosure_faces`, `panel_extent`, `shared_scale`, `render_panel` | !/usr/bin/env python3 |
+| [`guide_marks.py`](guide_marks.py) | [`guide_marks.pyi`](guide_marks.pyi) | `MarkParams`, `apply_marks`, `residue_count`, `tile_panels`, `main` | guide_marks.py — registration-mark post-pass over guide sheets (muralist technique, A/B parameterized). |
+| [`kit_module_render.py`](kit_module_render.py) | [`kit_module_render.pyi`](kit_module_render.pyi) | `ordered_front_faces`, `ordered_faces`, `ordered_enclosure_faces`, `panel_extent`, `shared_scale` | !/usr/bin/env python3 |
 | [`kit_modules.py`](kit_modules.py) | [`kit_modules.pyi`](kit_modules.pyi) | `Face`, `extrude`, `from_boxes` | !/usr/bin/env python3 |
-| [`kit_render.py`](kit_render.py) | [`kit_render.pyi`](kit_render.pyi) | `piece_boxes`, `render_piece`, `build_kit` | !/usr/bin/env python3 |
+| [`kit_render.py`](kit_render.py) | [`kit_render.pyi`](kit_render.pyi) | `piece_boxes`, `render_piece`, `build_kit` | kit_render.py — camera-fixed guide kit: one sprite per piece type (wall/door/window/floor) + alignment manifest. |
 | [`layout_dsl_v2.py`](layout_dsl_v2.py) | [`layout_dsl_v2.pyi`](layout_dsl_v2.pyi) | `parse_text_v2`, `cell` | !/usr/bin/env python3 |
 | [`layout_groups.py`](layout_groups.py) | [`layout_groups.pyi`](layout_groups.pyi) | `diag_solid`, `grp_base_data`, `grp_cell_voxels`, `solid`, `h_at` | !/usr/bin/env python3 |
-| [`layout_massing.py`](layout_massing.py) | [`layout_massing.pyi`](layout_massing.pyi) | `Opening`, `Box`, `massing` | !/usr/bin/env python3 |
-| [`layout_parse.py`](layout_parse.py) | [`layout_parse.pyi`](layout_parse.pyi) | `Level`, `Group`, `Layout`, `rotate_cw`, `rotate_point` | !/usr/bin/env python3 |
+| [`layout_massing.py`](layout_massing.py) | [`layout_massing.pyi`](layout_massing.pyi) | `Opening`, `Box`, `massing` | layout_massing.py — Layout grid → box list: merged wall runs with openings, floor strips, stair steps. |
+| [`layout_parse.py`](layout_parse.py) | [`layout_parse.pyi`](layout_parse.pyi) | `Level`, `Group`, `Layout`, `rotate_cw`, `rotate_point` | layout_parse.py — text-grid scene layout DSL → validated Layout model (F1 input). |
 | [`layout_serialize.py`](layout_serialize.py) | [`layout_serialize.pyi`](layout_serialize.pyi) | `to_dsl` | !/usr/bin/env python3 |
 | [`linework.py`](linework.py) | [`linework.pyi`](linework.pyi) | `floor_stone`, `wall_wood_side`, `wall_wood_top`, `wall_stone_side`, `wall_stone_top` | !/usr/bin/env python3 |
 | [`linework_doors.py`](linework_doors.py) | [`linework_doors.pyi`](linework_doors.pyi) | `door` | !/usr/bin/env python3 |
@@ -45,10 +45,10 @@
 | [`rotate_mesh.py`](rotate_mesh.py) | [`rotate_mesh.pyi`](rotate_mesh.pyi) | `rotate_y`, `rotate_axis`, `main` | !/usr/bin/env python3 |
 | [`run_anatomy_test.py`](run_anatomy_test.py) | [`run_anatomy_test.pyi`](run_anatomy_test.pyi) | `load_workflow`, `submit`, `wait_for_output`, `main` | run_anatomy_test.py — bare-hands anatomy test: dreamshaper, toonyou, lyriel |
 | [`run_model_comparison.py`](run_model_comparison.py) | [`run_model_comparison.pyi`](run_model_comparison.pyi) | `load_workflow`, `submit`, `wait_for_output`, `main` | run_model_comparison.py — generates one image per checkpoint, saves to benchmarks/model-comparison/ |
-| [`scene_anchors.py`](scene_anchors.py) | [`scene_anchors.pyi`](scene_anchors.pyi) | `anchors`, `project`, `apply_anchored` | !/usr/bin/env python3 |
-| [`scene_assemble.py`](scene_assemble.py) | [`scene_assemble.pyi`](scene_assemble.pyi) | `load_kit_meta`, `load_kit`, `assemble`, `main` | !/usr/bin/env python3 |
-| [`scene_guide_render.py`](scene_guide_render.py) | [`scene_guide_render.pyi`](scene_guide_render.pyi) | `Cam`, `scene_cam`, `render_boxes`, `render_scene_panel`, `render_plan_panel` | !/usr/bin/env python3 |
-| [`scene_guide_sheet.py`](scene_guide_sheet.py) | [`scene_guide_sheet.pyi`](scene_guide_sheet.pyi) | `compose_sheet`, `main` | !/usr/bin/env python3 |
+| [`scene_anchors.py`](scene_anchors.py) | [`scene_anchors.pyi`](scene_anchors.pyi) | `anchors`, `project`, `apply_anchored` | scene_anchors.py — stable 3D anchors on layout geometry, projected per view; attached registration marks. |
+| [`scene_assemble.py`](scene_assemble.py) | [`scene_assemble.pyi`](scene_assemble.pyi) | `load_kit_meta`, `load_kit`, `assemble`, `main` | scene_assemble.py — tinyglade-style deterministic assembly: kit sprites pasted per cell in painter order. |
+| [`scene_guide_render.py`](scene_guide_render.py) | [`scene_guide_render.pyi`](scene_guide_render.pyi) | `Cam`, `scene_cam`, `render_boxes`, `render_scene_panel`, `render_plan_panel` | scene_guide_render.py — one guide panel of a whole scene: dimetric view of the massing boxes, or TOP plan. |
+| [`scene_guide_sheet.py`](scene_guide_sheet.py) | [`scene_guide_sheet.pyi`](scene_guide_sheet.pyi) | `compose_sheet`, `main` | scene_guide_sheet.py — compose the 6-cell NB scene-guide sheet (views + plan + caption + marks) and CLI. |
 | [`scene_manifest.py`](scene_manifest.py) | [`scene_manifest.pyi`](scene_manifest.pyi) | `build_manifest`, `count_hud` | !/usr/bin/env python3 |
 | [`sheet_to_tpose.py`](sheet_to_tpose.py) | [`sheet_to_tpose.pyi`](sheet_to_tpose.pyi) | `cell_box`, `extract` | !/usr/bin/env python3 |
 | [`stage_kit_modules.py`](stage_kit_modules.py) | [`stage_kit_modules.pyi`](stage_kit_modules.pyi) | `sheet_grid`, `arm_b`, `arm_bc`, `paint_panel`, `arm_a` | !/usr/bin/env python3 |
@@ -56,6 +56,6 @@
 | [`texture_resample.py`](texture_resample.py) | [`texture_resample.pyi`](texture_resample.pyi) | `tile_source`, `match_source_density`, `supersample_transform` | !/usr/bin/env python3 |
 | [`texture_warp.py`](texture_warp.py) | [`texture_warp.pyi`](texture_warp.pyi) | `face_axes`, `warp_tiling`, `warp_decal` | !/usr/bin/env python3 |
 | [`tile_guide_matrix.py`](tile_guide_matrix.py) | [`tile_guide_matrix.pyi`](tile_guide_matrix.pyi) | `CellSpec`, `draw_panel`, `draw_caption`, `parse_spec`, `render_cells` | !/usr/bin/env python3 |
-| [`tile_guide_render.py`](tile_guide_render.py) | [`tile_guide_render.pyi`](tile_guide_render.pyi) | `draw_iso_panel`, `draw_square_grid`, `draw_flat_grid`, `row_y` | !/usr/bin/env python3 |
+| [`tile_guide_render.py`](tile_guide_render.py) | [`tile_guide_render.pyi`](tile_guide_render.pyi) | `draw_iso_panel`, `draw_square_grid`, `draw_flat_grid`, `row_y` | tile_guide_render.py — dimetric box-face geometry and single-panel drawing for tile guides. |
 | [`triposr_mesh.py`](triposr_mesh.py) | [`triposr_mesh.pyi`](triposr_mesh.pyi) | `parse_args`, `main` | [OBSOLETE-MESH] triposr_mesh.py — Generate a 3D mesh from a single concept image using TripoSR. |
 <!-- routing:end -->

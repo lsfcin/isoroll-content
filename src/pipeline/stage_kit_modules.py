@@ -177,8 +177,8 @@ def stage(out="output/gen-inbox", out_masks=None):
             module_panels.append(p)
             all_panels.append(p)
             ordered_by_panel[(name, view)] = ordered
-            if has_enclosure:  # ROUND 4b: lateral faces minus rendered alpha, see enclosure_masks.py
-                enclosure_masks.save_enclosure_masks(name, view, ordered, s, CELL_PX, PAD, origin, masks_path)
+            if has_enclosure:  # ROUND 4c: depth-composite enclosure faces vs cover, see enclosure_masks.py
+                enclosure_masks.save_enclosure_masks(name, view, s, CELL_PX, PAD, origin, masks_path)
 
         arm_a(module_panels, ordered_by_panel).save(out_path / f"{name}__a.png")
         (out_path / f"{name}__a_prompt.txt").write_text(f"# {name}\n\n{prompt_body_a}")

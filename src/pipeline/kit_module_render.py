@@ -91,15 +91,15 @@ def _project(faces, view, cam):
     return rows
 
 
+def ordered_front_faces(faces, view, cam):
+    """ALL front-facing faces (enclosure INCLUDED), painter order, tagged enc.
+    enclosure_masks depth-composites this; ordered_faces filters to visible."""
+    return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc, front in _project(faces, view, cam) if front]
+
+
 def ordered_faces(faces, view, cam):
-    """[(face_id, kind, mat, screen_poly)] — canonical seam consumed by
-    render + mask. RENDER-visible: excludes `enclosure`-tagged faces (ROUND
-    3) AND (ROUND 4) any face backface-culled at this view, for every
-    module — closed boxes lose hidden faces (previously just overpainted);
-    open covers (stairs/roofs) lose faces with nothing to overpaint them,
-    the actual ROUND 4 bug fix."""
-    return [(fid, k, m, poly) for _, fid, k, m, poly, enc, front in _project(faces, view, cam)
-            if not enc and front]
+    """Render-visible seam: front-facing, not enclosure-tagged (ROUND 3/4)."""
+    return [(fid, k, m, poly) for fid, k, m, poly, enc in ordered_front_faces(faces, view, cam) if not enc]
 
 
 def ordered_enclosure_faces(faces, view, cam):
@@ -108,8 +108,8 @@ def ordered_enclosure_faces(faces, view, cam):
     roof_edge/roof_inset), same projection/sort. Returns ALL enclosure
     faces regardless of facing (not backface-culled — self-occlusion
     bookkeeping wants the full mask-only geometry). Never consumed by
-    paint_panel/render_panel; ROUND 4's mask SOURCE is enclosure_masks.
-    voxel_silhouette, not this."""
+    paint_panel/render_panel; the enclosure MASK is geometric now
+    (enclosure_masks.py: solid minus render minus air-above), not from here."""
     return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc, front in _project(faces, view, cam) if enc]
 
 

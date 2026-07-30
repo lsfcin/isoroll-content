@@ -11,10 +11,10 @@ independently-tested seam — no builder below calls it anymore).
 ROUND 3/4 (design/S4-REVIEW-ROUNDS.md): roof_cell/stairs are cover-only at
 RENDER time; their enclosure faces (roof gable/soffit; stair envelope/back/
 floor) are real `Face` geometry (self-occlusion/silhouette) but `Face.
-enclosure`-tagged — mask-only, never painted. `ordered_faces` filters
-enclosure out AND (ROUND 4) backface-culls on top, for every module. ROUND
-4b's mask SOURCE is `enclosure_masks.lateral_faces` (profile-cap/gable faces),
-not this tag generally. ROUND 4 stairs: `_stair_cover` builds ONE zigzag profile
+enclosure`-tagged — kept out of render, never painted. `ordered_faces` filters
+enclosure out AND (ROUND 4) backface-culls on top, for every module. The mask
+depth-composites these enclosure faces with the cover (Lucas 2026-07-18,
+enclosure_masks.py: ROUND 4c). ROUND 4 stairs: `_stair_cover` builds ONE zigzag profile
 polygon (step outline in the u-z rise plane) extruded across width —
 treads/risers are strips of one connected solid, not stacked boxes.
 """
@@ -27,7 +27,7 @@ UNIT_SQUARE = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
 WALL_H = 3.0  # module-local wall height (unit cell, yaw not baked)
 THIN = 0.12  # top_cap/base z-band thickness
 ROOF_H = 0.7  # roof_cell ridge rise
-STAIR_ENCLOSURE, STAIR_LATERAL = "stair_enclosure", "stair_lateral"  # back-wall/floor unmasked; profile-cap sides = ROUND 4b mask source
+STAIR_ENCLOSURE, STAIR_LATERAL, STAIR_BACK = "stair_enclosure", "stair_lateral", "stair_back"  # enclosure tags only keep these faces OUT of render; the mask is geometric (enclosure_masks.py), tag-blind
 ROOF_RIDGE_V = 0.3  # off-centre on purpose: v=0.5 is mirror-symmetric across
 # v (collapses yaw silhouettes, test_kit_module_render.py needs >=4/8
 # distinct); ridge runs along u, so the two slopes never coincide at any yaw.
@@ -151,10 +151,10 @@ def _stair_profile(rise_scale):
 def _stair_cover(rise_scale):
     """ONE zigzag solid (ROUND 4), not STEPS stacked boxes: extrude
     `_stair_profile` across width (v: 0->1). The two profile copies (v=0/
-    v=1) are mask-only envelope caps, tagged `STAIR_LATERAL` (ROUND 4b mask
-    source); each profile EDGE becomes one v-spanning strip — risers/treads
-    RENDER, back/bottom stay `STAIR_ENCLOSURE` (self-occlusion only, never
-    masked). Edge-to-edge connectivity between steps is by construction."""
+    v=1) are the envelope caps, tagged `STAIR_LATERAL` (enclosure — kept out
+    of render); each profile EDGE becomes one v-spanning strip — risers/treads
+    RENDER; back wall = `STAIR_BACK` (masked, backs onto wall); floor =
+    `STAIR_ENCLOSURE` (z=0 ground, never masked). Connectivity by construction."""
     profile = _stair_profile(rise_scale)
     n = len(profile)
     n_step_edges = 2 * STEPS  # STEPS risers + STEPS treads
@@ -171,7 +171,7 @@ def _stair_cover(rise_scale):
         elif i < n_step_edges:
             faces.append(Face(pts, "top", "step"))  # tread, renders
         elif i == n_step_edges:
-            faces.append(Face(pts, "side", "step", enclosure=STAIR_ENCLOSURE))  # back wall
+            faces.append(Face(pts, "side", "step", enclosure=STAIR_BACK))  # back wall — masked (stair backs onto wall)
         else:
             faces.append(Face(pts, "bottom", "step", enclosure=STAIR_ENCLOSURE))  # floor
     return faces
