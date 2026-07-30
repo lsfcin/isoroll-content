@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""kit_module_render.py — shared projected-face seam, flat render, one shared
-px-per-voxel scale across a sheet (T2/T3).
+"""kit_module_render.py — flat panel render + one shared px-per-voxel scale across a sheet (T2/T3).
+
+The projected-face seam itself (yaw, backface cull, painter sort, project_face) moved to
+face_project.py when the camera family became a parameter; the names are re-exported here, so
+`kmr.ordered_faces` / `kmr.project_face` still resolve for every existing caller and test. Every
+panel function below takes the same optional `family` (view_table.FAMILIES: dimetric | cardinal |
+top) and defaults to the frozen dimetric camera.
 
 Standardized tuple order (Loop 4b, resolving 3-arch.md's own inconsistency
 between its `render_panel(...) -> (RGBA, origin, ordered)` line and its
@@ -14,13 +19,12 @@ thin per-view wrapper around `render_panel` and forwards its return value
 unchanged.
 """
 
-import math
-
 from PIL import Image, ImageDraw
 
 import kit_modules as km
+from face_project import (DIMETRIC, ordered_enclosure_faces, ordered_faces,  # noqa: F401
+                          ordered_front_faces, panel_cam, project_face)
 from kit_render import _black_to_alpha
-from scene_guide_render import Cam
 from tile_guide_render import FACE_CAP, FACE_LONG, FACE_TOP
 
 YAWS = [0, 45, 90, 135, 180, 225, 270, 315]
@@ -34,119 +38,44 @@ _COLOR = {
 }
 
 
-def _yaw(pt, deg, cu, cv):
-    u, v, z = pt
-    rad = math.radians(deg)
-    du, dv = u - cu, v - cv
-    ca, sa = math.cos(rad), math.sin(rad)
-    return (cu + du * ca - dv * sa, cv + du * sa + dv * ca, z)
-
-
-def _face_normal(pts):
-    """Cross of the first two edges, un-normalized — sign only matters here."""
-    p0, p1, p2 = pts[0], pts[1], pts[2]
-    v1, v2 = tuple(b - a for a, b in zip(p0, p1)), tuple(b - a for a, b in zip(p1, p2))
-    return (v1[1] * v2[2] - v1[2] * v2[1], v1[2] * v2[0] - v1[0] * v2[2], v1[0] * v2[1] - v1[1] * v2[0])
-
-
-def _front_facing(pts, view):
-    """ROUND 4 backface cull: normal of `pts` (already yawed for this view)
-    dotted with this fixed dimetric camera's look-toward-viewer axis. Every
-    y{deg} view shares ONE camera fixed at the +u+v+z octant looking toward
-    the origin (yaw rotates the FACE, not the camera) — matches scene_guide
-    _render.Cam/_faces, which only ever draws a box's max-u/max-v/top faces,
-    exactly what (1,1,1) picks out. TOP is a straight-down camera, axis
-    (0,0,1). Edge-on (dot == 0) counts as back-facing (culled)."""
-    n = _face_normal(pts)
-    axis = (0.0, 0.0, 1.0) if view == "TOP" else (1.0, 1.0, 1.0)
-    return (n[0] * axis[0] + n[1] * axis[1] + n[2] * axis[2]) > 1e-9
-
-
-def _project(faces, view, cam):
-    """Shared per-face projection+sort (R3 split from ordered_faces so both
-    it and ordered_enclosure_faces use byte-identical geometry): rotate
-    every Face by its yaw about the module centre (0.5,0.5), project through
-    the fixed-scale dimetric `cam`, sort far->near by painter key
-    (centroid_u+centroid_v, centroid_z) ascending. TOP: orthographic
-    (u*s, v*s), sorted by centroid_z ascending. face_id = f"{i}:{kind}" is
-    stable across views. Rows carry `f.enclosure` AND (ROUND 4) a
-    `front_facing` bool through uncut — callers filter both."""
-    rows = []
-    if view == "TOP":
-        for i, f in enumerate(faces):
-            poly = [(cam.ox + u * cam.s, cam.oy + v * cam.s) for u, v, _z in f.pts]
-            cz = sum(p[2] for p in f.pts) / len(f.pts)
-            rows.append((cz, f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure, _front_facing(f.pts, view)))
-    else:
-        deg = int(view[1:])
-        for i, f in enumerate(faces):
-            pts = [_yaw(p, deg, 0.5, 0.5) for p in f.pts]
-            poly = [cam.pt(u, v, z) for u, v, z in pts]
-            cu = sum(p[0] for p in pts) / len(pts)
-            cv = sum(p[1] for p in pts) / len(pts)
-            cz = sum(p[2] for p in pts) / len(pts)
-            row = ((cu + cv, cz), f"{i}:{f.kind}", f.kind, f.mat, poly, f.enclosure, _front_facing(pts, view))
-            rows.append(row)
-    rows.sort(key=lambda r: r[0])
-    return rows
-
-
-def ordered_front_faces(faces, view, cam):
-    """ALL front-facing faces (enclosure INCLUDED), painter order, tagged enc.
-    enclosure_masks depth-composites this; ordered_faces filters to visible."""
-    return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc, front in _project(faces, view, cam) if front]
-
-
-def ordered_faces(faces, view, cam):
-    """Render-visible seam: front-facing, not enclosure-tagged (ROUND 3/4)."""
-    return [(fid, k, m, poly) for fid, k, m, poly, enc in ordered_front_faces(faces, view, cam) if not enc]
-
-
-def ordered_enclosure_faces(faces, view, cam):
-    """[(face_id, kind, mat, screen_poly, enclosure)] — the complementary
-    mask-only set ordered_faces excludes (ROUND 3: stair_enclosure/
-    roof_edge/roof_inset), same projection/sort. Returns ALL enclosure
-    faces regardless of facing (not backface-culled — self-occlusion
-    bookkeeping wants the full mask-only geometry). Never consumed by
-    paint_panel/render_panel; the enclosure MASK is geometric now
-    (enclosure_masks.py: solid minus render minus air-above), not from here."""
-    return [(fid, k, m, poly, enc) for _, fid, k, m, poly, enc, front in _project(faces, view, cam) if enc]
-
-
-def panel_extent(faces, view, s=1.0):
+def panel_extent(faces, view, s=1.0, family=DIMETRIC):
     """Projected (w, h) bbox of one panel at scale s — no centring, origin (0,0)."""
-    cam = Cam([], 0, 0, 0, scale=s, origin=(0.0, 0.0))
+    cam = panel_cam(view, s, 0, 0, (0.0, 0.0), family)
     ordered = ordered_faces(faces, view, cam)
     xs = [p[0] for _fid, _k, _m, poly in ordered for p in poly]
     ys = [p[1] for _fid, _k, _m, poly in ordered for p in poly]
     return (max(xs) - min(xs), max(ys) - min(ys))
 
 
-def shared_scale(module_names, cell_px, pad):
+def shared_scale(module_names, cell_px, pad, families=(DIMETRIC,)):
     """One s that fits the largest panel (by w, and separately by h) across ALL
-    module x view combos — P3: one scale per sheet, never per-cell."""
+    module x view combos — P3: one scale per sheet, never per-cell. Passing every
+    family keeps ONE s across the whole 8+1 bake, so a piece never changes size
+    when the view switches (view_table's equal-cell-area property is about the
+    projection; this is about the fitted scale)."""
     avail = cell_px - 2 * pad
     max_w = max_h = 0.0
     for name in module_names:
         faces = km.MODULES[name]()
-        for view in VIEWS:
-            w, h = panel_extent(faces, view, s=1.0)
-            max_w = max(max_w, w)
-            max_h = max(max_h, h)
+        for family in families:
+            for view in VIEWS:
+                w, h = panel_extent(faces, view, 1.0, family)
+                max_w = max(max_w, w)
+                max_h = max(max_h, h)
     return min(avail / (max_w or 1.0), avail / (max_h or 1.0))
 
 
-def render_panel(faces, view, s, cell_px, pad):
+def render_panel(faces, view, s, cell_px, pad, family=DIMETRIC):
     """(RGBA, ordered, origin) — fixed-scale Cam centring this panel's bbox in the cell."""
     avail = cell_px - 2 * pad
-    raw_cam = Cam([], 0, 0, 0, scale=s, origin=(0.0, 0.0))
+    raw_cam = panel_cam(view, s, 0, 0, (0.0, 0.0), family)
     raw = ordered_faces(faces, view, raw_cam)
     xs = [p[0] for _fid, _k, _m, poly in raw for p in poly]
     ys = [p[1] for _fid, _k, _m, poly in raw for p in poly]
     minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
     ox = -minx + pad + (avail - (maxx - minx)) / 2
     oy = -miny + pad + (avail - (maxy - miny)) / 2
-    cam = Cam([], cell_px, cell_px, pad, scale=s, origin=(ox, oy))
+    cam = panel_cam(view, s, cell_px, pad, (ox, oy), family)
     ordered = ordered_faces(faces, view, cam)
 
     img = Image.new("RGB", (cell_px, cell_px), (0, 0, 0))
@@ -157,13 +86,13 @@ def render_panel(faces, view, s, cell_px, pad):
     return rgba, ordered, (ox, oy)
 
 
-def render_module(name, s, cell_px, pad):
+def render_module(name, s, cell_px, pad, family=DIMETRIC):
     """dict[view -> (RGBA, ordered, origin)] — 9 entries (VIEWS)."""
     faces = km.MODULES[name]()
-    return {view: render_panel(faces, view, s, cell_px, pad) for view in VIEWS}
+    return {view: render_panel(faces, view, s, cell_px, pad, family) for view in VIEWS}
 
 
-def enclosure_faces(name, s, cell_px, pad, origins):
+def enclosure_faces(name, s, cell_px, pad, origins, family=DIMETRIC):
     """dict[view -> [(face_id, kind, mat, poly, enclosure)]] — ROUND 3
     mask-only faces for every view, projected with the SAME per-view
     `origins` render_module already computed (so a mask lands pixel-aligned
@@ -173,24 +102,9 @@ def enclosure_faces(name, s, cell_px, pad, origins):
     faces = km.MODULES[name]()
     result = {}
     for view in VIEWS:
-        cam = Cam([], cell_px, cell_px, pad, scale=s, origin=origins[view])
+        cam = panel_cam(view, s, cell_px, pad, origins[view], family)
         result[view] = ordered_enclosure_faces(faces, view, cam)
     return result
-
-
-def project_face(pts, view, s, cell_px, pad, origin):
-    """screen_poly for arbitrary world `pts` (T3, additive-only) — byte-identical
-    transform to the per-face step inside `ordered_faces` (same yaw-then-project
-    for yN views, same raw orthographic for TOP), so a face's own `ordered` polys
-    and a `project_face`-derived poly (e.g. a recess decal's world quad) always
-    land in the same screen frame. Does NOT touch ordered_faces/render_panel/
-    render_module."""
-    if view == "TOP":
-        ox, oy = origin
-        return [(ox + u * s, oy + v * s) for u, v, _z in pts]
-    deg = int(view[1:])
-    cam = Cam([], cell_px, cell_px, pad, scale=s, origin=origin)
-    return [cam.pt(*_yaw(p, deg, 0.5, 0.5)) for p in pts]
 
 
 def build_sheet_manifest(panels, s):

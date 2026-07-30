@@ -1,10 +1,12 @@
 from _typeshed import Incomplete
 
 VIEW_TURNS: Incomplete
+DIMETRIC: Incomplete
 
 class Cam:
+    family: Incomplete
     s: Incomplete
-    def __init__(self, boxes, avail_w, avail_h, pad, scale=None, origin=None) -> None: ...
+    def __init__(self, boxes, avail_w, avail_h, pad, scale=None, origin=None, family=...) -> None: ...
     def pt(self, u, v, z): ...
 
 def scene_cam(turned_layout, size, pad: int = 24): ...

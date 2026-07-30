@@ -22,7 +22,7 @@ from PIL import Image, ImageDraw
 import face_masks as fm
 import kit_module_render as kmr
 import kit_modules as km
-from scene_guide_render import Cam
+from face_project import DIMETRIC, panel_cam
 
 _ENCLOSURE_VALUE = fm.MASK_BASE + fm.MASK_STEP  # the mask's own paint value
 
@@ -44,7 +44,7 @@ def composite_enclosure(ordered_front, size):
     return arr == _ENCLOSURE_VALUE
 
 
-def save_enclosure_masks(module, view, s, cell_px, pad, origin, masks_path):
+def save_enclosure_masks(module, view, s, cell_px, pad, origin, masks_path, family=DIMETRIC):
     """Write `{module}_{view}_enclosure_facemask.png`/`_faces.json` — the
     depth-composited enclosure region for this view, recomputed from the same
     (view, s, origin) render_module used for the panel so it lands pixel-
@@ -52,7 +52,7 @@ def save_enclosure_masks(module, view, s, cell_px, pad, origin, masks_path):
     occludes it — e.g. TOP and the edge-on yaws)."""
     size = (cell_px, cell_px)
     faces = km.MODULES[module]()
-    cam = Cam([], cell_px, cell_px, pad, scale=s, origin=origin)
+    cam = panel_cam(view, s, cell_px, pad, origin, family)
     ordered_front = kmr.ordered_front_faces(faces, view, cam)
     mask_arr = composite_enclosure(ordered_front, size)
     pixels = int(mask_arr.sum())

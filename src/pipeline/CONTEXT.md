@@ -25,15 +25,18 @@
 | [`enclosure_masks.py`](enclosure_masks.py) | [`enclosure_masks.pyi`](enclosure_masks.pyi) | `composite_enclosure`, `save_enclosure_masks` | !/usr/bin/env python3 |
 | [`face_edges.py`](face_edges.py) | [`face_edges.pyi`](face_edges.pyi) | `stroke_edges`, `edge_width`, `draw_face_edges` | !/usr/bin/env python3 |
 | [`face_masks.py`](face_masks.py) | [`face_masks.pyi`](face_masks.pyi) | `face_mask`, `save_mask` | !/usr/bin/env python3 |
+| [`face_project.py`](face_project.py) | [`face_project.pyi`](face_project.pyi) | `panel_family`, `yaw_deg`, `panel_cam`, `ordered_front_faces`, `ordered_faces` | ← add first-line comment |
 | [`generate_sheet_template.py`](generate_sheet_template.py) | [`generate_sheet_template.pyi`](generate_sheet_template.pyi) | `load_font`, `total_size`, `cell_origin`, `generate` | !/usr/bin/env python3 |
 | [`guide_marks.py`](guide_marks.py) | [`guide_marks.pyi`](guide_marks.pyi) | `MarkParams`, `apply_marks`, `residue_count`, `tile_panels`, `main` | guide_marks.py — registration-mark post-pass over guide sheets (muralist technique, A/B parameterized). |
-| [`kit_module_render.py`](kit_module_render.py) | [`kit_module_render.pyi`](kit_module_render.pyi) | `ordered_front_faces`, `ordered_faces`, `ordered_enclosure_faces`, `panel_extent`, `shared_scale` | !/usr/bin/env python3 |
+| [`kit_module_render.py`](kit_module_render.py) | [`kit_module_render.pyi`](kit_module_render.pyi) | `panel_extent`, `shared_scale`, `render_panel`, `render_module`, `enclosure_faces` | !/usr/bin/env python3 |
 | [`kit_modules.py`](kit_modules.py) | [`kit_modules.pyi`](kit_modules.pyi) | `Face`, `extrude`, `from_boxes` | !/usr/bin/env python3 |
 | [`kit_render.py`](kit_render.py) | [`kit_render.pyi`](kit_render.pyi) | `piece_boxes`, `render_piece`, `build_kit` | kit_render.py — camera-fixed guide kit: one sprite per piece type (wall/door/window/floor) + alignment manifest. |
 | [`layout_dsl_v2.py`](layout_dsl_v2.py) | [`layout_dsl_v2.pyi`](layout_dsl_v2.pyi) | `parse_text_v2`, `cell` | !/usr/bin/env python3 |
 | [`layout_groups.py`](layout_groups.py) | [`layout_groups.pyi`](layout_groups.pyi) | `diag_solid`, `grp_base_data`, `grp_cell_voxels`, `solid`, `h_at` | !/usr/bin/env python3 |
 | [`layout_massing.py`](layout_massing.py) | [`layout_massing.pyi`](layout_massing.pyi) | `Opening`, `Box`, `massing` | layout_massing.py — Layout grid → box list: merged wall runs with openings, floor strips, stair steps. |
+| [`layout_material.py`](layout_material.py) | [`layout_material.pyi`](layout_material.pyi) | `cell_material`, `wall_material`, `level_attrs` | ← add first-line comment |
 | [`layout_parse.py`](layout_parse.py) | [`layout_parse.pyi`](layout_parse.pyi) | `Level`, `Group`, `Layout`, `rotate_cw`, `rotate_point` | layout_parse.py — text-grid scene layout DSL → validated Layout model (F1 input). |
+| [`layout_rotate.py`](layout_rotate.py) | [`layout_rotate.pyi`](layout_rotate.pyi) | `rotate_arrow`, `rotate_grid_cw`, `rotate_cells`, `rotate_attrs` | ← add first-line comment |
 | [`layout_serialize.py`](layout_serialize.py) | [`layout_serialize.pyi`](layout_serialize.pyi) | `to_dsl` | !/usr/bin/env python3 |
 | [`linework.py`](linework.py) | [`linework.pyi`](linework.pyi) | `floor_stone`, `wall_wood_side`, `wall_wood_top`, `wall_stone_side`, `wall_stone_top` | !/usr/bin/env python3 |
 | [`linework_doors.py`](linework_doors.py) | [`linework_doors.pyi`](linework_doors.pyi) | `door` | !/usr/bin/env python3 |
@@ -58,4 +61,5 @@
 | [`tile_guide_matrix.py`](tile_guide_matrix.py) | [`tile_guide_matrix.pyi`](tile_guide_matrix.pyi) | `CellSpec`, `draw_panel`, `draw_caption`, `parse_spec`, `render_cells` | !/usr/bin/env python3 |
 | [`tile_guide_render.py`](tile_guide_render.py) | [`tile_guide_render.pyi`](tile_guide_render.pyi) | `draw_iso_panel`, `draw_square_grid`, `draw_flat_grid`, `row_y` | tile_guide_render.py — dimetric box-face geometry and single-panel drawing for tile guides. |
 | [`triposr_mesh.py`](triposr_mesh.py) | [`triposr_mesh.pyi`](triposr_mesh.pyi) | `parse_args`, `main` | [OBSOLETE-MESH] triposr_mesh.py — Generate a 3D mesh from a single concept image using TripoSR. |
+| [`view_table.py`](view_table.py) | [`view_table.pyi`](view_table.pyi) | `family`, `turns`, `matrix`, `cull_axis`, `project` | ← add first-line comment |
 <!-- routing:end -->

@@ -149,10 +149,27 @@ def _validate_groups(layout):
                     layout.errors.append(f"level {lvl} ({c},{r}) marker {ch!r} != group type {markers[0]!r}")
 
 
+def _pad_levels(levels):
+    """Pad every level to ONE shared frame (the bounding rows x cols), VOID-filled.
+
+    Rotation maps a cell by (r,c) -> (c, rows-1-r) in a single frame (layout_rotate.py) and group
+    cells / attr overlays are authored in that same frame, so ragged levels would rotate onto
+    different origins and drift apart view by view. Padding is VOID-only: massing ignores VOID, so
+    no count or box changes.
+    """
+    rows = max((len(level.g) for level in levels.values()), default=0)
+    cols = max((len(row) for level in levels.values() for row in level.g), default=0)
+    for level in levels.values():
+        padded = [row.ljust(cols) for row in level.g]
+        padded.extend([" " * cols] * (rows - len(padded)))
+        level.g = padded
+
+
 def parse_text_v2(text, name):
     lines = text.splitlines()
     directives, i = _read_directives(lines)
     levels, groups = _parse_body(lines, i)
+    _pad_levels(levels)
     base_grid = levels[min(levels)].g if levels else []
     layout = Layout(name=directives.get("name", name), grid=base_grid,
                      wall_h=int(directives.get("wall_h", DEFAULT_WALL_H)),

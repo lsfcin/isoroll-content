@@ -6,13 +6,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from layout_groups import DIAG, ENCLOSE, ROOF_FORMS, SIDE_NAME, STAIR_TYPES, grp_base_data, grp_cell_voxels
+from layout_rotate import rotate_arrow, rotate_attrs, rotate_cells, rotate_grid_cw
 
 WALL, FLOOR, VOID, DOOR, WINDOW = "#", ".", " ", "D", "W"
 # Stairs are directional (the arrow points toward the ascent) so that grid
 # rotation can remap them and every view sees the same physical staircase.
 STAIR_N, STAIR_E, STAIR_S, STAIR_W = "^", ">", "v", "<"
 STAIRS = {STAIR_N, STAIR_E, STAIR_S, STAIR_W}
-_STAIR_CW = {STAIR_N: STAIR_E, STAIR_E: STAIR_S, STAIR_S: STAIR_W, STAIR_W: STAIR_N}
 SOLID = {WALL, DOOR, WINDOW}
 # v2 (T2/T3): R/S are group-surface voxel markers, not real grid content — see Group below.
 MARKERS = {"R", "S"}
@@ -75,32 +75,41 @@ class Layout:
         return VOID
 
 
-def _rotate_grid_cw(grid, turns):
-    for _ in range(turns % 4):
-        grid = ["".join(_STAIR_CW.get(ch, ch) for ch in col) for col in zip(*grid[::-1])]
-    return grid
+def _rotate_level(level, rows, cols, turns):
+    """Grid AND every per-cell overlay of one level (layout_rotate.rotate_attrs) — leaving the
+    overlays unrotated would repaint materials/types onto other cells when a view switches."""
+    return Level(g=rotate_grid_cw(level.g, turns),
+                 side=rotate_attrs(level.side, rows, cols, turns),
+                 type=rotate_attrs(level.type, rows, cols, turns),
+                 wmat=rotate_attrs(level.wmat, rows, cols, turns),
+                 fh=rotate_attrs(level.fh, rows, cols, turns))
+
+
+def _rotate_group(group, rows, cols, turns):
+    """A group's cells and ascent arrow rotate with the grid; form/incl/z are frame-independent."""
+    return Group(kind=group.kind, cells=rotate_cells(group.cells, rows, cols, turns), form=group.form,
+                 dir=rotate_arrow(group.dir, turns), incl=group.incl, z=group.z, enclose=group.enclose)
 
 
 def rotate_cw(layout, turns=1):
     """New Layout turned 90° clockwise `turns` times; stair arrows follow.
 
-    v2: rotates every level's grid the same way. Group cells/dir are NOT re-oriented (no current
-    seam exercises rotate_cw on a Layout with groups) — carried over as-is, a known limitation.
+    v2: rotates every level's grid, its per-cell overlays, and every roof/stair group (cells +
+    ascent arrow) — so a rotated view shows the same physical scene, which is what makes the 8+1
+    view table a cell remap rather than new art.
     """
     turns = turns % 4
     if layout.levels:
-        new_levels = {
-            lvl: Level(g=_rotate_grid_cw(level.g, turns), side=level.side, type=level.type,
-                       wmat=level.wmat, fh=level.fh)
-            for lvl, level in layout.levels.items()
-        }
+        rows, cols = layout.rows, layout.cols
+        new_levels = {lvl: _rotate_level(level, rows, cols, turns) for lvl, level in layout.levels.items()}
         base_grid = new_levels[min(new_levels)].g
         out = Layout(layout.name, base_grid, layout.wall_h, len(base_grid),
                      len(base_grid[0]) if base_grid else 0)
-        out.levels, out.groups = new_levels, layout.groups
+        out.levels = new_levels
+        out.groups = [_rotate_group(group, rows, cols, turns) for group in layout.groups]
         out.errors, out.warnings = layout.errors, layout.warnings
         return out
-    grid = _rotate_grid_cw(layout.grid, turns)
+    grid = rotate_grid_cw(layout.grid, turns)
     out = Layout(layout.name, grid, layout.wall_h, len(grid), len(grid[0]) if grid else 0)
     out.errors, out.warnings = layout.errors, layout.warnings
     return out

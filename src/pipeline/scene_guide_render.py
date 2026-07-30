@@ -3,21 +3,24 @@
 
 from PIL import Image, ImageDraw
 
+import view_table
 from layout_massing import massing
 from layout_parse import DOOR, FLOOR, SOLID, STAIRS, VOID, WINDOW, rotate_cw
 from tile_guide_render import FACE_CAP, FACE_LONG, FACE_TOP, GRID_WIDTH, MAGENTA, SIL_WIDTH
 
 # True rotation per view: the single-tile mirror trick would mirror the floor
 # plan itself, so scenes re-run massing on a clockwise-rotated grid instead.
-VIEW_TURNS = {"SW": 0, "SE": 1, "NE": 2, "NW": 3}
-_UX, _UY, _UZ = 1.0, 0.5, 1.0  # 2:1 dimetric, same camera as tile_guide_render
+# Re-exported from view_table.py, which owns the 8+1 table (4 dimetric + 4
+# cardinal + TOP); the four dimetric entries are unchanged.
+VIEW_TURNS = view_table.VIEW_TURNS
+DIMETRIC = view_table.DIMETRIC
 
 
-def _proj(u, v, z):
-    return (u - v) * _UX, (u + v) * _UY - z * _UZ
+def _proj(u, v, z, family=DIMETRIC):
+    return view_table.project(family, u, v, z)
 
 
-def _fit(boxes, avail_w, avail_h):
+def _fit(boxes, avail_w, avail_h, family=DIMETRIC):
     if not boxes:
         # 3-arch.md Amendment (C5-seam+): defense for an all-void scene (no wall/floor/GRP boxes
         # at all) — min()/max() over an empty list would raise ValueError otherwise.
@@ -27,7 +30,7 @@ def _fit(boxes, avail_w, avail_h):
         for u in (b.u0, b.u0 + b.l):
             for v in (b.v0, b.v0 + b.d):
                 for z in (b.z0, b.z0 + b.h):
-                    x, y = _proj(u, v, z)
+                    x, y = _proj(u, v, z, family)
                     xs.append(x)
                     ys.append(y)
     minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
@@ -38,18 +41,25 @@ def _fit(boxes, avail_w, avail_h):
 
 
 class Cam:
-    """Dimetric camera: fit-to-panel by default, or fixed scale+origin for kit/assembly alignment."""
+    """Fit-to-panel by default, or fixed scale+origin for kit/assembly alignment.
 
-    def __init__(self, boxes, avail_w, avail_h, pad, scale=None, origin=None):
+    `family` picks the projection out of view_table.FAMILIES (default: the frozen dimetric camera,
+    so every pre-existing caller is unchanged). Turns/rotation are NOT the camera's business —
+    callers rotate the layout with rotate_cw(layout, VIEW_TURNS[view]) before massing it, and read
+    the family off the same view name with view_table.family(view).
+    """
+
+    def __init__(self, boxes, avail_w, avail_h, pad, scale=None, origin=None, family=DIMETRIC):
+        self.family = family
         if scale is None:
-            self.s, ox, oy = _fit(boxes, avail_w - 2 * pad, avail_h - 2 * pad)
+            self.s, ox, oy = _fit(boxes, avail_w - 2 * pad, avail_h - 2 * pad, family)
             self.ox, self.oy = ox + pad, oy + pad
         else:
             self.s = scale
             self.ox, self.oy = origin
 
     def pt(self, u, v, z):
-        x, y = _proj(u, v, z)
+        x, y = _proj(u, v, z, self.family)
         return self.ox + x * self.s, self.oy + y * self.s
 
 

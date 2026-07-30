@@ -3,7 +3,9 @@
 
 from dataclasses import dataclass, field
 
-from layout_groups import grp_base_data, grp_cell_voxels
+from layout_groups import SIDE_NAME, grp_base_data, grp_cell_voxels
+from layout_material import DEFAULT as DEFAULT_MAT
+from layout_material import cell_material, level_attrs, wall_material
 from layout_parse import DOOR, FLOOR, Layout, SOLID, STAIRS, STAIR_E, STAIR_N, STAIR_S, STAIR_W, WINDOW
 
 STEPS = 4  # sub-boxes per stair cell
@@ -24,10 +26,13 @@ class Box:
     l: float  # extent along u
     d: float  # extent along v
     h: float  # extent along z (0 = flat)
-    kind: str  # "wall" | "floor" | "step"
+    kind: str  # "wall" | "floor" | "step" | "GRP"
     openings: list = field(default_factory=list)
     axis: str = "u"  # wall-run axis; openings pierce across it
     z0: float = 0.0  # v2 (T5, DECISION D1): base elevation — level_index * wall_h; 0.0 = v1 back-compat
+    mat: str = DEFAULT_MAT  # material name (layout_material) — what texture_map paints this box with
+    grp: str = ""  # GRP boxes only: "{roof|stair}:{N|E|S|W}" — which group, pointing which way, so
+    # assembly can pick a roof/stair piece with the right orientation instead of a nameless "group"
 
 
 def _run_openings(layout, u0, v0, length, axis):
@@ -49,14 +54,17 @@ def _cell_axis(layout, u, v):
     return "u"
 
 
-def _cell_wall_boxes(layout, wall_h):
+def _cell_wall_boxes(layout, wall_h, attrs=None):
     """One 1x1 box per solid cell — exact painter's order for rendering."""
+    attrs = attrs if attrs is not None else level_attrs(None)
     boxes = []
     for v in range(layout.rows):
         for u in range(layout.cols):
-            if layout.kind(u, v) in SOLID:
+            ch = layout.kind(u, v)
+            if ch in SOLID:
+                mat = wall_material(attrs, v, u, ch)
                 boxes.append(Box(u, v, 1, 1, wall_h, "wall",
-                                 _run_openings(layout, u, v, 1, "u"), _cell_axis(layout, u, v)))
+                                 _run_openings(layout, u, v, 1, "u"), _cell_axis(layout, u, v), mat=mat))
     return boxes
 
 
@@ -90,16 +98,19 @@ def _merged_wall_boxes(layout, wall_h):
     return boxes
 
 
-def _floor_boxes(layout):
+def _floor_boxes(layout, attrs=None):
+    """Floor strips, split where the material changes so one strip is never two materials."""
+    attrs = attrs if attrs is not None else level_attrs(None)
     boxes = []
     for v in range(layout.rows):
         u = 0
         while u < layout.cols:
             run = 0
-            while layout.kind(u + run, v) == FLOOR:
+            mat = cell_material(attrs, v, u, FLOOR)
+            while layout.kind(u + run, v) == FLOOR and cell_material(attrs, v, u + run, FLOOR) == mat:
                 run += 1
             if run:
-                boxes.append(Box(u, v, run, 1, 0, "floor"))
+                boxes.append(Box(u, v, run, 1, 0, "floor", mat=mat))
             u += max(run, 1)
     return boxes
 
@@ -125,9 +136,10 @@ def _stair_boxes(layout):
     return boxes
 
 
-def _massing_one_level(layout, merge):
-    walls = _merged_wall_boxes if merge else _cell_wall_boxes
-    return _floor_boxes(layout) + _stair_boxes(layout) + walls(layout, layout.wall_h)
+def _massing_one_level(layout, merge, attrs=None):
+    if merge:
+        return _floor_boxes(layout, attrs) + _stair_boxes(layout) + _merged_wall_boxes(layout, layout.wall_h)
+    return _floor_boxes(layout, attrs) + _stair_boxes(layout) + _cell_wall_boxes(layout, layout.wall_h, attrs)
 
 
 def _group_boxes(layout):
@@ -137,9 +149,10 @@ def _group_boxes(layout):
     boxes = []
     for group in layout.groups:
         base = grp_base_data(group)
+        grp = f"{group.kind}:{SIDE_NAME[group.dir]}"
         for (r, c) in group.cells:
             vox_lo, vox_hi = grp_cell_voxels(base, group, r, c)
-            boxes.append(Box(c, r, 1, 1, vox_hi - vox_lo, "GRP", z0=vox_lo))
+            boxes.append(Box(c, r, 1, 1, vox_hi - vox_lo, "GRP", z0=vox_lo, grp=grp))
     return boxes
 
 
@@ -155,9 +168,10 @@ def massing(layout, merge=True):
     if layout.levels:
         boxes = []
         for lvl in sorted(layout.levels):
-            grid = layout.levels[lvl].g
+            level = layout.levels[lvl]
+            grid = level.g
             sub = Layout(layout.name, grid, layout.wall_h, len(grid), len(grid[0]) if grid else 0)
-            for box in _massing_one_level(sub, merge):
+            for box in _massing_one_level(sub, merge, level_attrs(level)):
                 box.z0 = lvl * layout.wall_h
                 boxes.append(box)
         boxes.extend(_group_boxes(layout))

@@ -32,11 +32,13 @@ def _bool(idmap):
 
 
 def _front(module, view, s, cell_px, pad, origin):
+    # panel_cam, not a raw Cam: the panel token decides the camera family (face_project.py), so a
+    # "TOP" panel is projected by the top camera. Building a bare dimetric Cam here would silently
+    # top-project under the old code's TOP special-case and dimetric-project without it.
     import kit_module_render as kmr
     import kit_modules as km
-    from scene_guide_render import Cam
     faces = km.MODULES[module]()
-    cam = Cam([], cell_px, cell_px, pad, scale=s, origin=origin)
+    cam = kmr.panel_cam(view, s, cell_px, pad, origin)
     return kmr.ordered_front_faces(faces, view, cam)
 
 
