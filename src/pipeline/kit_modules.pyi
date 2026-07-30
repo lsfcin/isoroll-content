@@ -7,6 +7,7 @@ THIN: float
 ROOF_H: float
 STAIR_ENCLOSURE: Incomplete
 STAIR_LATERAL: Incomplete
+STAIR_BACK: Incomplete
 ROOF_RIDGE_V: float
 SLAB_THICK: float
 
