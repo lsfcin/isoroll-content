@@ -71,7 +71,7 @@ def test_every_manifest_tile_resolves_to_a_sprite_this_kit_carries(cabin, kit_ro
         result = render_scene.render_scene(cabin, view, kit_root)
         for tile in result["manifest"]["tiles"]:
             path = Path(result["kit_dir"]) / tile["asset"]
-            assert path.exists(), (view, tile["piece"], tile["mat"], tile["dir"], tile["asset"])
+            assert path.exists(), (view, tile["piece"], tile["mat"], tile["side"], tile["asset"])
 
 
 def test_geometry_round_trips_through_all_nine_views(cabin):

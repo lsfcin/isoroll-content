@@ -14,7 +14,7 @@
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -22,15 +22,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 5,
@@ -38,15 +46,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -54,15 +70,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 5,
@@ -70,15 +94,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -86,15 +118,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 5,
@@ -102,15 +142,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -118,15 +166,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 5,
@@ -134,15 +190,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -150,15 +214,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 5,
@@ -166,15 +238,23 @@
       "z": 0,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -182,15 +262,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 1,
@@ -198,15 +286,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 2,
@@ -214,15 +310,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 3,
@@ -230,15 +334,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 4,
@@ -246,15 +358,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 5,
@@ -262,15 +382,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 6,
@@ -278,15 +406,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 7,
@@ -294,15 +430,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 8,
@@ -310,15 +454,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 9,
@@ -326,15 +478,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -342,15 +502,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 4,
@@ -358,15 +526,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 9,
@@ -374,15 +550,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -390,15 +574,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "door_v",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "door_v.png",
       "facing": "SW",
       "u": 4,
@@ -406,15 +598,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.10070422535211256,
-        0.6076086956521738
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        14.299999999999983,
+        195.64999999999998
+      ],
+      "sizePx": [
+        142,
+        322
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 9,
@@ -422,15 +622,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -438,15 +646,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 4,
@@ -454,15 +670,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "window_v",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "window_v.png",
       "facing": "SW",
       "u": 9,
@@ -470,15 +694,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.10070422535211256,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        14.299999999999983,
+        69.65
+      ],
+      "sizePx": [
+        142,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -486,15 +718,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 4,
@@ -502,15 +742,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 9,
@@ -518,15 +766,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -534,15 +790,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 4,
@@ -550,15 +814,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 9,
@@ -566,15 +838,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 0,
@@ -582,15 +862,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 1,
@@ -598,15 +886,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 2,
@@ -614,15 +910,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "door_u",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "door_u.png",
       "facing": "SW",
       "u": 3,
@@ -630,15 +934,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.10070422535211256,
-        0.7836956521739131
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        14.299999999999983,
+        252.35000000000002
+      ],
+      "sizePx": [
+        142,
+        322
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 4,
@@ -646,15 +958,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 5,
@@ -662,15 +982,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 6,
@@ -678,15 +1006,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 7,
@@ -694,15 +1030,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 8,
@@ -710,15 +1054,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "wood",
-      "dir": "",
+      "side": "",
       "asset": "wall__wood.png",
       "facing": "SW",
       "u": 9,
@@ -726,15 +1078,23 @@
       "z": 0,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -742,15 +1102,23 @@
       "z": 2,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -758,15 +1126,23 @@
       "z": 2,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "floor",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "floor.png",
       "facing": "SW",
       "u": 1,
@@ -774,15 +1150,23 @@
       "z": 2,
       "boundHeight": 0,
       "imageOffset": [
-        0.4980392156862745,
-        0.10957746478873241
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        15.560000000000002
+      ],
+      "sizePx": [
+        255,
+        142
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 0,
@@ -790,15 +1174,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 1,
@@ -806,15 +1198,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 2,
@@ -822,15 +1222,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 3,
@@ -838,15 +1246,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 4,
@@ -854,15 +1270,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 0,
@@ -870,15 +1294,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 4,
@@ -886,15 +1318,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 0,
@@ -902,15 +1342,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 4,
@@ -918,15 +1366,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 0,
@@ -934,15 +1390,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 4,
@@ -950,15 +1414,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 0,
@@ -966,15 +1438,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 1,
@@ -982,15 +1462,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 2,
@@ -998,15 +1486,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 3,
@@ -1014,15 +1510,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "wall",
       "mat": "stone",
-      "dir": "",
+      "side": "",
       "asset": "wall__stone.png",
       "facing": "SW",
       "u": 4,
@@ -1030,15 +1534,23 @@
       "z": 2,
       "boundHeight": 2,
       "imageOffset": [
-        0.4980392156862745,
-        0.7485148514851485
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        378.0
+      ],
+      "sizePx": [
+        255,
+        505
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "stair",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "stair_N.png",
       "facing": "SW",
       "u": 3,
@@ -1046,15 +1558,23 @@
       "z": 1,
       "boundHeight": 1,
       "imageOffset": [
-        0.5,
-        0.4980237154150198
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        126.0
+      ],
+      "sizePx": [
+        254,
+        253
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "stair",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "stair_N.png",
       "facing": "SW",
       "u": 3,
@@ -1062,15 +1582,23 @@
       "z": 0,
       "boundHeight": 1,
       "imageOffset": [
-        0.5,
-        0.4980237154150198
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        127.0,
+        126.0
+      ],
+      "sizePx": [
+        254,
+        253
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 5,
@@ -1078,15 +1606,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 6,
@@ -1094,15 +1630,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 7,
@@ -1110,15 +1654,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 8,
@@ -1126,15 +1678,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 5,
@@ -1142,15 +1702,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 6,
@@ -1158,15 +1726,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 7,
@@ -1174,15 +1750,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 8,
@@ -1190,15 +1774,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 5,
@@ -1206,15 +1798,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 6,
@@ -1222,15 +1822,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 7,
@@ -1238,15 +1846,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 8,
@@ -1254,15 +1870,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 5,
@@ -1270,15 +1894,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 6,
@@ -1286,15 +1918,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 7,
@@ -1302,15 +1942,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 8,
@@ -1318,15 +1966,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 5,
@@ -1334,15 +1990,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 6,
@@ -1350,15 +2014,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 7,
@@ -1366,15 +2038,23 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     },
     {
       "piece": "roof",
       "mat": "",
-      "dir": "N",
+      "side": "N",
       "asset": "roof_N.png",
       "facing": "SW",
       "u": 8,
@@ -1382,8 +2062,16 @@
       "z": 2,
       "boundHeight": 1,
       "imageOffset": [
-        0.41330275229357794,
-        0.35535714285714287
+        0.0,
+        0.0
+      ],
+      "originPx": [
+        90.1,
+        69.65
+      ],
+      "sizePx": [
+        218,
+        196
       ],
       "pxPerVoxel": 126.0
     }

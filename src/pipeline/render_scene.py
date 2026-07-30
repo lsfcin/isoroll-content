@@ -78,7 +78,9 @@ def bake(layout, kit_root, out_dir, views=None, arm="a"):
         result = render_scene(layout, view, kit_root, arm)
         manifest = result["manifest"]
         manifest["kit"] = str(kit_dir_for(kit_root, view))
-        path = out / f"{layout.name}_{view}.manifest.json"
+        # lowercase, single-extension: the workspace naming gate rejects both `SW` and the
+        # `<slug>.TYPE.json` double-extension shape (core/SCHEMA.md).
+        path = out / f"{layout.name}_{view.lower()}_manifest.json"
         payload = json.dumps(manifest, indent=2)
         path.write_text(payload)
         written[view] = manifest

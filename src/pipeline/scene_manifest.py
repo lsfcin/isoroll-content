@@ -38,19 +38,29 @@ def build_manifest(layout, kit_dir, view="NW"):
         # it yet — imageOffset degrades to a neutral [0,0] rather than KeyError-ing.
         resolved = kit_assets.resolve(manifest["pieces"], name, mat, direction)
         piece = manifest["pieces"].get(resolved) if resolved else None
-        ox, oy = piece["origin"] if piece else (0, 0)
-        w, h = piece["size"] if piece else (1, 1)
+        origin = list(piece["origin"]) if piece else [0.0, 0.0]
+        size = list(piece["size"]) if piece else [1, 1]
         tiles.append({
             "piece": name,
             "mat": mat,
-            "dir": direction,
+            "side": direction,
             "asset": kit_assets.asset_name(manifest["pieces"], name, mat, direction),
             "facing": view,
             "u": box.u0,
             "v": box.v0,
             "z": box.z0,
             "boundHeight": box.h,
-            "imageOffset": [ox / w, oy / h],
+            # The module defines imageOffset as a WORLD displacement normalized by gridSize
+            # (isoroll-module/src/transform/CONTEXT.md: mesh.x = baseCenterWorld.x + imgOff.x *
+            # gridSize) — an artist nudge away from where the module's own box/anchor model puts
+            # the sprite. NEUTRAL here on purpose: this exporter used to emit origin_px / size_px,
+            # which is not that quantity in any unit and pushed values out of [0,1] as soon as
+            # sprites were cropped (caught live — the module's validator rejected the import).
+            # Per-piece alignment is calibrated against live Foundry, not guessed; the raw data
+            # that calibration needs is originPx/sizePx below.
+            "imageOffset": [0.0, 0.0],
+            "originPx": origin,
+            "sizePx": size,
             "pxPerVoxel": px_per_unit,
         })
 
@@ -61,7 +71,7 @@ def build_manifest(layout, kit_dir, view="NW"):
                     tiles.append({
                         "piece": "stair",
                         "mat": "",
-                        "dir": "",
+                        "side": "",
                         "asset": "stair.png",
                         "facing": view,
                         "u": u,
@@ -69,6 +79,8 @@ def build_manifest(layout, kit_dir, view="NW"):
                         "z": lvl * turned.wall_h,
                         "boundHeight": float(STAIR_RISE),
                         "imageOffset": [0.0, 0.0],
+                        "originPx": [0.0, 0.0],
+                        "sizePx": [1, 1],
                         "pxPerVoxel": px_per_unit,
                     })
 
