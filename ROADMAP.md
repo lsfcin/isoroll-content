@@ -84,7 +84,14 @@ Single user-visible outcome. The seam gets frozen by carrying the cabin all the 
       per-cell attr overlays (materials) and ragged level frames were not being rotated, so any view
       but SW was quietly wrong.
 - [ ] module: close painter MVP (`loop/painter-mvp-1@3987979`, WIP, 16 dirty).
-- [ ] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin.
+- [~] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin. **Import half done and
+      verified live** (2026-07-30): `test/e2e/import-cabin.spec.mjs` imports the cabin manifest for all
+      9 views against a running Foundry — tile and wall counts round-trip, and wall CELLS are constant
+      at 51 across every view (the number isoroll-content asserts independently). Still open: vision
+      and fog behaviour on the imported walls is not asserted by anything yet, and the tiles land where
+      the module's box/anchor model puts them because `imageOffset` is now neutral — **per-piece
+      alignment is un-calibrated**. Calibrate by measuring in live Foundry (the spec is the harness);
+      the raw inputs are the manifest's new `originPx`/`sizePx` + `pxPerVoxel`. Do not guess it.
 - [ ] module: view switching across 8+1 (dimetric = cell remap; cardinal = projection preset via the
       existing `customRotation`/`customSkewX`/`customSkewY`/`customRatio` flags).
 - [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
@@ -94,6 +101,13 @@ Single user-visible outcome. The seam gets frozen by carrying the cabin all the 
 - Before that gate can be called, agents must have verified the chain themselves: `verify:full` e2e green
   against live Foundry, `dumpZOrderJSON()` stable across all 9 view switches, wall count round-tripping
   from the layout. Lucas's gate is for *feel*, never for finding broken plumbing.
+- Chain status 2026-07-30: `verify:full` **green** (127 unit + 9 e2e, 0 failed) and wall count
+  **round-trips** (51 cells, every view). `dumpZOrderJSON()` across 9 view switches is **not yet
+  exercised** — that needs view switching to exist first (task above). Two traps found and removed on
+  the way, both worth knowing about: the e2e golden gate had been reporting a false ~10% mismatch that
+  was entirely the GAME PAUSED banner over the capture (fixed in `test/e2e/golden.mjs`), and the
+  manifest's `imageOffset` was never the module's quantity (see the entry above). Foundry is started
+  with `--world=isoroll-test`; without the world the e2e login selector never appears.
 
 ## BAKEOFF — content arms compared behind the frozen seam
 
