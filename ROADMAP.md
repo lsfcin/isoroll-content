@@ -38,18 +38,42 @@ trade-off honestly.
 | D6 | Art cost is paid **once at texture scale** (~40 materials), never per tile | ~40 painted materials is AI-able or commissionable; 500 stitched tiles is not. Same logic for props: mesh once, render 9 views |
 | D7 | Perf deferred, with one guard | unique-pixel memory scales with map area × views (draw calls do NOT change between arms). Keep `px_per_voxel` and `chunk` as manifest fields so chunking + per-view lazy bake stay possible without a format break |
 
-## SEAM — freeze the renderer interface (content, small)
+## How this gets used — the workflow is the spec (read before planning any task)
 
-- [ ] `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry; arm A (today's kit
-      assembly) becomes implementation A behind it, code untouched.
-- [ ] Manifest gains `px_per_voxel` + `chunk` fields (D7 guard).
-- [ ] Fixture upgrade: bare l-room → **cabin** (2 rooms, door, window, stair to a platform, roof section,
-      2 materials). The l-room cannot produce a meaningful style verdict — no stairs, no roof, one material.
-- [ ] Golden test: manifest + assembled PNG for the cabin fixture.
-- Gate: `make verify-fast` green; golden diff stable. No eyeball needed (no new pixels).
+Failure pattern this project keeps hitting (Lucas, 2026-07-29): agents make progress but leave **loose
+ends — results that don't connect to the next step**. Three rules exist to prevent it, and they bind every
+task below:
 
-## PLAYABLE — ugly, complete, in Foundry (module-heavy, zero generation)
+1. **Milestones are user actions, never artifacts.** A milestone is "Lucas paints a room and walks a token",
+   never "the renderer interface exists". An interface is frozen *by being used end to end*, not before —
+   which is why the old SEAM milestone was folded into PLAYABLE rather than kept as its own gate. Any task
+   that cannot name the user action it serves is a loose end by definition.
+2. **Every eye-catch becomes a code invariant.** When Lucas catches something by looking (orange mask over
+   air, hairlines, phantom plates), the fix is not just the fix — it's an invariant test so it can never
+   come back to him. Precedent that this works: ROUND 4's `render ∪ mask == silhouette` test made that whole
+   bug class unshippable. This is the mechanism that turns 19 review rounds into 3.
+3. **The user's touchpoints are budgeted and enumerated.** Lucas appears exactly twice below (PLAYABLE
+   usability gate, BAKEOFF style verdict). Anything that would add a third touchpoint needs a code oracle
+   first. Agents must never route a judgement to him that a test could make.
 
+Agent self-knowledge to plan around, not wish away: **Claude is not a Foundry expert and has a weak visual
+eye.** Therefore — load `/foundry` before touching module code; never assert Foundry behavior, verify it
+against the live instance (`verify:full` e2e + the `isoroll.dumpZOrderJSON()` oracle); never assert geometry
+from looking at an image (`core/skills/iso-visual.md` hard rule). And prototype interactions in a throwaway
+rig before coding them in the module — `design/feel-rig/` is what made the frozen painter grammar cheap, and
+that grammar is already bought: **reuse rig v16.2, do not re-derive it.**
+
+## PLAYABLE — ugly, complete, in Foundry (zero generation, absorbs the old SEAM milestone)
+
+Single user-visible outcome. The seam gets frozen by carrying the cabin all the way into Foundry.
+
+- [ ] content: `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry; arm A (today's
+      kit assembly) becomes implementation A behind it, code untouched.
+- [ ] content: manifest gains `px_per_voxel` + `chunk` fields (D7 guard).
+- [ ] content: fixture upgrade bare l-room → **cabin** (2 rooms, door, window, stair to a platform, roof
+      section, 2 materials). The l-room cannot produce a meaningful style verdict — no stairs, no roof,
+      one material.
+- [ ] content: golden test on the cabin (manifest + assembled PNG).
 - [ ] content: cardinal camera entries in the view table (projection + cull axis) → bake the cabin sprite
       set + manifest, all **9 views** (D2), from arm A with the existing 50 linework textures.
 - [ ] module: close painter MVP (`loop/painter-mvp-1@3987979`, WIP, 16 dirty).
@@ -58,8 +82,11 @@ trade-off honestly.
       existing `customRotation`/`customSkewX`/`customSkewY`/`customRatio` flags).
 - [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
 - [ ] module: 8-direction token sprite selection (placeholder in `object-transform.ts`).
-- ☐ **Gate (Lucas):** paint a room in live Foundry, walk a token, rotate through all 9 views. Walls,
-      vision, fog and z-order correct. **Look is explicitly not judged here.**
+- ☐ **Gate (Lucas), touchpoint 1 of 2:** paint a room in live Foundry, walk a token, rotate through all 9
+      views. Walls, vision, fog and z-order correct. **Look is explicitly not judged here.**
+- Before that gate can be called, agents must have verified the chain themselves: `verify:full` e2e green
+  against live Foundry, `dumpZOrderJSON()` stable across all 9 view switches, wall count round-tripping
+  from the layout. Lucas's gate is for *feel*, never for finding broken plumbing.
 
 ## BAKEOFF — content arms compared behind the frozen seam
 
@@ -69,7 +96,7 @@ trade-off honestly.
       full-scene render, pixel-identical.
 - [ ] arm C: NB-restyled textures (~3 first: wall stone, floor wood, roof shingle) dropped into whichever
       arm wins geometry. Code gate before eyeball: half-shift wrap-seam energy test per texture.
-- [ ] Pre-registered decision rule: Lucas style score 1–5 **and** a code continuity check (cross-cell
+- [ ] Pre-registered decision rule (touchpoint 2 of 2): Lucas style score 1–5 **and** a code continuity check (cross-cell
       seam energy). Winner becomes the default arm; losers get a kill-log line.
 - ☐ **Gate (Lucas):** three arms boarded side by side on the identical cabin geometry.
 
