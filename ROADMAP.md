@@ -91,6 +91,13 @@ Single user-visible outcome. The seam gets frozen by carrying the cabin all the 
 ## BAKEOFF — content arms compared behind the frozen seam
 
 - [ ] arm A: as-is (baseline, already baked by PLAYABLE).
+- [ ] arm A′: **Wang/corner-tiled arm A** — arm A with a corner-matched variant SET per piece instead
+      of one sprite. Added 2026-07-30 after the Wang-tile research below: this is the option that
+      keeps arm A's reusable sprite (and its painter latency: pick a variant by neighbour colours, no
+      re-render on a paint stroke) while making patterns cross cell joins. Cost is a bake multiplier
+      (~16 variants per piece per material per family), not artist time — D6 still holds. Scope it
+      against arm B *before* building it: if arm B's re-render latency turns out acceptable, A′ is
+      redundant.
 - [ ] arm B: scene-cell world-uv render — each cell rendered at its **real world position**, cropped by
       its own face mask. Continuity exact by construction. Invariant test: crop-and-recompose ==
       full-scene render, pixel-identical.
@@ -126,10 +133,58 @@ Single user-visible outcome. The seam gets frozen by carrying the cabin all the 
 | S0-E4/E5/E6a/E6b/E6c NB tile batches | parked with the NB-sheet regime; the S0 8+1 decision itself survives as D2 |
 | Cross-view sprite QC (IoU, cross-view dims) | dissolves under arm B (a render is consistent by construction); arm A keeps it while it is the baseline |
 
+## Research finding — Wang tiles apply, and they qualify a kill-log row (2026-07-30, Lucas asked)
+
+**Wang tiles** (square tiles with coloured EDGES, laid so touching edges match) are the standard way
+to get boundless, non-periodic pattern out of a *finite, reusable* tile set. **Corner tiles** (Lagae &
+Dutré 2006) colour the CORNERS instead and fix the *corner problem* — edge-coloured tiles leave
+diagonal neighbours unconstrained, so continuity breaks near tile corners; corner tiles also halve
+texture memory and are easier to tile. Sources in [refs/REFS.md](refs/REFS.md).
+
+**What this means for us — the honest version:** the kill-log's "reusable sprite + true cross-tile
+continuity are mutually exclusive → IMPOSSIBLE" is true for a **one-sprite-per-piece** set, which is
+what arm A is today. It is **not** true for a *set*: that is precisely the problem Wang/corner tiling
+solves, and it has been solved for our exact case — Derouet-Jourdan et al. build a Wang tile set for
+**stochastic stone/brick wall patterns** with procedural hash-based placement, boundless, with
+explicit control over "no cross" and "no long lines". Our `wall_band` is that problem. The kill-log
+row is amended accordingly in SCENE-CREATION.md rather than left overstated.
+
+Why it is a real contender and not just theory:
+- **Painter latency.** A Wang/corner variant is picked from neighbour colours at paint time — O(1),
+  no re-render. Arm B has to re-render the affected region on every stroke. This is the one axis
+  where arm A′ can beat arm B outright, and it is an MVP-visible axis.
+- **Cost stays at texture scale (D6).** Variants are *rendered*, not painted — bake multiplier, not
+  artist time. Same order as the blob-47 → dual-grid ~16 reduction already in the painter grammar.
+- **Corner, not edge, for us.** Floors are a 2D field where diagonal neighbours are visible, so the
+  corner problem would show. Corner tiles are also what the "dual-grid" technique already in
+  SCENE-CREATION.md § Painter grammar *is*.
+
+Limits to state up front: Wang tiling gives **structural** continuity (courses line up, no seam), not
+**global registration** (one mural spanning many cells) — murals stay decals. And a variant set must
+be baked per projection family (×3), so D7's unique-pixel guard applies harder.
+
+Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
+- [ ] Decide the matching unit for a 3D cell: our "edge" is a vertical seam between wall-band faces
+      (1×3 voxels), not a flat square side. Corner colours would live on the module's face corners.
+- [ ] The bake must be able to *produce* a variant that meets a given boundary colour. Two candidate
+      routes: Cohen-2003-style graphcut from a source texture, or the Derouet-Jourdan route of
+      generating the brick STRUCTURE procedurally and painting bricks — the latter fits our linework
+      look and D6 better.
+- [ ] Reuse the BAKEOFF cross-cell seam-energy oracle as the falsifier: it can *measure* whether A′
+      reaches arm B's continuity, which is what turns this from an argument into a result.
+
 ## Backlog
 
 - **Assess Beakman level-creation process** (INBOX 2026-07-23, ref in refs/REFS.md) — watch the
   Barrow-and-Blade reel, decide what transfers. Small scoping pass, not a build.
+- **Assess PixelLab as a tool** (Lucas 2026-07-30, refs in refs/REFS.md) — two separable questions,
+  do not conflate them: (1) its **tileset structure** (main / transition / lower tile, transition
+  size, export to Wang / dual-grid-15 / 3x3) is a working reference for our painter grammar and for
+  arm A′'s variant set — read it as design evidence, not as an asset source; (2) its **generation
+  tools** (`Create isometric tile`, `Create 8-directional sprite`, `Rotate`) are pixel-art scale
+  (16/32px) and therefore off-target for our Feather-3D look, and any 8-direction *generated* view
+  hits the frozen rule "anything that must rotate passes through geometry" — evaluate only against
+  that gate, for props/characters, never for scene cells.
 - ~~**Content strategy review**~~ (INBOX 2026-07-20) — **RESOLVED by this replan** (2026-07-29): the
   structure audit is the seam + doc restructure; the stitching re-check is arm B vs arm A in BAKEOFF.
 - **Brightness QC post-batch** — opaque-mean < 10 → flag (PIL, cheap). Would have caught the 32 black

@@ -17,16 +17,14 @@ import json
 from math import ceil
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw
 
 import guide_marks
-import face_edges
 import kit_module_render as kmr
 import kit_modules as km
 import face_masks as fm
 import enclosure_masks
-import texture_map
-import texture_warp
+from paint_faces import paint_panel  # noqa: F401 — re-exported: skm.paint_panel is the pinned seam
 
 CELL_PX = 512  # R2-1: 2x the prior 256px cell (S4-REVIEW-ROUNDS.md ROUND 2)
 PAD = 4
@@ -41,15 +39,6 @@ MAT_COLORS = {
     "thatch": (200, 180, 90),
     "blank": (170, 170, 170),
 }
-
-_PNG_CACHE = {}
-
-
-def _texture_png(texture_id):
-    if texture_id not in _PNG_CACHE:
-        _PNG_CACHE[texture_id] = Image.open(texture_map.texture_png_path(texture_id)).convert("RGBA")
-    return _PNG_CACHE[texture_id]
-
 
 def _cell_origin(idx, cell_px):
     row, col = divmod(idx, GRID_COLS)
@@ -108,32 +97,6 @@ def arm_bc(panels):
     rects = [(p["view"], (*_cell_origin(idx, cell_px), cell_px, cell_px))
              for idx, p in enumerate(panels)]
     return guide_marks.apply_marks(sheet, rects)
-
-
-def paint_panel(module, view, ordered, s, cell_px, pad, origin):
-    """RGBA cell: warp a texture onto every ordered face quad (T4, C1) —
-    tiling via warp_tiling, decal (R2-5 slab front/back, flip_h mirrored
-    first) via warp_decal — then stroke that face's edge-ink (R2-2,
-    face_edges.py) right after its own paste, so a nearer face pasted later
-    overpaints ink under it. Zero MAT_COLORS fills remain."""
-    faces = km.MODULES[module]()
-    edges = face_edges.stroke_edges(faces)
-    cell = Image.new("RGBA", (cell_px, cell_px), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(cell)
-    for face_id, kind, mat, poly in ordered:
-        i = int(face_id.split(":")[0])
-        world_pts = faces[i].pts
-        spec = texture_map.face_texture(module, kind, world_pts, mat)
-        tex_img = _texture_png(spec["id"])
-        if spec["type"] == "decal":
-            if spec["flip_h"]:
-                tex_img = ImageOps.mirror(tex_img)
-            warped = texture_warp.warp_decal(tex_img, world_pts, poly)
-        else:
-            warped = texture_warp.warp_tiling(tex_img, world_pts, poly, spec["dims_voxels"])
-        cell.paste(warped, (0, 0), warped)
-        face_edges.draw_face_edges(draw, edges.get(i, []), view, s, cell_px, pad, origin, kmr.project_face)
-    return cell
 
 
 def arm_a(panels, ordered_by_panel):

@@ -28,6 +28,8 @@
 | [`face_project.py`](face_project.py) | [`face_project.pyi`](face_project.pyi) | `panel_family`, `yaw_deg`, `panel_cam`, `ordered_front_faces`, `ordered_faces` | ← add first-line comment |
 | [`generate_sheet_template.py`](generate_sheet_template.py) | [`generate_sheet_template.pyi`](generate_sheet_template.pyi) | `load_font`, `total_size`, `cell_origin`, `generate` | !/usr/bin/env python3 |
 | [`guide_marks.py`](guide_marks.py) | [`guide_marks.pyi`](guide_marks.pyi) | `MarkParams`, `apply_marks`, `residue_count`, `tile_panels`, `main` | guide_marks.py — registration-mark post-pass over guide sheets (muralist technique, A/B parameterized). |
+| [`kit_arm_a.py`](kit_arm_a.py) | [`kit_arm_a.pyi`](kit_arm_a.pyi) | `piece_specs`, `shared_px_per_voxel`, `render_piece`, `build_kit`, `build_all` | ← add first-line comment |
+| [`kit_assets.py`](kit_assets.py) | [`kit_assets.pyi`](kit_assets.pyi) | `candidates`, `resolve`, `asset_name` | ← add first-line comment |
 | [`kit_module_render.py`](kit_module_render.py) | [`kit_module_render.pyi`](kit_module_render.pyi) | `panel_extent`, `shared_scale`, `render_panel`, `render_module`, `enclosure_faces` | !/usr/bin/env python3 |
 | [`kit_modules.py`](kit_modules.py) | [`kit_modules.pyi`](kit_modules.pyi) | `Face`, `extrude`, `from_boxes` | !/usr/bin/env python3 |
 | [`kit_render.py`](kit_render.py) | [`kit_render.pyi`](kit_render.pyi) | `piece_boxes`, `render_piece`, `build_kit` | kit_render.py — camera-fixed guide kit: one sprite per piece type (wall/door/window/floor) + alignment manifest. |
@@ -42,6 +44,7 @@
 | [`linework_doors.py`](linework_doors.py) | [`linework_doors.pyi`](linework_doors.pyi) | `door` | !/usr/bin/env python3 |
 | [`linework_extra.py`](linework_extra.py) | [`linework_extra.pyi`](linework_extra.pyi) | `floor_wood`, `roof_shingle`, `stair_tread`, `stair_riser`, `grass` | !/usr/bin/env python3 |
 | [`make_tile_guide.py`](make_tile_guide.py) | [`make_tile_guide.pyi`](make_tile_guide.pyi) | `generate` | !/usr/bin/env python3 |
+| [`paint_faces.py`](paint_faces.py) | [`paint_faces.pyi`](paint_faces.pyi) | `texture_png`, `paint_panel` | ← add first-line comment |
 | [`panel_geometry.py`](panel_geometry.py) | [`panel_geometry.pyi`](panel_geometry.pyi) | `fit_scale`, `content_extent`, `panel_fit_scale` | !/usr/bin/env python3 |
 | [`preprocess.py`](preprocess.py) | [`preprocess.pyi`](preprocess.pyi) | `remove_background`, `resize_with_padding`, `find_content_root`, `main` | preprocess.py — Step 1 of the art pipeline: background removal + resize for concept art. |
 | [`render_iso.py`](render_iso.py) | [`render_iso.pyi`](render_iso.pyi) | `parse_args`, `load_fbx`, `render_one`, `main`, `report` | [OBSOLETE-MESH] render_iso.py — Isometric sprite render (all 8 directions, fixed config). |
@@ -54,7 +57,7 @@
 | [`scene_guide_sheet.py`](scene_guide_sheet.py) | [`scene_guide_sheet.pyi`](scene_guide_sheet.pyi) | `compose_sheet`, `main` | scene_guide_sheet.py — compose the 6-cell NB scene-guide sheet (views + plan + caption + marks) and CLI. |
 | [`scene_manifest.py`](scene_manifest.py) | [`scene_manifest.pyi`](scene_manifest.pyi) | `build_manifest`, `count_hud` | !/usr/bin/env python3 |
 | [`sheet_to_tpose.py`](sheet_to_tpose.py) | [`sheet_to_tpose.pyi`](sheet_to_tpose.pyi) | `cell_box`, `extract` | !/usr/bin/env python3 |
-| [`stage_kit_modules.py`](stage_kit_modules.py) | [`stage_kit_modules.pyi`](stage_kit_modules.pyi) | `sheet_grid`, `arm_b`, `arm_bc`, `paint_panel`, `arm_a` | !/usr/bin/env python3 |
+| [`stage_kit_modules.py`](stage_kit_modules.py) | [`stage_kit_modules.pyi`](stage_kit_modules.pyi) | `sheet_grid`, `arm_b`, `arm_bc`, `arm_a`, `stage` | !/usr/bin/env python3 |
 | [`texture_map.py`](texture_map.py) | [`texture_map.pyi`](texture_map.pyi) | `load_textures`, `FAMILY`, `variant`, `face_texture`, `texture_png_path` | !/usr/bin/env python3 |
 | [`texture_resample.py`](texture_resample.py) | [`texture_resample.pyi`](texture_resample.pyi) | `tile_source`, `match_source_density`, `supersample_transform` | !/usr/bin/env python3 |
 | [`texture_warp.py`](texture_warp.py) | [`texture_warp.pyi`](texture_warp.pyi) | `face_axes`, `warp_tiling`, `warp_decal` | !/usr/bin/env python3 |
