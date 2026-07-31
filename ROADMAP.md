@@ -121,10 +121,14 @@ off by √5/2 = 1.118. CP-1's harness did exactly that and still reported sizes 
 importer sized tiles with the same wrong number — a false green worth remembering: **two sides of a
 comparison that share a derivation cannot check that derivation.**
 
+**A tile covers `cells`, not a cell (CP-3, 2026-07-31).** `merge=False` is per-cell for walls but
+not for floors — a floor strip is ONE box spanning `l` cells — so the manifest now carries
+`cells: [l, d]` and the importer sizes the tile document from it. The turn transposes the footprint
+with everything else: `l` along the manifest's `u` is world HEIGHT, `d` is world WIDTH.
+
 | CP | Fixture | What it fixes | Oracle that proves it |
 |----|---------|---------------|------------------------|
-| 3 | l-room | Tile **position** — grid alignment across a whole flat layer. Also the first fixture with **multi-cell massing boxes**, which the manifest cannot express yet: it carries no footprint, so the importer gives every tile a 1×1 cell volume. Emit `cells: [l, d]` beside `sizePx`. | every floor tile matches; count matches |
-| 4 | l-room | **One** wall placed correctly (shallow on purpose — D10 is about to change wall geometry). | one wall's rect matches |
+| 4 | l-room | **One** wall placed correctly (shallow on purpose — D10 is about to change wall geometry). CP-3 already places all 28 of the l-room's wall TILES; what is unproven is the Foundry `Wall` segments the manifest's `walls[]` become. | one wall's rect matches |
 | 5 | cabin | **Elevation** — `baseElevation` is a flag the renderer never reads; position comes from native `document.elevation`, which the importer never sets. This is why roofs sit on the floor. | platform + roof rects match the Python render |
 | 6 | cabin | **Foundry wall segments** — the importer anchors every wall to an arbitrary `createdTiles[0]` in a frame one tile wide, and its normalized anchors have not been through the quarter turn. (`manifest.chunk` is read now: CP-2 needed `rows` to place anything.) | wall endpoints in world px vs layout-derived expectation; token vision blocked where the layout says |
 | 7 | cabin | **Z-order** — `DepthSorter.activate()` is an empty body; the live sort is per-slice and unsliced tiles never appear in the dump. | `zOrderViolations()` empty; token occludes and is occluded correctly |

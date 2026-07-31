@@ -49,6 +49,12 @@ def build_manifest(layout, kit_dir, view="NW"):
             "u": box.u0,
             "v": box.v0,
             "z": box.z0,
+            # Footprint in cells. merge=False is per-cell for walls but NOT for floors — a floor
+            # strip is one box spanning l cells — so (u,v) alone does not say how much ground a
+            # tile covers. The module needs it for the tile's VOLUME (its document width/height);
+            # without it every piece imports as a 1x1 cell and a 6-cell floor strip carries a
+            # one-cell box. Added 2026-07-31, CP-3.
+            "cells": [box.l, box.d],
             "boundHeight": box.h,
             # The module defines imageOffset as a WORLD displacement normalized by gridSize
             # (isoroll-module/src/transform/CONTEXT.md: mesh.x = baseCenterWorld.x + imgOff.x *
@@ -77,6 +83,7 @@ def build_manifest(layout, kit_dir, view="NW"):
                         "u": u,
                         "v": v,
                         "z": lvl * turned.wall_h,
+                        "cells": [1, 1],
                         "boundHeight": float(STAIR_RISE),
                         "imageOffset": [0.0, 0.0],
                         "originPx": [0.0, 0.0],
