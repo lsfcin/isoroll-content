@@ -1,0 +1,5 @@
+name: one-cell
+wall_h: 2
+
+level 0:
+#.

@@ -22,6 +22,7 @@ from pathlib import Path
 import kit_arm_a
 import scene_assemble
 import scene_manifest
+import scene_plan
 import view_table
 
 
@@ -36,7 +37,9 @@ def _arm_a(layout, view, kit_root):
     kit_dir = kit_dir_for(kit_root, view)
     manifest, sprites = scene_assemble.load_kit(kit_dir)
     scene = scene_manifest.build_manifest(layout, kit_dir, view)
-    return {"sprites": sprites, "kit": manifest, "manifest": scene, "kit_dir": kit_dir}
+    sizes = scene_plan.sizes_of(sprites)
+    laid = scene_plan.plan(layout, view, manifest, sizes)
+    return {"sprites": sprites, "kit": manifest, "manifest": scene, "kit_dir": kit_dir, "plan": laid}
 
 
 ARMS = {"a": _arm_a}
@@ -83,6 +86,11 @@ def bake(layout, kit_root, out_dir, views=None, arm="a"):
         path = out / f"{layout.name}_{view.lower()}_manifest.json"
         payload = json.dumps(manifest, indent=2)
         path.write_text(payload)
+        # The placement map beside it: where the offline renderer put every sprite. This is what the
+        # module's parity spec diffs its own tile rects against (PARITY LADDER, ROADMAP).
+        plan_path = out / f"{layout.name}_{view.lower()}_plan.json"
+        plan_payload = json.dumps(result["plan"], indent=2)
+        plan_path.write_text(plan_payload)
         written[view] = manifest
     return written
 

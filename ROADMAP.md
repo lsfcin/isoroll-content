@@ -44,6 +44,7 @@ trade-off honestly.
 |---|---|---|
 | D8 | **No painter in the MVP — scenes are authored as text DSL**, baked by CLI, imported into Foundry | The in-Foundry painter is not assumed to be the way scenes get built. `loop/painter-mvp-1` is **PARKED, not closed** (work preserved at `3987979`); P7a leaves the critical path. This *changes the PLAYABLE user action* — see the milestone below — and removes the largest remaining module task. Revisit the painter only after the play loop has been felt, when it is a convenience question rather than an architecture one |
 | D9 | Rotation = **instant in-place swap, all 9 views preloaded** | No rebuild pause on rotate: every family's sprites load up front, a rotate re-textures + repositions each tile in place, and walls/vision are re-derived per view. Cardinal views stay in the same rotation cycle as dimetric (not a separate mode). Prices D7's guard immediately — memory = map area × 3 sprite families — so `chunk`/`px_per_voxel` stop being theoretical the moment maps grow |
+| D10 | **Walls are THIN — 1 ft, on a cell EDGE, not a 5 ft cell-filling block** | Deferred to after the PARITY ladder (Lucas, 2026-07-31), but decided now so nothing is built assuming otherwise. A wall stops being "this cell is solid" and becomes "this cell edge carries a wall", which touches the DSL's meaning, massing, the kit's `wall_band` geometry, tile placement, and the Foundry wall segment. Corner rule Lucas gave: at a junction, render each wall's **large face**; the thin end faces are not rendered. Sequencing note: everything on the ladder survives this **except the wall-sprite placement checkpoint (CP-4)**, which is placement work on geometry that is about to change — so CP-4 stays deliberately shallow (prove the mechanism on ONE wall, do not tune) and the real wall pass happens after |
 
 ## How this gets used — the workflow is the spec (read before planning any task)
 
@@ -73,6 +74,43 @@ against the live instance (`verify:full` e2e + the `isoroll.dumpZOrderJSON()` or
 from looking at an image (`core/skills/iso-visual.md` hard rule). And prototype interactions in a throwaway
 rig before coding them in the module — `design/feel-rig/` is what made the frozen painter grammar cheap, and
 that grammar is already bought: **reuse rig v16.2, do not re-derive it.**
+
+## PARITY LADDER — how the rest of PLAYABLE gets built (2026-07-31)
+
+Lucas, after the first live cabin import: *"visuals is a hard thing for you Opus… we cannot rely on your
+visual/spatial reasoning without guardrails."* He is right, and the evidence is in this repo's own rule
+(`core/skills/iso-visual.md`: **model eyes never assert geometry**) which the previous session broke — a
+screenshot was read as "the cabin composes" while the tiles were mis-sized, the walls mis-placed, the roofs
+at floor level and the z-order wrong. All five causes were readable in code. None needed eyes.
+
+**The guardrail: the Python assembler is ground truth, and the module must agree with it numerically.**
+`scene_assemble.assemble()` already computes the exact rect every sprite occupies. The module can report the
+rect every sprite actually got. Diffing those per tile catches wrong size, wrong position, wrong sprite and
+missing tile — and would have caught 3 of the 5 bugs above before Foundry was ever opened.
+
+**Working agreement (Lucas, 2026-07-31):**
+1. **One checkpoint at a time.** Oracle green → board → stop → he approves → next. No chaining.
+2. **Fixture ladder**: 1 cell → l-room → cabin. Each fix is proven on the smallest fixture that can show
+   it. A single tile has one thing that can be wrong; the cabin has eighty-six.
+3. **Board, not a hunt**: each checkpoint ships a side-by-side (Python reference | Foundry actual) plus the
+   parity numbers. He glances and says go / no-go; he is never asked to find the bug.
+4. **He never looks at red.** A checkpoint reaches him only with its oracle already green. His eye is for
+   what numbers cannot judge — never for finding broken plumbing.
+5. **Every catch of his becomes a parity assertion**, in the same commit as the fix. Nothing he has already
+   caught may come back.
+
+| CP | Fixture | What it fixes | Oracle that proves it |
+|----|---------|---------------|------------------------|
+| 1 | 1 cell | **The harness itself** — Python emits a placement map, module exposes per-tile sprite rects, spec diffs them. Plus the preset 404 (`presetEnabled: true` → one failed fetch per tile). | per-tile rect diff green on 1 floor + 1 wall |
+| 2 | 1 cell | Tile **size** — sprite scale uses `max(w, h, boundHeight×gridSize)`, so tall pieces inflate past their box (this is why the volume box does not match the sprite). | rect diff ≤ tolerance for a piece with boundHeight > 1 |
+| 3 | l-room | Tile **position** — grid alignment across a whole flat layer. | every floor tile matches; count matches |
+| 4 | l-room | **One** wall placed correctly (shallow on purpose — D10 is about to change wall geometry). | one wall's rect matches |
+| 5 | cabin | **Elevation** — `baseElevation` is a flag the renderer never reads; position comes from native `document.elevation`, which the importer never sets. This is why roofs sit on the floor. | platform + roof rects match the Python render |
+| 6 | cabin | **Foundry wall segments** — importer ignores `manifest.chunk` and guesses `cols/rows = max(u)+1`, then anchors every wall to an arbitrary `createdTiles[0]` in a frame one tile wide. | wall endpoints in world px vs layout-derived expectation; token vision blocked where the layout says |
+| 7 | cabin | **Z-order** — `DepthSorter.activate()` is an empty body; the live sort is per-slice and unsliced tiles never appear in the dump. | `zOrderViolations()` empty; token occludes and is occluded correctly |
+| 8 | cabin | **Rotation** (D9) — instant in-place swap. | parity green in all 9 views |
+
+Then D10 (thin walls), then the PLAYABLE gate.
 
 ## PLAYABLE — ugly, complete, in Foundry (zero generation, absorbs the old SEAM milestone)
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 import kit_assets
+import scene_plan
 import view_table
 from layout_massing import massing
 from layout_parse import load as load_layout
@@ -71,33 +72,17 @@ def paint_key(family, box):
 
 
 def assemble(layout, view, kit_dir):
-    """One assembled scene view (RGB on black). Geometry exact by construction — no generation involved."""
+    """One assembled scene view (RGB on black). Geometry exact by construction — no generation involved.
+
+    Placement comes from scene_plan.plan(), the SAME object the parity oracle compares Foundry
+    against, so the reference image and the reference numbers can never disagree.
+    """
     manifest, sprites = load_kit(kit_dir)
-    family = view_table.family(view)
-    cam = Cam([], 0, 0, 0, scale=manifest["px_per_unit"], origin=(0.0, 0.0), family=family)
-    turned = rotate_cw(layout, VIEW_TURNS[view])
-    boxes = sorted(massing(turned, merge=False), key=lambda box: paint_key(family, box))
-    placements, xs, ys = [], [], []
-    for box in boxes:
-        piece, mat, direction = piece_of(box)
-        if piece is None:
-            continue
-        name = kit_assets.resolve(sprites, piece, mat, direction)
-        if name is None:
-            continue
-        px, py = cam.pt(box.u0, box.v0, box.z0)
-        ox, oy = manifest["pieces"][name]["origin"]
-        left, top = px - ox, py - oy
-        w, h = sprites[name].size
-        placements.append((name, left, top))
-        xs.extend([left, left + w])
-        ys.extend([top, top + h])
-    width = int(max(xs) - min(xs)) + 2 * MARGIN
-    height = int(max(ys) - min(ys)) + 2 * MARGIN
-    canvas = Image.new("RGBA", (width, height), (0, 0, 0, 255))
-    dx, dy = MARGIN - min(xs), MARGIN - min(ys)
-    for name, left, top in placements:
-        canvas.alpha_composite(sprites[name], (int(left + dx), int(top + dy)))
+    sizes = scene_plan.sizes_of(sprites)
+    laid = scene_plan.plan(layout, view, manifest, sizes)
+    canvas = Image.new("RGBA", (laid["canvas"]["width"], laid["canvas"]["height"]), (0, 0, 0, 255))
+    for tile in laid["tiles"]:
+        canvas.alpha_composite(sprites[tile["asset"]], (int(tile["left"]), int(tile["top"])))
     return canvas.convert("RGB")
 
 
