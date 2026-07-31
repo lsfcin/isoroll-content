@@ -4,7 +4,7 @@
 <!-- routing:start -->
 ## Routing
 
-| File | Interface | API | Description |
-|------|-----------|-----|-------------|
-| [`REFS.md`](REFS.md) | — | — | References |
+| File | Description |
+|------|-------------|
+| [`REFS.md`](REFS.md) | References |
 <!-- routing:end -->

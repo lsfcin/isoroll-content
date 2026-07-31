@@ -52,11 +52,13 @@
 | [`rotate_mesh.py`](rotate_mesh.py) | [`rotate_mesh.pyi`](rotate_mesh.pyi) | `rotate_y`, `rotate_axis`, `main` | !/usr/bin/env python3 |
 | [`run_anatomy_test.py`](run_anatomy_test.py) | [`run_anatomy_test.pyi`](run_anatomy_test.pyi) | `load_workflow`, `submit`, `wait_for_output`, `main` | run_anatomy_test.py — bare-hands anatomy test: dreamshaper, toonyou, lyriel |
 | [`run_model_comparison.py`](run_model_comparison.py) | [`run_model_comparison.pyi`](run_model_comparison.pyi) | `load_workflow`, `submit`, `wait_for_output`, `main` | run_model_comparison.py — generates one image per checkpoint, saves to benchmarks/model-comparison/ |
+| [`s3_batch.sh`](s3_batch.sh) | — | — | ← add first-line comment |
 | [`scene_anchors.py`](scene_anchors.py) | [`scene_anchors.pyi`](scene_anchors.pyi) | `anchors`, `project`, `apply_anchored` | scene_anchors.py — stable 3D anchors on layout geometry, projected per view; attached registration marks. |
 | [`scene_assemble.py`](scene_assemble.py) | [`scene_assemble.pyi`](scene_assemble.pyi) | `piece_of`, `load_kit_meta`, `load_kit`, `paint_key`, `assemble` | scene_assemble.py — tinyglade-style deterministic assembly: kit sprites pasted per cell in painter order. |
 | [`scene_guide_render.py`](scene_guide_render.py) | [`scene_guide_render.pyi`](scene_guide_render.pyi) | `Cam`, `scene_cam`, `render_boxes`, `render_scene_panel`, `render_plan_panel` | scene_guide_render.py — one guide panel of a whole scene: dimetric view of the massing boxes, or TOP plan. |
 | [`scene_guide_sheet.py`](scene_guide_sheet.py) | [`scene_guide_sheet.pyi`](scene_guide_sheet.pyi) | `compose_sheet`, `main` | scene_guide_sheet.py — compose the 6-cell NB scene-guide sheet (views + plan + caption + marks) and CLI. |
 | [`scene_manifest.py`](scene_manifest.py) | [`scene_manifest.pyi`](scene_manifest.pyi) | `build_manifest`, `count_hud` | !/usr/bin/env python3 |
+| [`scene_plan.py`](scene_plan.py) | [`scene_plan.pyi`](scene_plan.pyi) | `plan`, `sizes_of` | ← add first-line comment |
 | [`sheet_to_tpose.py`](sheet_to_tpose.py) | [`sheet_to_tpose.pyi`](sheet_to_tpose.pyi) | `cell_box`, `extract` | !/usr/bin/env python3 |
 | [`stage_kit_modules.py`](stage_kit_modules.py) | [`stage_kit_modules.pyi`](stage_kit_modules.pyi) | `sheet_grid`, `arm_b`, `arm_bc`, `arm_a`, `stage` | !/usr/bin/env python3 |
 | [`texture_map.py`](texture_map.py) | [`texture_map.pyi`](texture_map.pyi) | `load_textures`, `FAMILY`, `variant`, `face_texture`, `texture_png_path` | !/usr/bin/env python3 |

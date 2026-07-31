@@ -6,6 +6,6 @@
 
 | Subdirectory | Description |
 |--------------|-------------|
-| [`cli/`](cli/CONTEXT.md) | — |
-| [`pipeline/`](pipeline/CONTEXT.md) | — |
+| [`cli/`](cli/CONTEXT.md) | `iso-cli.py` entry point — submits ComfyUI API workflows for character generatio |
+| [`pipeline/`](pipeline/CONTEXT.md) | Guide rendering + kit assembly + Blender legacy. Spec: [../../SCENE-CREATION.md] |
 <!-- routing:end -->

@@ -7,6 +7,8 @@
 | File | Interface | API | Description |
 |------|-----------|-----|-------------|
 | [`bake_commands.py`](bake_commands.py) | [`bake_commands.pyi`](bake_commands.pyi) | `run_bake` | ← add first-line comment |
+| [`batch_rembg.sh`](batch_rembg.sh) | — | — | ← add first-line comment |
+| [`batch_stylize.sh`](batch_stylize.sh) | — | — | ← add first-line comment |
 | [`blender_commands.py`](blender_commands.py) | [`blender_commands.pyi`](blender_commands.pyi) | `blender_stylize`, `blender_ipadapter` | blender_commands.py — Blender render stylization commands: Path A and Path A+B hybrid. |
 | [`comfy_client.py`](comfy_client.py) | [`comfy_client.pyi`](comfy_client.pyi) | `get_comfy_dir`, `get_output_dir`, `upload_image`, `send_prompt`, `snapshot_pngs` | ComfyUI API client helpers for the isoroll pipeline. |
 | [`export_commands.py`](export_commands.py) | [`export_commands.pyi`](export_commands.pyi) | `run_export` | export_commands.py — export-manifest verb: layout + kit → scene manifest JSON. |
