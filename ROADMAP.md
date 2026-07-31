@@ -99,18 +99,45 @@ missing tile — and would have caught 3 of the 5 bugs above before Foundry was 
 5. **Every catch of his becomes a parity assertion**, in the same commit as the fix. Nothing he has already
    caught may come back.
 
+**The frame contract, settled by CP-2 (2026-07-31).** A baked sprite lands in Foundry by three
+rules, and the first live cabin import broke all three at once:
+
+1. **Scale by density, not by box fit.** `a * gridSize / pxPerVoxel`, where `a = cos(rotation +
+   skewY) ≈ 0.894` is what a world px spends of screen width. The module used to fit the texture to
+   `max(docW, docH, boundHeight)`, so tall pieces inflated past their cell — and the tile document
+   was being sized from the sprite, which confused the piece's VOLUME with its picture.
+2. **Anchor on `originPx`, at the footprint's screen-top corner.** The module used to put the
+   texture's centre on the volume box's centre; the bake measures every sprite from the box's
+   `(u0, v0, z0)` corner. The taller the sprite, the further apart those are — 149 px for a 2-high
+   wall, which is what the pinned CP-2 gap was.
+3. **The manifest grid is a quarter turn off the module's.** isoroll-content projects `x = u - v`,
+   the module's stage projects `x = a(X + Y)`; equal pictures require `Y = u, X = -v`. Importing
+   `(u,v)` straight into `(x,y)` laid every scene out a quarter turn wrong, which no per-piece nudge
+   can undo. The bake cell is now carried as `flags.isoroll.cell`, since the position no longer
+   spells it out.
+
+Anything comparing a projected image (the bake, a screenshot) to world units and omitting `a` is
+off by √5/2 = 1.118. CP-1's harness did exactly that and still reported sizes GREEN, because the
+importer sized tiles with the same wrong number — a false green worth remembering: **two sides of a
+comparison that share a derivation cannot check that derivation.**
+
 | CP | Fixture | What it fixes | Oracle that proves it |
 |----|---------|---------------|------------------------|
-| 1 | 1 cell | **The harness itself** — Python emits a placement map, module exposes per-tile sprite rects, spec diffs them. Plus the preset 404 (`presetEnabled: true` → one failed fetch per tile). | per-tile rect diff green on 1 floor + 1 wall |
-| 2 | 1 cell | Tile **size** — sprite scale uses `max(w, h, boundHeight×gridSize)`, so tall pieces inflate past their box (this is why the volume box does not match the sprite). | rect diff ≤ tolerance for a piece with boundHeight > 1 |
-| 3 | l-room | Tile **position** — grid alignment across a whole flat layer. | every floor tile matches; count matches |
+| 3 | l-room | Tile **position** — grid alignment across a whole flat layer. Also the first fixture with **multi-cell massing boxes**, which the manifest cannot express yet: it carries no footprint, so the importer gives every tile a 1×1 cell volume. Emit `cells: [l, d]` beside `sizePx`. | every floor tile matches; count matches |
 | 4 | l-room | **One** wall placed correctly (shallow on purpose — D10 is about to change wall geometry). | one wall's rect matches |
 | 5 | cabin | **Elevation** — `baseElevation` is a flag the renderer never reads; position comes from native `document.elevation`, which the importer never sets. This is why roofs sit on the floor. | platform + roof rects match the Python render |
-| 6 | cabin | **Foundry wall segments** — importer ignores `manifest.chunk` and guesses `cols/rows = max(u)+1`, then anchors every wall to an arbitrary `createdTiles[0]` in a frame one tile wide. | wall endpoints in world px vs layout-derived expectation; token vision blocked where the layout says |
+| 6 | cabin | **Foundry wall segments** — the importer anchors every wall to an arbitrary `createdTiles[0]` in a frame one tile wide, and its normalized anchors have not been through the quarter turn. (`manifest.chunk` is read now: CP-2 needed `rows` to place anything.) | wall endpoints in world px vs layout-derived expectation; token vision blocked where the layout says |
 | 7 | cabin | **Z-order** — `DepthSorter.activate()` is an empty body; the live sort is per-slice and unsliced tiles never appear in the dump. | `zOrderViolations()` empty; token occludes and is occluded correctly |
 | 8 | cabin | **Rotation** (D9) — instant in-place swap. | parity green in all 9 views |
 
 Then D10 (thin walls), then the PLAYABLE gate.
+
+**Kit height ≠ layout height (found at CP-2, unowned).** `kit.json` bakes `wall_h: 3.0` while
+`one-cell.txt` (and `cabin.txt`) declare `wall_h: 2`, so a wall SPRITE is a voxel taller than the
+`boundHeight` its own manifest entry carries. Parity does not see it — both sides use the same
+sprite — but the volume box, occlusion and depth sort all read `boundHeight`, so CP-7 will. Either
+the kit renders at the layout's wall height, or the manifest reports the sprite's height and the
+box follows it.
 
 ## PLAYABLE — ugly, complete, in Foundry (zero generation, absorbs the old SEAM milestone)
 
@@ -138,23 +165,20 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
       per-cell attr overlays (materials) and ragged level frames were not being rotated, so any view
       but SW was quietly wrong.
 - [—] module: ~~close painter MVP~~ — **PARKED by D8** (work preserved at `loop/painter-mvp-1@3987979`).
-- [ ] module: **sprite alignment calibration** — the blocker for everything visual, added 2026-07-31.
-      The cabin imports (86 tiles, 9 walls, live-verified) but the pieces land as scattered blocks
-      instead of a composed cabin: tiles are created at `gridSize` square while sprites are baked at
-      `pxPerVoxel` (126) with their own `originPx`, so both SIZE and OFFSET are wrong. Size is
-      deterministic (`sizePx / pxPerVoxel` grid units). Offset is a **measurement**, not a derivation —
-      place one known piece, read where its mesh actually lands vs the projected cell corner, solve.
-      Harness: `isoroll-module/test/e2e/import-cabin.spec.mjs`.
+- [x] module: **sprite alignment** — settled at CP-2, and it was a derivation after all, not a
+      measurement: density × the projection's ground factor for size, `originPx` on the footprint's
+      screen-top corner for offset, plus the quarter turn between the two grids (§ PARITY LADDER,
+      frame contract). Proven twice — offline in `test/unit/parity-placement.test.ts` and live in
+      `test/e2e/parity-one-cell.spec.mjs`, both at 0 px error. Still open above it: multi-cell
+      footprints (CP-3) and elevation (CP-5).
 - [ ] module: **view switching = instant in-place swap, 9 preloaded** (D9) — rotate re-textures and
       repositions each tile without a rebuild pause; walls/vision re-derived per view.
 - [~] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin. **Import half done and
       verified live** (2026-07-30): `test/e2e/import-cabin.spec.mjs` imports the cabin manifest for all
       9 views against a running Foundry — tile and wall counts round-trip, and wall CELLS are constant
       at 51 across every view (the number isoroll-content asserts independently). Still open: vision
-      and fog behaviour on the imported walls is not asserted by anything yet, and the tiles land where
-      the module's box/anchor model puts them because `imageOffset` is now neutral — **per-piece
-      alignment is un-calibrated**. Calibrate by measuring in live Foundry (the spec is the harness);
-      the raw inputs are the manifest's new `originPx`/`sizePx` + `pxPerVoxel`. Do not guess it.
+      and fog behaviour on the imported walls is not asserted by anything yet, and wall anchors have
+      not been through the quarter turn that CP-2 put the tiles through — see CP-6.
       Dimetric = cell remap; cardinal = projection preset via the existing `customRotation`/
       `customSkewX`/`customSkewY`/`customRatio` flags.
 - [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
