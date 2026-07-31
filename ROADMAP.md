@@ -38,6 +38,13 @@ trade-off honestly.
 | D6 | Art cost is paid **once at texture scale** (~40 materials), never per tile | ~40 painted materials is AI-able or commissionable; 500 stitched tiles is not. Same logic for props: mesh once, render 9 views |
 | D7 | Perf deferred, with one guard | unique-pixel memory scales with map area × views (draw calls do NOT change between arms). Keep `px_per_voxel` and `chunk` as manifest fields so chunking + per-view lazy bake stay possible without a format break |
 
+### Decisions taken 2026-07-31 (Lucas, asked mid-PLAYABLE)
+
+| # | Decision | Consequence |
+|---|---|---|
+| D8 | **No painter in the MVP — scenes are authored as text DSL**, baked by CLI, imported into Foundry | The in-Foundry painter is not assumed to be the way scenes get built. `loop/painter-mvp-1` is **PARKED, not closed** (work preserved at `3987979`); P7a leaves the critical path. This *changes the PLAYABLE user action* — see the milestone below — and removes the largest remaining module task. Revisit the painter only after the play loop has been felt, when it is a convenience question rather than an architecture one |
+| D9 | Rotation = **instant in-place swap, all 9 views preloaded** | No rebuild pause on rotate: every family's sprites load up front, a rotate re-textures + repositions each tile in place, and walls/vision are re-derived per view. Cardinal views stay in the same rotation cycle as dimetric (not a separate mode). Prices D7's guard immediately — memory = map area × 3 sprite families — so `chunk`/`px_per_voxel` stop being theoretical the moment maps grow |
+
 ## How this gets used — the workflow is the spec (read before planning any task)
 
 Failure pattern this project keeps hitting (Lucas, 2026-07-29): agents make progress but leave **loose
@@ -54,7 +61,11 @@ task below:
    bug class unshippable. This is the mechanism that turns 19 review rounds into 3.
 3. **The user's touchpoints are budgeted and enumerated.** Lucas appears exactly twice below (PLAYABLE
    usability gate, BAKEOFF style verdict). Anything that would add a third touchpoint needs a code oracle
-   first. Agents must never route a judgement to him that a test could make.
+   first. Agents must never route a judgement to him that a test could make. *Amendment 2026-07-31:*
+   this budgets **judgements**, not **premises**. D8/D9 are design forks no test could settle — whether
+   scenes are painted in Foundry at all, and how rotation should feel — and asking cost far less than
+   building P7a under an unchosen premise would have. Ask about premises early; never ask about
+   anything a test can decide.
 
 Agent self-knowledge to plan around, not wish away: **Claude is not a Foundry expert and has a weak visual
 eye.** Therefore — load `/foundry` before touching module code; never assert Foundry behavior, verify it
@@ -66,6 +77,11 @@ that grammar is already bought: **reuse rig v16.2, do not re-derive it.**
 ## PLAYABLE — ugly, complete, in Foundry (zero generation, absorbs the old SEAM milestone)
 
 Single user-visible outcome. The seam gets frozen by carrying the cabin all the way into Foundry.
+
+**The user action, restated under D8 (2026-07-31):** Lucas *authors a layout as text DSL*, bakes it with
+one command, imports it into Foundry, walks a token, and rotates through all 9 views with walls, vision,
+fog and z-order correct. It is no longer "paints a room in live Foundry" — painting is not assumed to be
+how scenes get built, so a milestone defined on it would be testing an unchosen premise.
 
 - [x] content: `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry (`src/pipeline/
       render_scene.py`); arm A is implementation A behind it, in `ARMS`. Sprite sets are per projection
@@ -83,7 +99,16 @@ Single user-visible outcome. The seam gets frozen by carrying the cabin all the 
       textures. Three rotation loose ends had to be fixed first — group cells/ascent arrows, the
       per-cell attr overlays (materials) and ragged level frames were not being rotated, so any view
       but SW was quietly wrong.
-- [ ] module: close painter MVP (`loop/painter-mvp-1@3987979`, WIP, 16 dirty).
+- [—] module: ~~close painter MVP~~ — **PARKED by D8** (work preserved at `loop/painter-mvp-1@3987979`).
+- [ ] module: **sprite alignment calibration** — the blocker for everything visual, added 2026-07-31.
+      The cabin imports (86 tiles, 9 walls, live-verified) but the pieces land as scattered blocks
+      instead of a composed cabin: tiles are created at `gridSize` square while sprites are baked at
+      `pxPerVoxel` (126) with their own `originPx`, so both SIZE and OFFSET are wrong. Size is
+      deterministic (`sizePx / pxPerVoxel` grid units). Offset is a **measurement**, not a derivation —
+      place one known piece, read where its mesh actually lands vs the projected cell corner, solve.
+      Harness: `isoroll-module/test/e2e/import-cabin.spec.mjs`.
+- [ ] module: **view switching = instant in-place swap, 9 preloaded** (D9) — rotate re-textures and
+      repositions each tile without a rebuild pause; walls/vision re-derived per view.
 - [~] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin. **Import half done and
       verified live** (2026-07-30): `test/e2e/import-cabin.spec.mjs` imports the cabin manifest for all
       9 views against a running Foundry — tile and wall counts round-trip, and wall CELLS are constant
@@ -92,12 +117,13 @@ Single user-visible outcome. The seam gets frozen by carrying the cabin all the 
       the module's box/anchor model puts them because `imageOffset` is now neutral — **per-piece
       alignment is un-calibrated**. Calibrate by measuring in live Foundry (the spec is the harness);
       the raw inputs are the manifest's new `originPx`/`sizePx` + `pxPerVoxel`. Do not guess it.
-- [ ] module: view switching across 8+1 (dimetric = cell remap; cardinal = projection preset via the
-      existing `customRotation`/`customSkewX`/`customSkewY`/`customRatio` flags).
+      Dimetric = cell remap; cardinal = projection preset via the existing `customRotation`/
+      `customSkewX`/`customSkewY`/`customRatio` flags.
 - [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
 - [ ] module: 8-direction token sprite selection (placeholder in `object-transform.ts`).
-- ☐ **Gate (Lucas), touchpoint 1 of 2:** paint a room in live Foundry, walk a token, rotate through all 9
-      views. Walls, vision, fog and z-order correct. **Look is explicitly not judged here.**
+- ☐ **Gate (Lucas), touchpoint 1 of 2:** author a layout as DSL, bake it, import it, walk a token, rotate
+      through all 9 views (D8). Walls, vision, fog and z-order correct. **Look is explicitly not judged
+      here.**
 - Before that gate can be called, agents must have verified the chain themselves: `verify:full` e2e green
   against live Foundry, `dumpZOrderJSON()` stable across all 9 view switches, wall count round-tripping
   from the layout. Lucas's gate is for *feel*, never for finding broken plumbing.
