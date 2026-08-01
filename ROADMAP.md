@@ -142,7 +142,17 @@ rendered by the old Python, so nothing goes red — the twin just quietly stoppe
 
 | CP | Fixture | What it fixes | Oracle that proves it |
 |----|---------|---------------|------------------------|
-| 4 | l-room | **One** wall placed correctly (shallow on purpose — D10 is about to change wall geometry). CP-3 already places all 28 of the l-room's wall TILES; what is unproven is the Foundry `Wall` segments the manifest's `walls[]` become. | one wall's rect matches |
+**A manifest wall is a BOX, not a line (CP-4, 2026-08-01).** `walls[]` states each run's bounding
+rect — `(u0,v0)` to `(u0+l, v0+d)` — because that is what a massing box is. Read as a segment it
+puts every wall on its box's DIAGONAL (a 45° line through a 1×1 wall cell). A Foundry wall is the
+box's centreline along its own `dir` axis, then through the same quarter turn as the tiles
+(`import/bake-frame.ts`, now the single statement of that turn).
+
+The oracle deliberately does not restate that formula — it checks walls against the tile placement
+CP-3 already proved: every segment is axis-aligned in world space, and sampled points along it land
+on wall TILES. Both halves were needed and both were mutation-tested: sampling alone cannot see the
+diagonal (a 12×1 run's diagonal never leaves its own wall cells), and axis-alignment alone cannot
+see a missing turn.
 | 5 | cabin | **Elevation** — `baseElevation` is a flag the renderer never reads; position comes from native `document.elevation`, which the importer never sets. This is why roofs sit on the floor. | platform + roof rects match the Python render |
 | 6 | cabin | **Foundry wall segments** — the importer anchors every wall to an arbitrary `createdTiles[0]` in a frame one tile wide, and its normalized anchors have not been through the quarter turn. (`manifest.chunk` is read now: CP-2 needed `rows` to place anything.) | wall endpoints in world px vs layout-derived expectation; token vision blocked where the layout says |
 | 7 | cabin | **Z-order** — `DepthSorter.activate()` is an empty body; the live sort is per-slice and unsliced tiles never appear in the dump. | `zOrderViolations()` empty; token occludes and is occluded correctly |
