@@ -98,6 +98,25 @@ def _merged_wall_boxes(layout, wall_h):
     return boxes
 
 
+def _floor_cell_boxes(layout, attrs=None):
+    """One 1x1 box per floor cell — the render lane, exactly like _cell_wall_boxes.
+
+    Floors used to strip-merge in BOTH lanes, which broke the render lane's own contract (merge=
+    False means 1x1 boxes) in a way no oracle could see: arm A pastes ONE one-cell sprite per box,
+    so a 10-cell strip drew a tenth of itself and the rest of the room had no floor art at all,
+    while the parity comparator happily agreed with the plan that put it there (Lucas, board,
+    2026-08-01). Merged strips are still right for the export lane, and `cells` in the manifest is
+    what a future merged RENDER lane would need — but it must repeat the sprite first."""
+    attrs = attrs if attrs is not None else level_attrs(None)
+    boxes = []
+    for v in range(layout.rows):
+        for u in range(layout.cols):
+            if layout.kind(u, v) == FLOOR:
+                mat = cell_material(attrs, v, u, FLOOR)
+                boxes.append(Box(u, v, 1, 1, 0, "floor", mat=mat))
+    return boxes
+
+
 def _floor_boxes(layout, attrs=None):
     """Floor strips, split where the material changes so one strip is never two materials."""
     attrs = attrs if attrs is not None else level_attrs(None)
@@ -139,7 +158,8 @@ def _stair_boxes(layout):
 def _massing_one_level(layout, merge, attrs=None):
     if merge:
         return _floor_boxes(layout, attrs) + _stair_boxes(layout) + _merged_wall_boxes(layout, layout.wall_h)
-    return _floor_boxes(layout, attrs) + _stair_boxes(layout) + _cell_wall_boxes(layout, layout.wall_h, attrs)
+    return (_floor_cell_boxes(layout, attrs) + _stair_boxes(layout)
+            + _cell_wall_boxes(layout, layout.wall_h, attrs))
 
 
 def _group_boxes(layout):

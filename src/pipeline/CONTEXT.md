@@ -31,7 +31,9 @@
 | [`kit_arm_a.py`](kit_arm_a.py) | [`kit_arm_a.pyi`](kit_arm_a.pyi) | `piece_specs`, `shared_px_per_voxel`, `render_piece`, `build_kit`, `build_all` | ← add first-line comment |
 | [`kit_assets.py`](kit_assets.py) | [`kit_assets.pyi`](kit_assets.pyi) | `candidates`, `resolve`, `asset_name` | ← add first-line comment |
 | [`kit_module_render.py`](kit_module_render.py) | [`kit_module_render.pyi`](kit_module_render.pyi) | `panel_extent`, `shared_scale`, `render_panel`, `render_module`, `enclosure_faces` | !/usr/bin/env python3 |
-| [`kit_modules.py`](kit_modules.py) | [`kit_modules.pyi`](kit_modules.pyi) | `Face`, `extrude`, `from_boxes` | !/usr/bin/env python3 |
+| [`kit_modules.py`](kit_modules.py) | [`kit_modules.pyi`](kit_modules.pyi) | — | !/usr/bin/env python3 |
+| [`kit_modules_face.py`](kit_modules_face.py) | [`kit_modules_face.pyi`](kit_modules_face.pyi) | `Face`, `extrude`, `from_boxes` | ← add first-line comment |
+| [`kit_modules_stair.py`](kit_modules_stair.py) | [`kit_modules_stair.pyi`](kit_modules_stair.pyi) | `cover`, `stair_45`, `stair_half` | ← add first-line comment |
 | [`kit_render.py`](kit_render.py) | [`kit_render.pyi`](kit_render.pyi) | `piece_boxes`, `render_piece`, `build_kit` | kit_render.py — camera-fixed guide kit: one sprite per piece type (wall/door/window/floor) + alignment manifest. |
 | [`layout_dsl_v2.py`](layout_dsl_v2.py) | [`layout_dsl_v2.pyi`](layout_dsl_v2.pyi) | `parse_text_v2`, `cell` | !/usr/bin/env python3 |
 | [`layout_groups.py`](layout_groups.py) | [`layout_groups.pyi`](layout_groups.pyi) | `diag_solid`, `grp_base_data`, `grp_cell_voxels`, `solid`, `h_at` | !/usr/bin/env python3 |

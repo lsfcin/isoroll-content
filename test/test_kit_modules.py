@@ -108,6 +108,32 @@ def test_door_and_window_are_standalone_thin_slabs():
         assert Counter(f.kind for f in faces) == {"top": 1, "bottom": 1, "side": 4}, name
 
 
+def test_window_sits_one_voxel_up_with_a_voxel_of_wall_above_it():
+    """Lucas, 2026-08-01: a window needs a sill and a lintel — one voxel of wall
+    below the opening, one above. At z0=0 it sat on the floor. This is also what
+    scene_guide_render._draw_openings has always drawn (z 1..2)."""
+    km = _km()
+    zs = {round(z, 6) for f in km.MODULES["window_1x1"]() for _u, _v, z in f.pts}
+    assert zs == {1.0, 2.0}
+    assert km.WALL_H - max(zs) == 1.0, "a voxel of wall has to remain above the opening"
+
+
+def test_door_reaches_the_floor():
+    zs = {round(z, 6) for f in _km().MODULES["door_1x2"]() for _u, _v, z in f.pts}
+    assert zs == {0.0, 2.0}
+
+
+def test_a_slab_hugs_the_cell_edge_the_camera_sees():
+    """Lucas, 2026-08-01: the door read as hung on the far side of the wall.
+    Backface culling keeps only the +v-normal large face, so a slab at v=0..THICK
+    renders its face most of a cell deep inside the wall. It has to sit at v=1."""
+    km = _km()
+    for name in ("door_1x2", "window_1x1"):
+        vs = {round(v, 6) for f in km.MODULES[name]() for _u, v, _z in f.pts}
+        assert max(vs) == 1.0, name
+        assert min(vs) == round(1.0 - km.SLAB_THICK, 6), name
+
+
 def test_door_1x2_and_window_1x1_are_geometrically_distinct():
     MODULES = _km().MODULES
     door = [(f.kind, f.pts) for f in MODULES["door_1x2"]()]

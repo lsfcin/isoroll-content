@@ -1,0 +1,9 @@
+from _typeshed import Incomplete
+
+STAIR_ENCLOSURE: Incomplete
+STAIR_LATERAL: Incomplete
+STAIR_BACK: Incomplete
+
+def cover(rise_scale): ...
+def stair_45(): ...
+def stair_half(): ...

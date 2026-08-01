@@ -121,10 +121,24 @@ off by √5/2 = 1.118. CP-1's harness did exactly that and still reported sizes 
 importer sized tiles with the same wrong number — a false green worth remembering: **two sides of a
 comparison that share a derivation cannot check that derivation.**
 
-**A tile covers `cells`, not a cell (CP-3, 2026-07-31).** `merge=False` is per-cell for walls but
-not for floors — a floor strip is ONE box spanning `l` cells — so the manifest now carries
-`cells: [l, d]` and the importer sizes the tile document from it. The turn transposes the footprint
-with everything else: `l` along the manifest's `u` is world HEIGHT, `d` is world WIDTH.
+**A tile covers `cells`, not a cell (CP-3).** The manifest carries `cells: [l, d]` and the importer
+sizes the tile document from it. The turn transposes the footprint with everything else: `l` along
+the manifest's `u` is world HEIGHT, `d` is world WIDTH. Every render-lane box is 1×1 again after
+the floor fix below, so this is a contract with no current user — keep it: a merged render lane is
+the obvious optimisation (128 Foundry tiles for one room), and this is the field it needs.
+
+**What the numbers could not see (Lucas, board, 2026-08-01).** Parity was green on a picture with
+nine tenths of its floor missing, because BOTH sides agreed on it. `_floor_boxes` ignored the
+`merge` flag, so floors strip-merged even in the render lane — and arm A pastes ONE one-cell sprite
+per box, so a 10-cell strip drew one cell. Two more of his catches, both kit geometry: a window sat
+at z 0..1 (on the floor) where the guide renderer had always drawn z 1..2, and the door/window slab
+hugged v=0 — the FAR edge of its cell — so backface culling showed its face most of a cell deep
+inside the wall. All three are now pinned by `test/test_kit_modules.py`. **The eyeball gate is not
+ceremony: an oracle built from one derivation cannot see an error in that derivation.**
+
+*Open, for whoever next touches `isoroll-module/src/assemble/`:* the TS twin's `massing.ts` still
+strip-merges floors in the render lane, so it and the Python have diverged. Its own goldens were
+rendered by the old Python, so nothing goes red — the twin just quietly stopped being a twin.
 
 | CP | Fixture | What it fixes | Oracle that proves it |
 |----|---------|---------------|------------------------|

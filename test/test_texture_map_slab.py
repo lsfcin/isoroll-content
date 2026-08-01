@@ -23,12 +23,16 @@ def _tm():
 
 def _large_and_thin(module):
     """(front, back, [thin edges]) — front/back are the two v-constant LARGE
-    side faces (v=0 / v=SLAB_THICK), thin are the two u-constant edge faces.
-    Split by inspecting `.pts` directly, same pattern
-    test_texture_warp.py's face_axes tests already use."""
+    side faces, front the one at the LOWER v (normal -v), thin are the two
+    u-constant edge faces. Split by inspecting `.pts` directly, same pattern
+    test_texture_warp.py's face_axes tests already use.
+
+    Found by which coordinate is constant, never by an absolute v: the slab
+    moved from v=0..SLAB_THICK to the cell's near edge (kit_modules._slab,
+    2026-08-01) and pinned v values went stale the moment it did."""
     sides = [f for f in km.MODULES[module]() if f.kind == "side"]
-    front = next(f for f in sides if {round(v, 6) for _u, v, _z in f.pts} == {0.0})
-    back = next(f for f in sides if {round(v, 6) for _u, v, _z in f.pts} == {round(km.SLAB_THICK, 6)})
+    flat = [f for f in sides if len({round(v, 6) for _u, v, _z in f.pts}) == 1]
+    front, back = sorted(flat, key=lambda f: f.pts[0][1])
     thin = [f for f in sides if f not in (front, back)]
     return front, back, thin
 
