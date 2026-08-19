@@ -111,20 +111,29 @@ isoroll-content/
 
 | Subdirectory | Description |
 |--------------|-------------|
-| [`assets/`](assets/CONTEXT.md) | Generated art output — characters and tiles. Not curated reference material (see |
-| [`benchmarks/`](benchmarks/CONTEXT.md) | Curated, tracked comparison images (checkpoint/anatomy/model tests) and QC dev o |
+| [`assets/`](assets/CONTEXT.md) | Generated art output — characters and tiles. Not curated reference material (see… |
+| [`benchmarks/`](benchmarks/CONTEXT.md) | Curated, tracked comparison images (checkpoint/anatomy/model tests) and QC dev… |
 | [`design/`](design/CONTEXT.md) | — |
 | [`output/`](output/CONTEXT.md) | — |
-| [`refs/`](refs/CONTEXT.md) | Captured references for isoroll-content — tier-1 links in [REFS.md](REFS.md); pr |
-| [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts. G |
+| [`refs/`](refs/CONTEXT.md) | Captured references for isoroll-content — tier-1 links in… |
+| [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts… |
 | [`test/`](test/CONTEXT.md) | — |
 
 | File | Description |
 |------|-------------|
-| [`ROADMAP.md`](ROADMAP.md) | isoroll-content Roadmap |
-| [`SCENE-CREATION.md`](SCENE-CREATION.md) | SCENE-CREATION — Canonical Spec |
-| [`SETUP.md`](SETUP.md) | isorolling Setup |
+| [`ROADMAP.md`](ROADMAP.md) | **The only live-state file for scene creation.** What's next lives here and… |
+| [`SCENE-CREATION.md`](SCENE-CREATION.md) | Single source of truth for isoroll scene creation: goal, architecture, seam… |
+| [`SETUP-comfy.md`](SETUP-comfy.md) | Install it, point COMFY_DIR at it, and fetch the models and extensions it needs. |
+| [`SETUP-local.md`](SETUP-local.md) | Python deps, the low-VRAM SDXL settings for a 3050, and the Blender lane. |
+| [`SETUP-verify.md`](SETUP-verify.md) | Probes that say whether the install works, node by node. |
+| [`SETUP.md`](SETUP.md) | Environment setup for the isorolling content pipeline and future Foundry module. |
+| [`SPECS-debt.md`](SPECS-debt.md) | What the runtime assumes, the pattern to prefer, and the debt not yet paid. |
+| [`SPECS-layout.md`](SPECS-layout.md) | What lives where, which CLI entry points exist, and how src/cli/ is arranged. |
+| [`SPECS-manifests.md`](SPECS-manifests.md) | The benchmark and asset manifests, and how a tile, variant and file are named. |
+| [`SPECS-pipeline.md`](SPECS-pipeline.md) | The pipeline that was chosen, and the concept-art prompts fed into it. |
+| [`SPECS-render.md`](SPECS-render.md) | The Blender camera rig, the VRAM budget, and the style path it has to hold. |
+| [`SPECS-workflow.md`](SPECS-workflow.md) | What a ComfyUI workflow must expose, the render profiles, the detailer state. |
 | [`SPECS.md`](SPECS.md) | isorolling Specs |
-| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | ROADMAP archive — 2026-H1 strategy tree (SUPERSEDED) |
-| [`archive/S4-REVIEW-ROUNDS.md`](archive/S4-REVIEW-ROUNDS.md) | S4 REVIEW ROUNDS — Lucas's 5 points on arm_a gate (2026-07-16) |
+| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | Moved out of ROADMAP.md 2026-07-09 (P0 consolidation). These strategies predate… |
+| [`archive/S4-REVIEW-ROUNDS.md`](archive/S4-REVIEW-ROUNDS.md) | Status: ROUND 1 open. Protocol: discuss → agree strategy per point → solve point… |
 <!-- routing:end -->
