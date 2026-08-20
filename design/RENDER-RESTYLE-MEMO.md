@@ -18,10 +18,14 @@ then **render**, and ask NB (or any image tool) to **restyle** the render — in
 
 | Fragment | File | What it kept |
 |---|---|---|
-| Path A "Blender-first": toon render → img2img (denoise 0.65–0.80) + ControlNet Tile/Lineart; "temporal consistency near-perfect (geometry is anchor)" | `archive/ROADMAP-2026H1-strategies.md` | the full recipe — archived with the 2026-H1 tree |
+| Path A "Blender-first": toon render → img2img (denoise 0.65–0.80) + ControlNet Tile/Lineart; "temporal consistency near-perfect (geometry is anchor)" | inlined below — the 2026-H1 archive that held it is deleted | the full recipe |
 | P-Kit lane: Blender parametric kit, `[OBSOLETE-MESH]` scripts quarantined | `ROADMAP.md`, CONTEXT.md | the mesh backend, demoted to fallback-if-NB-fails |
 | P-CTRL lane: hosted Flux+ControlNet conditioned on massing-derived depth/lineart | `ROADMAP-content-gen.md` (lane P-CTRL) | the conditioning insight — depth/contours are trivial to emit from the guide renderer |
 | F4 `mv-restyle` verb: existing sheet + marks + style prompt → NB | `ROADMAP-content-gen.md` | the restyle seam in the CLI |
+
+**Path A's full recipe**, carried here 2026-08-19 when `archive/ROADMAP-2026H1-strategies.md` was deleted under the `.md` cap — this table row was the only live thing pointing at it: ComfyUI img2img with the Blender toon render as input, **ControlNet Tile at weight ≤ 0.5** (so SD does not repaint edges inconsistently — the 3D structure is the seam guarantee) or **ControlNet Lineart** fed from Blender Freestyle output, **denoise 0.65–0.80**, checkpoint `lyriel_v16`. Models: `control_v11f1e_sd15_tile.pth`, `control_v11p_sd15_lineart.pth`, `control_v11p_sd15_depth.pth`.
+
+**And the reason it was killed, which is the half git holds least usefully**: SD 1.5 + ControlNet Tile is *architecturally* wrong for viewpoint consistency. It is a 2D model and cannot infer "NW = back of character" from a Blender render — **not fixable by tuning denoise or ControlNet strength**. That kills Path A *with SD 1.5 as the restyler*, which is precisely why the structure survives with NB.
 
 **Why it got lost**: the archive kill was *local SD as generator* (horrible character artifacts). Path A died with that tree, but its render→restyle STRUCTURE was never falsified — with NB as the restyler it is untested. The kill-log has no entry against it.
 

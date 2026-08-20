@@ -1,7 +1,9 @@
 # SCENE-CREATION — Canonical Spec
 > Single source of truth for isoroll scene creation: goal, architecture, seam, contract, kill-log.
 > **Status-free by rule** — no phases, no task state, no "current focus". What's next lives only in
-> [ROADMAP.md](ROADMAP.md). Superseded strategies: [archive/ROADMAP-2026H1-strategies.md](archive/ROADMAP-2026H1-strategies.md).
+> [ROADMAP.md](ROADMAP.md). The superseded 2026-H1 strategy tree was deleted 2026-08-19 under the
+> `.md` cap — git holds it, and the one recipe anything still pointed at is inlined in
+> [design/RENDER-RESTYLE-MEMO.md](design/RENDER-RESTYLE-MEMO.md).
 > Runtime counterpart: `../isoroll-module/` (see its ROADMAP.md § Scene Painter track).
 
 ## Goal

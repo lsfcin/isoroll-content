@@ -134,6 +134,4 @@ isoroll-content/
 | [`SPECS-render.md`](SPECS-render.md) | The Blender camera rig, the VRAM budget, and the style path it has to hold. |
 | [`SPECS-workflow.md`](SPECS-workflow.md) | What a ComfyUI workflow must expose, the render profiles, the detailer state. |
 | [`SPECS.md`](SPECS.md) | isorolling Specs |
-| [`archive/ROADMAP-2026H1-strategies.md`](archive/ROADMAP-2026H1-strategies.md) | Moved out of ROADMAP.md 2026-07-09 (P0 consolidation). These strategies predate… |
-| [`archive/S4-REVIEW-ROUNDS.md`](archive/S4-REVIEW-ROUNDS.md) | Status: ROUND 1 open. Protocol: discuss → agree strategy per point → solve point… |
 <!-- routing:end -->
