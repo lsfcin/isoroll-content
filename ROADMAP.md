@@ -2,7 +2,8 @@
 > **The only live-state file for scene creation.** What's next lives here and nowhere else.
 > Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, seam, contract, kill-log.
 > Frozen decision records: [`design/`](design/CONTEXT.md).
-> Superseded strategy trees: [`archive/`](archive/) — consult the kill-log before resurrecting anything.
+> Superseded strategy trees were deleted 2026-08-19 under the `.md` cap; git holds them. Consult the
+> kill-log in [`SCENE-CREATION.md`](SCENE-CREATION.md) before resurrecting anything.
 
 ## Strategy — MVP-first behind a frozen seam (replan 2026-07-29, Lucas + inline)
 
@@ -154,7 +155,7 @@ on wall TILES. Both halves were needed and both were mutation-tested: sampling a
 diagonal (a 12×1 run's diagonal never leaves its own wall cells), and axis-alignment alone cannot
 see a missing turn.
 | 5 | cabin | **Elevation** — `baseElevation` is a flag the renderer never reads; position comes from native `document.elevation`, which the importer never sets. This is why roofs sit on the floor. | platform + roof rects match the Python render |
-| 6 | cabin | **Foundry wall segments** — the importer anchors every wall to an arbitrary `createdTiles[0]` in a frame one tile wide, and its normalized anchors have not been through the quarter turn. (`manifest.chunk` is read now: CP-2 needed `rows` to place anything.) | wall endpoints in world px vs layout-derived expectation; token vision blocked where the layout says |
+| 6 | cabin | **Wall behaviour** — segments are placed and mutation-tested at CP-4, but nothing asserts what they DO: vision, fog, movement. Also still odd: every wall is anchored to an arbitrary `createdTiles[0]`, so the scene's walls hang off one tile's frame. | token vision blocked where the layout says; wall survives its frame tile moving |
 | 7 | cabin | **Z-order** — `DepthSorter.activate()` is an empty body; the live sort is per-slice and unsliced tiles never appear in the dump. | `zOrderViolations()` empty; token occludes and is occluded correctly |
 | 8 | cabin | **Rotation** (D9) — instant in-place swap. | parity green in all 9 views |
 
@@ -176,37 +177,13 @@ one command, imports it into Foundry, walks a token, and rotates through all 9 v
 fog and z-order correct. It is no longer "paints a room in live Foundry" — painting is not assumed to be
 how scenes get built, so a milestone defined on it would be testing an unchosen premise.
 
-- [x] content: `render_scene(layout, view) -> {cell sprites, manifest}` as the single entry (`src/pipeline/
-      render_scene.py`); arm A is implementation A behind it, in `ARMS`. Sprite sets are per projection
-      FAMILY, not per view — the 4 dimetric views are cell remaps of one set, the 4 cardinal ones of
-      another, so 3 sets cover all 9. CLI: `iso-cli.py bake-scene --layout <file> [--preview]`.
-- [x] content: manifest gains `chunk` (index + cols/rows) beside the existing `pxPerVoxel` (D7 guard) —
-      a chunked bake changes those numbers, never the file's shape.
-- [x] content: fixture upgrade bare l-room → **cabin** (`src/pipeline/layouts/cabin.txt`): 2 rooms,
-      interior + exterior door, window, stair up to a platform, flat roof section, stone + wood walls.
-- [x] content: golden test on the cabin (`test/test_cabin_golden.py`) — manifest goldened exactly, one
-      view per family; the assembled PNG is held by invariants + determinism rather than a brittle
-      multi-megabyte pixel golden (it is a QC preview, not a shipped asset).
-- [x] content: cardinal camera entries in the view table (`src/pipeline/view_table.py`: projection matrix
-      + cull axis per family) → cabin baked in all **9 views** (D2) from arm A with the 50 linework
-      textures. Three rotation loose ends had to be fixed first — group cells/ascent arrows, the
-      per-cell attr overlays (materials) and ragged level frames were not being rotated, so any view
-      but SW was quietly wrong.
-- [—] module: ~~close painter MVP~~ — **PARKED by D8** (work preserved at `loop/painter-mvp-1@3987979`).
-- [x] module: **sprite alignment** — settled at CP-2, and it was a derivation after all, not a
-      measurement: density × the projection's ground factor for size, `originPx` on the footprint's
-      screen-top corner for offset, plus the quarter turn between the two grids (§ PARITY LADDER,
-      frame contract). Proven twice — offline in `test/unit/parity-placement.test.ts` and live in
-      `test/e2e/parity-one-cell.spec.mjs`, both at 0 px error. Still open above it: multi-cell
-      footprints (CP-3) and elevation (CP-5).
 - [ ] module: **view switching = instant in-place swap, 9 preloaded** (D9) — rotate re-textures and
       repositions each tile without a rebuild pause; walls/vision re-derived per view.
 - [~] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin. **Import half done and
       verified live** (2026-07-30): `test/e2e/import-cabin.spec.mjs` imports the cabin manifest for all
       9 views against a running Foundry — tile and wall counts round-trip, and wall CELLS are constant
-      at 51 across every view (the number isoroll-content asserts independently). Still open: vision
-      and fog behaviour on the imported walls is not asserted by anything yet, and wall anchors have
-      not been through the quarter turn that CP-2 put the tiles through — see CP-6.
+      at 51 across every view (the number isoroll-content asserts independently). Segment geometry
+      is settled at CP-4; what nothing asserts yet is vision and fog behaviour on those walls — CP-6.
       Dimetric = cell remap; cardinal = projection preset via the existing `customRotation`/
       `customSkewX`/`customSkewY`/`customRatio` flags.
 - [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
@@ -322,6 +299,13 @@ Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
   (16/32px) and therefore off-target for our Feather-3D look, and any 8-direction *generated* view
   hits the frozen rule "anything that must rotate passes through geometry" — evaluate only against
   that gate, for props/characters, never for scene cells.
+- **Assess Sprite Sheet Creator** (INBOX 2026-07-31, Lucas: *"tenho que olhar isso!"*; ref in
+  refs/REFS.md) — open-source prompt→sprite-sheet tool with an isometric RPG mode. Same split as
+  PixelLab, and answer it the same way: its **sheet layout and animation-state vocabulary**
+  (walk/attack/idle × 8 directions, how a sheet is packed and indexed) is design evidence we can use
+  against our own manifest; its **generation** is pixel-art scale and prompt-driven, so it fails the
+  frozen "anything that must rotate passes through geometry" rule for anything shipped. Scoping pass,
+  not a build.
 - ~~**Content strategy review**~~ (INBOX 2026-07-20) — **RESOLVED by this replan** (2026-07-29): the
   structure audit is the seam + doc restructure; the stitching re-check is arm B vs arm A in BAKEOFF.
 - **Brightness QC post-batch** — opaque-mean < 10 → flag (PIL, cheap). Would have caught the 32 black
