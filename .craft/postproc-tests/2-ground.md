@@ -22,6 +22,6 @@ branch-created: feature/postproc-tests base: feature/f1-procedural-spine
 paths: 10/10 ok (all existing files present; test/ parent dir exists and created during grounding verification)
 test-cmd-runs: yes (after test/ dir creation: `no tests ran in 0.00s` — expected; pytest collects cleanly with 0 import errors)
 
-Note: worktree path for Loops 4a/4b/5/6 is `/tmp/claude-1000/-mnt-workspace/bb9b9715-4ea6-4628-9115-ce47ee08dba4/scratchpad/wt-postproc-tests`; .loop files remain at main-tree path.
+Note: worktree path for Loops 4a/4b/5/6 is `/tmp/claude-1000/-mnt-workspace/bb9b9715-4ea6-4628-9115-ce47ee08dba4/scratchpad/wt-postproc-tests`; .craft files remain at main-tree path.
 
 executor: loop-low model=haiku tier=low

@@ -14,7 +14,7 @@ context: /mnt/workspace/code/isoroll-content/CONTEXT.md, /mnt/workspace/code/iso
 intent: export a scene manifest JSON (tiles + WallDef[]) from the assembled gray l-room so isoroll-module can import it (program P2 seam, first half).
 motivation: closes the generate→play seam; this is the loop-engineering [pilot] — smallest piece testable without Foundry.
 refs: SCENE-CREATION.md §Contract + §Program P2; ROADMAP-content-gen.md §export (layer 4) + delegação table row `export-manifest`; module import surface `src/walls/wall-crud.ts::createWallsFromDefs`; existing spine `src/pipeline/{layout_parse,layout_massing,kit_render,scene_assemble}.py`; demo `output/assembled/l-room_{NW,NE,SW,SE}.png`.
-scope-files: `src/cli/` (new exporter verb + validation), `src/pipeline/` (only if a small helper is needed), `test/`, `.loop/export-manifest/`, ROADMAP-content-gen.md (plan line).
+scope-files: `src/cli/` (new exporter verb + validation), `src/pipeline/` (only if a small helper is needed), `test/`, `.craft/export-manifest/`, ROADMAP-content-gen.md (plan line).
 expected-result: `iso-cli.py <export verb> --layout <l-room> ...` writes `output/manifests/l-room.manifest.json`; validation passes; counts match layout; pytest/make verify-fast green.
 ambition: solid
 criticality: normal tolerance: manifest format may gain fields later (painter/multiview); wrong geometry is NOT tolerable (counts/anchors must round-trip).

@@ -3,7 +3,7 @@
 
 Produces {scene, view, pxPerVoxel, tiles[], walls[]} for a given view rotation.
 tiles are per-cell (render lane, merge=False); walls are per merged run (export
-lane, merge=True). See .loop/export-manifest/3-arch.md for the full contract.
+lane, merge=True). See .craft/export-manifest/3-arch.md for the full contract.
 """
 
 import kit_assets
@@ -121,7 +121,7 @@ def build_manifest(layout, kit_dir, view="NW"):
 
 
 def count_hud(layout):
-    """v2 (T6, .loop/dsl-v2-python/3-arch.md) — {walls, doors, windows, floors, stairs, roofs} counts.
+    """v2 (T6, .craft/dsl-v2-python/3-arch.md) — {walls, doors, windows, floors, stairs, roofs} counts.
 
     rig.frag updateHud (L1073-1084): walls/diags count VOXELS (one per solid cell, not merged
     runs); doors/windows count RUNS (a D whose same-position neighbor one level down is also D is

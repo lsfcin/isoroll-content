@@ -33,7 +33,7 @@ imports for clean-FAILED collection, public-seam-only assertions, correct
 red for `ModuleNotFoundError: texture_map`) — kept as-is, no rewrite. This
 session then wrote the remainder: `test_texture_warp.py`, `test_arm_a_texture.py`,
 and amended `test_stage_kit_modules.py` per Carry ruling R2/R3
-(`.loop/arm-a-homography/1-plan.md`).
+(`.craft/arm-a-homography/1-plan.md`).
 
 ## Tests
 | test file | covers | asserts |

@@ -27,7 +27,7 @@ context: code/CONTEXT.md, code/isoroll-content/CONTEXT.md, code/isoroll-content/
 diff-scope: clean
   - Modified: ROADMAP-content-gen.md, src/pipeline/{CONTEXT.md,layout_massing.py,layout_massing.pyi,layout_parse.py,layout_parse.pyi,scene_assemble.py,scene_guide_render.py,scene_manifest.py,scene_manifest.pyi}, test/{CONTEXT.md}
   - Added: src/pipeline/{layout_dsl_v2.py,layout_dsl_v2.pyi,layout_groups.py,layout_groups.pyi,layout_serialize.py,layout_serialize.pyi}, test/fixtures/golden/{dsl_v2_groups.txt,dsl_v2_invalid_badincl.txt,dsl_v2_invalid_misplaced_r.txt,dsl_v2_lroom.txt,dsl_v2_multilevel.txt}, test/test_dsl_v2_{manifest,massing,parse,render,serialize}.{py,pyi}
-  - No out-of-scope files; .loop/dsl-v2-python/ audit trail included per keep-trail: yes
+  - No out-of-scope files; .craft/dsl-v2-python/ audit trail included per keep-trail: yes
 
 roadmap: updated ROADMAP-content-gen.md (marked dsl-v2-python ✓ done with outcome summary)
 

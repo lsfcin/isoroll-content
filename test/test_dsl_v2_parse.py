@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """test_dsl_v2_parse.py — C1 (parse): v2 fixtures parse clean; invalid fixtures raise errors.
 
-Seam: layout_parse.parse_text(text).errors — see .loop/dsl-v2-python/3-arch.md DECISION D3, T2/T3.
+Seam: layout_parse.parse_text(text).errors — see .craft/dsl-v2-python/3-arch.md DECISION D3, T2/T3.
 Expected RED until T2/T3 land: parse_text still reads v1 grammar, so `level N:` lines get
 swallowed into the grid itself (as bogus rows, producing unknown-cell errors) instead of being
 recognized as level-block headers. This is the root-cause red for every other v2 test file too.

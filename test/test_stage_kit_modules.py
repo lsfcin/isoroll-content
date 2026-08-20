@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """test_stage_kit_modules.py — per-module arm sheets staged to
 output/gen-inbox (C4, C5). AMENDED 2026-07-16 (Loop 4a, arm-a-homography,
-ruling R2/R3 — see .loop/arm-a-homography/1-plan.md): the mega-sheet
+ruling R2/R3 — see .craft/arm-a-homography/1-plan.md): the mega-sheet
 contract ("exactly 3 arm sheets") is a SANCTIONED, user-authorized contract
 change to sheet-per-object (`{module}__{arm}.png` stem pairs), not a fudge.
 Assertions below are amended in place per R2's own instruction ("AMENDED,

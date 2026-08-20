@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """layout_dsl_v2.py — v2 grammar: "level N:"/"layer X:"/"roof:"/"stair:" blocks -> Layout.
 
-T2/T3 (.loop/dsl-v2-python/3-arch.md): parser + D3 union/double-book validation, split out of
+T2/T3 (.craft/dsl-v2-python/3-arch.md): parser + D3 union/double-book validation, split out of
 layout_parse.py to stay under the project's per-file line cap. Only layout_parse.parse_text calls
 into this module (lazily, to dodge the import cycle) — no other module should import it directly.
 """

@@ -33,8 +33,8 @@ T5 new/amended tests (`test_texture_map.py`, `test_texture_warp.py`,
 hook-auto-regenerated routing tables (`CONTEXT.md`, `src/pipeline/CONTEXT.md`,
 `test/CONTEXT.md` — not hand-edited, side effect of the touched dirs per
 4b-code.md's own note), `ROADMAP-content-gen.md` (this loop's S4/S4b update),
-and `.loop/arm-a-homography/` (the chain trail, keep-trail: yes). No files
-outside the plan's `files` columns + `.loop/` + `ROADMAP-content-gen.md`. No
+and `.craft/arm-a-homography/` (the chain trail, keep-trail: yes). No files
+outside the plan's `files` columns + `.craft/` + `ROADMAP-content-gen.md`. No
 pre-existing dirty paths at branch start (verified via `git status --short`
 at Loop 5 session start — tree was clean before this loop's own edits). No
 secrets. `output/gen-inbox/` restage artifacts from Loop 5 are gitignored

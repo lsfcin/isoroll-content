@@ -23,7 +23,7 @@ _COMPASS_TO_ARROW = {v: k for k, v in SIDE_NAME.items()}
 
 @dataclass
 class Level:
-    """v2 (T2/T3, .loop/dsl-v2-python/3-arch.md) — one `level N:` block: grid + per-cell attr grids.
+    """v2 (T2/T3, .craft/dsl-v2-python/3-arch.md) — one `level N:` block: grid + per-cell attr grids.
 
     NEW dataclass, additive only — not yet wired into Layout/parse_text/rotate_cw/validate (Loop 4b).
     g: list[str] grid rows. side/type/wmat: dict["r,c"->int|arrow] sparse attr grids. fh: dict["r,c"->int]

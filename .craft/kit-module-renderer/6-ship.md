@@ -22,7 +22,7 @@ context: code/CONTEXT.md, code/isoroll-content/CONTEXT.md, code/isoroll-content/
 
 ## Ship
 
-diff-scope: clean — 27 files: all 7 task files (T1–T7) + type stubs (.pyi) + .loop/ audit trail + ROADMAP/CONTEXT.md updates; no extras
+diff-scope: clean — 27 files: all 7 task files (T1–T7) + type stubs (.pyi) + .craft/ audit trail + ROADMAP/CONTEXT.md updates; no extras
 roadmap: updated `/mnt/workspace/code/isoroll-content/ROADMAP-content-gen.md` — Lane R execution note added with plan reference and branch name
 commit: b56abc0 pushed: yes — `loop/kit-module-renderer` → GitHub (ready for merge decision, not merged per flow)
 leftovers: none — follow-ups documented in ROADMAP.md (P-CTRL + P-Kit remain fallbacks; restyle NB test-to-kill is user's next step per MEMO)

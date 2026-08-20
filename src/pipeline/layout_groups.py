@@ -2,7 +2,7 @@
 """layout_groups.py — pure geometry helpers for sloped-surface GROUPS (roofs/stairs), ported from
 design/feel-rig/rig.frag (L184-199 vocab, L365-372 diagSolid, L423-443 grpBaseData/grpCellVoxels).
 
-T1 (.loop/dsl-v2-python/3-arch.md) — ported from rig.frag. No PIL, no I/O — pure functions only.
+T1 (.craft/dsl-v2-python/3-arch.md) — ported from rig.frag. No PIL, no I/O — pure functions only.
 """
 
 import math

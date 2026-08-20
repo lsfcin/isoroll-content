@@ -89,7 +89,7 @@ Constraint: floor must participate in **isoroll's own fog/visibility stack** (mo
 - (a) floor as isoroll tiles built from merged massing strips (not per-cell — slice-count sanity);
 - (b) live background-image regeneration on edit (module has `transformBackground`, `backgroundYScale`, background gizmos) with fog implications prototyped.
 
-**Spiked** (`isoroll-module/.loop/floor-fog-spike`, live-Foundry e2e, l-room fixture, SW view, oracle-verified via sprite tint — not eyeballed):
+**Spiked** (`isoroll-module/.craft/floor-fog-spike`, live-Foundry e2e, l-room fixture, SW view, oracle-verified via sprite tint — not eyeballed):
 
 | Metric | (a) floor-as-iso-tiles | (b) background regen |
 |---|---|---|
@@ -98,7 +98,7 @@ Constraint: floor must participate in **isoroll's own fog/visibility stack** (mo
 | Fog-state correctness | unseen 0 / explored 18 / visible 6 / total 24 (darkenedFraction 0.75) across a visible→explored transition, oracle-verified | n/a — renders at full clarity regardless of fog/token-vision state (structural gap, not partial) |
 | Edit latency | not isolated (tile create + fog-sync settled inside fixed waits) | ~670ms mean of 3 runs (`canvas.scene.update` + settle) |
 
-**Evidence-based recommendation:** (a) is the only fog-correct option — verified, not assumed. (b) has a complete fog gap (background floor stays fully lit under unexplored fog), so it is not viable as a *substitute* for the floor; it could only be considered as a decorative layer *under* (a)'s fog-tiled floor, which was not prototyped and is not part of this evidence. Full write-up: `isoroll-module/.loop/floor-fog-spike/5-user.md`.
+**Evidence-based recommendation:** (a) is the only fog-correct option — verified, not assumed. (b) has a complete fog gap (background floor stays fully lit under unexplored fog), so it is not viable as a *substitute* for the floor; it could only be considered as a decorative layer *under* (a)'s fog-tiled floor, which was not prototyped and is not part of this evidence. Full write-up: `isoroll-module/.craft/floor-fog-spike/5-user.md`.
 
 **DECIDED 2026-07-10 (Lucas): floor = iso-tiles (a).** Caveat accepted with a guard: P7 adds a slice-count perf gate (merged massing strips keep counts low — l-room floor = 6 tiles/24 slices; if large maps degrade, fall back to chunked mega-strips before reconsidering).
 

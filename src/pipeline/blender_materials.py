@@ -146,7 +146,7 @@ def apply_uv_texture(mesh_objs, front_path: str, back_path: str,
         # Normals need inverse-transpose of the 3×3 rotation+scale portion
         nor_mat = world_mat.to_3x3().inverted().transposed()
 
-        uv_layer = bm.loops.layers.uv.new("iso_uv")
+        uv_layer = bm.crafts.layers.uv.new("iso_uv")
 
         for face in bm.faces:
             w_normal = nor_mat @ face.normal
@@ -155,7 +155,7 @@ def apply_uv_texture(mesh_objs, front_path: str, back_path: str,
             is_front = w_normal.y < 0
             face.material_index = 0 if is_front else 1
 
-            for loop in face.loops:
+            for loop in face.crafts:
                 v_world = world_mat @ loop.vert.co
                 u = (v_world.x - x_min) / x_span
                 v = (v_world.z - z_min) / z_span

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """layout_serialize.py — Layout -> canonical DSL v2 text, ported from rig.frag updateDsl (L1088-1119).
 
-T4 (.loop/dsl-v2-python/3-arch.md). Round-trip contract (C2): to_dsl(parse_text(text)) == text,
+T4 (.craft/dsl-v2-python/3-arch.md). Round-trip contract (C2): to_dsl(parse_text(text)) == text,
 compared per-line-rstripped. Unlike rig.frag's live editor (whose in-memory grid never stores R/S —
 they're a computed overlay recomputed at render time), our parser keeps R/S markers verbatim in
 Level.g when it reads them (see layout_dsl_v2.py), so emission here is a straight, lossless replay

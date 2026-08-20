@@ -4,7 +4,7 @@
 Seam: layout_massing.massing() Box list (T5) + layout_groups pure geometry (T1). Two layers of
 test: (a) isolated geometry unit tests for grp_base_data/grp_cell_voxels, hand-derived from
 rig.frag L423-443 for a flat roof and a shed1 stair (derivation recorded in
-.loop/dsl-v2-python/4a-tests.md and mirrored by the dsl_v2_groups.txt fixture); (b) Box.z0
+.craft/dsl-v2-python/4a-tests.md and mirrored by the dsl_v2_groups.txt fixture); (b) Box.z0
 (DECISION D1) on the simplest possible v2 fixture — a lone wall voxel, no groups, no Z-merge
 branching — so the new field is exercised without needing the full group pipeline.
 """

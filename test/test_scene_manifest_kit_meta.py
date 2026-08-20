@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """test_scene_manifest_kit_meta.py — Loop 4a (re-run) tests for the metadata-only kit seam.
 
-Closes the integration gap raised in .loop/export-manifest/5-user.md
+Closes the integration gap raised in .craft/export-manifest/5-user.md
 (FLAG: RETURN loop=3 reason=integration-gap): build_manifest must not require
 kit piece PNGs on disk, only kit.json metadata — otherwise a missing-asset kit
 crashes on an eager PIL Image.open() before wall_schema.validate_manifest's
-graceful [FAIL] path ever runs. See .loop/export-manifest/3-arch.md
+graceful [FAIL] path ever runs. See .craft/export-manifest/3-arch.md
 "Architecture (re-run after RETURN loop=3 reason=integration-gap)" for the
 design: new `scene_assemble.load_kit_meta(kit_dir)` (kit.json only, no PIL),
 `build_manifest` switched from `load_kit` to `load_kit_meta`.

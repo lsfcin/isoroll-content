@@ -15,7 +15,7 @@ context: /mnt/workspace/code/isoroll-content/CONTEXT.md, /mnt/workspace/code/iso
 intent: repair the ComfyUI utility-model environment — dead symlinks plus the missing upscale model, nothing else.
 motivation: every local CLI command fails at ComfyUI runtime today; the NB lane is unaffected but the utility rail (upscale/rembg) is needed for postproc.
 refs: ROADMAP-content-gen.md § Delegação /loops; SETUP.md §3 (model list + URLs).
-scope-files: none in repo besides .loop trail (optional: one-line SETUP.md troubleshooting note); real work under $HOME/ComfyUI/models and /mnt/workspace/Models/diffusion.
+scope-files: none in repo besides .craft trail (optional: one-line SETUP.md troubleshooting note); real work under $HOME/ComfyUI/models and /mnt/workspace/Models/diffusion.
 expected-result: symlinks resolve; upscale model file present; `upscale_pass.json` loadable by a running ComfyUI.
 ambition: minimal
 criticality: low tolerance: partial OK — any download that fails after 2 attempts becomes a leftover line, not a retry hunt

@@ -3,7 +3,7 @@
 
 Covers C1 (manifest shape + verb wiring), C2 (wall-schema validation),
 C3 (round-trip counts vs the layout DSL), C4 (asset resolution) from
-.loop/export-manifest/3-arch.md, against the l-room fixture.
+.craft/export-manifest/3-arch.md, against the l-room fixture.
 """
 
 import copy

@@ -187,9 +187,11 @@ def test_sheet_qc_cli_exit_codes(tmp_path):
 
 
 # ---------------------------------------------------------------- C4 ---
-# SPECS.md corrective-factor appendix (doc-only criterion; grep seam).
+# The corrective-factor appendix (doc-only criterion; grep seam). It lives in the
+# SPECS shard that owns the pipeline — reading the root SPECS.md went red the day
+# SPECS was split, because a shard moves the text without moving the pointer.
 
 def test_specs_md_has_corrective_factor_appendix():
-    text = (ROOT / "SPECS.md").read_text()
+    text = (ROOT / "SPECS-pipeline.md").read_text()
     assert "Scale corrective factor" in text
     assert "px_per_voxel" in text
