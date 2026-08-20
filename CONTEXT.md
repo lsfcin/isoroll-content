@@ -111,18 +111,18 @@ isoroll-content/
 
 | Subdirectory | Description |
 |--------------|-------------|
-| [`assets/`](assets/CONTEXT.md) | Generated art output — characters and tiles. Not curated reference material (see… |
-| [`benchmarks/`](benchmarks/CONTEXT.md) | Curated, tracked comparison images (checkpoint/anatomy/model tests) and QC dev… |
+| [`assets/`](assets/CONTEXT.md) | Generated art output — characters and tiles. Not curated reference material (see `../benchmarks/` for that). |
+| [`benchmarks/`](benchmarks/CONTEXT.md) | Curated, tracked comparison images (checkpoint/anatomy/model tests) and QC dev output for the tile-guide generator. Each comparison folder carries its own `manifest.json` (model, seed, time_s, file — not the aspirational schema in SPECS.md, which is unused). Generator scripts (`run_anatomy_test.py`, `run_model_comparison.py`) live in `src/pipeline/`, not… |
 | [`design/`](design/CONTEXT.md) | — |
 | [`output/`](output/CONTEXT.md) | — |
-| [`refs/`](refs/CONTEXT.md) | Captured references for isoroll-content — tier-1 links in… |
-| [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts… |
+| [`refs/`](refs/CONTEXT.md) | Captured references for isoroll-content — tier-1 links in [REFS.md](refs/REFS.md); promote to `<slug>.yaml` for deep study (schema: `academy/papers/*/refs/CONTEXT.md`). |
+| [`src/`](src/CONTEXT.md) | Source code for the isoroll-content pipeline — CLI and art-generation scripts. Generated/tracked assets live in `../assets/` and `../benchmarks/`, not here. |
 | [`test/`](test/CONTEXT.md) | — |
 
 | File | Description |
 |------|-------------|
-| [`ROADMAP.md`](ROADMAP.md) | **The only live-state file for scene creation.** What's next lives here and… |
-| [`SCENE-CREATION.md`](SCENE-CREATION.md) | Single source of truth for isoroll scene creation: goal, architecture, seam… |
+| [`ROADMAP.md`](ROADMAP.md) | **The only live-state file for scene creation.** What's next lives here and nowhere else. Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, seam, contract, kill-log. Frozen decision records: [`design/`](design/CONTEXT.md). Superseded strategy trees were deleted 2026-08-19 under the `.md` cap; git holds them. Consult the kill-log in… |
+| [`SCENE-CREATION.md`](SCENE-CREATION.md) | Single source of truth for isoroll scene creation: goal, architecture, seam, contract, kill-log. **Status-free by rule** — no phases, no task state, no "current focus". What's next lives only in [ROADMAP.md](ROADMAP.md). The superseded 2026-H1 strategy tree was deleted 2026-08-19 under the `.md` cap — git holds it, and the one recipe anything still pointed… |
 | [`SETUP-comfy.md`](SETUP-comfy.md) | Install it, point COMFY_DIR at it, and fetch the models and extensions it needs. |
 | [`SETUP-local.md`](SETUP-local.md) | Python deps, the low-VRAM SDXL settings for a 3050, and the Blender lane. |
 | [`SETUP-verify.md`](SETUP-verify.md) | Probes that say whether the install works, node by node. |
