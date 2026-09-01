@@ -29,8 +29,10 @@
 | Header fields naming code that is not there | 0 |
 | Truncated routing descriptions | 2 |
 | Constraints trapped in a CONTEXT.md head | 1 |
-| Repos on an unmerged feature branch | 0 |
-| Remote branches already merged into their base | 1 |
+| Local branches holding unpromoted work | 1 |
+| Work that exists on this disk and nowhere else | 0 |
+| Local branches already merged into their base | 0 |
+| Remote branches already merged into their base | 0 |
 
 ### Off-allowlist `.md` types
 
@@ -174,9 +176,21 @@ Clean.
 
 - CONTEXT.md: head is 1740 tok carrying 12 constraint(s).
 
-### Repos on an unmerged feature branch
+### Local branches holding unpromoted work
 
 *promote when the work is green, or say which reason applies — /roundup Phase 5*
+
+- code/isoroll-content — salvage/setup-symlink-fix is 1 ahead of main
+
+### Work that exists on this disk and nowhere else
+
+*two machines share this workspace — push it, or give the repo a remote to push to: code/SPECS-git.md § Push policy*
+
+Clean.
+
+### Local branches already merged into their base
+
+*safe to delete, and purely local — `git -C <repo> branch -d <branch>`*
 
 Clean.
 
@@ -184,6 +198,6 @@ Clean.
 
 *safe to delete, and outward-facing — `git -C <repo> push origin --delete <branch>`, Lucas*
 
-- code/isoroll-content — 7 merged into main: git -C code/isoroll-content push origin --delete feature/arm-a-homography feature/env-utility-repair feature/export-manifest feature/mvp-first-replan feature/playable-seam feature/scale-consistency feature/stub-backfill
+Clean.
 
 <!-- entropy:end -->
