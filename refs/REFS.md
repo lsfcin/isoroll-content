@@ -10,6 +10,7 @@
 - [bodam.sketch — 3D flower shop sketch (Feather 3D)](https://www.instagram.com/reel/DZNl9VJz7XO/) — target visual level/type for isoroll content
 - [Caio Figueiredo — "Suburb Buildings" lowpoly](https://www.instagram.com/p/CZRzKTKKAOA/) — Blender geometry-nodes style ref for isoroll content
 - [Miaugic TCG — transparent modular cards](https://www.instagram.com/reel/Daks3P5xQf-/) — layering power (character + items composition); consider for texpace/spacemantics
+- [Craft RPGs](https://www.craftrpgs.com/) — plataforma SaaS de RPG com IA (sucessor do fables.gg), battle maps 2D em grade e diálogos VN; proprietário (sem repo no GitHub), não substitui nossa pipeline isométrica de assets — assessment task tracked in ROADMAP.md
 
 ## Prompt/skill packs for the NB lane
 - [Banana Pro Director + Cinema World Builder](https://www.instagram.com/reel/Dax-38bjV8R/) — two Claude skills by "Joey": the first builds character sheets, outfit references, scene layouts and image prompts **explicitly tuned for nano banana** (our primary generator, see CONTEXT.md); the second turns those images into video prompts with camera/lens/shot-style baked in. The character-sheet + scene-layout half maps onto the kit-assembly pipeline; the video half does not apply. ⚠ DM-bait post — the skills are not linked, only named. Found via the reel's speech track, its caption says nothing
@@ -31,5 +32,23 @@
 - [PixelLab — tileset tutorial (YouTube)](https://www.youtube.com/watch?v=q9z2Vhpz-Z8) (Lucas 2026-07-30) — walkthrough of the same tool: tileset explanation, reference tiles, export, import into Godot, then `extend map` to build a house. Watch the 0:30–4:00 "tileset explanation" segment for how a shipping tool frames main/transition/lower tiles
 - [Sprite Sheet Creator](https://github.com/blendi-remade/sprite-sheet-creator) ([post](https://www.instagram.com/reel/DbUJiTmiIRA/), Lucas 2026-07-31: *"tenho que olhar isso!"*) — [src: web:instagram.com] open-source, prompt→2D pixel sprite sheets, with an **isometric RPG mode** alongside side-scroller: walk/attack/idle animations, parallax backgrounds, top-down world maps. Same tension as PixelLab — pixel-art scale is off-target for our look, and prompt-generated views collide with the frozen "anything that rotates passes through geometry" rule — so the value is in its **sheet layout and animation-state vocabulary**, not its pixels. Assessment task tracked in ROADMAP Backlog
 
+## Tools — video, not sprites
+- [CapCut, one recording into many cuts](https://www.instagram.com/reel/Ddboo3axo9t/) — [src: web:instagram.com] a
+  creator claims every cut in the reel came from a **single** take, and points at a shared CapCut project. Lucas: *"será
+  que o capcut pode ser útil pro isoroll?"* (INBOX 2026-09-18). It edits video, so it reaches devlog/promo and
+  table-session capture and never the sprite pipeline — the frozen rule that anything which rotates passes through
+  geometry rules the second use out by construction. Assessment task tracked in ROADMAP Backlog, mirrored in
+  `brain/goals/rpg-isoroll.md` [capcut-um-take].
+
 ## Process — level/scene creation
 - [Beakman Studios — level-creation process (Barrow and Blade)](https://www.instagram.com/reel/DXpDJCACt2V/) — how an indie roguelike settled its level-creation workflow; Lucas: "útil pro isoroll content" (INBOX 2026-07-23). Assessment task tracked in ROADMAP Backlog — extract anything transferable to the kit-assembly / scene-stitching pipeline.
+
+- [Drift](https://www.instagram.com/reel/DeI3Zulji05/?utm_source=ig_web_copy_link) — [src: web:instagram.com, gittrend.io] desktop video-editor demonstration; author's claims to test. Assessment in code/isoroll-content/ROADMAP.md; full extraction in outputs/virada/inbox-2026-10-06-links.json.
+
+- [Animater — Lunatic Dice](https://www.youtube.com/watch?v=miVmM-EMRm8) — [src: web:youtube.com] Text, captions and speech describe animated Foundry effects; visual extraction waived by Lucas. Check projection, elevation, occlusion and assets. Assessment: ../ROADMAP.md [animater].
+
+- [Universal Modder — gittrend.io](https://www.instagram.com/reel/DeJdwzZiDQA/?utm_source=ig_web_copy_link) — [src: web:instagram.com] Demonstration names rehan-remade/universal-modder: discovery, asset production, live-game verification and reusable field notes; compare with our workflow before adoption. Assessment: ../ROADMAP.md [modder-patterns].
+
+- [Object brush — Canvas of Kings / Might of Merchants](https://www.instagram.com/reel/DeHQ3vrKB26/?utm_source=ig_web_copy_link&stkn=NTc4MTIwNjQ2YQ==) — [src: web:instagram.com] Demonstration shows density, erase, auto-height, collision and grid controls; compare the experience with our frozen painter grammar. Assessment: ../ROADMAP.md [object-brush].
+
+- [UniMate — theartificialintelligens](https://www.instagram.com/p/DeGM6u4AZ9r/?utm_source=ig_web_copy_link) — [src: web:instagram.com] Seven slides present “One Unified Model to Animate Diverse Skeletons”; availability, license, rig inputs and performance unverified; source notes difficult contact/foot grounding. Assessment: ../ROADMAP.md [unimate].

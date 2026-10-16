@@ -19,13 +19,7 @@ as an architecture decision. This replaces the P0–P9 program and the S1–S8 l
 below): those made the content strategy a prerequisite for a playable product, which is what stalled
 the project on per-module enclosure masks for four review rounds.
 
-**Why the pivot** (evidence, not preference): the renderer already uses world-absolute texcoords
-(`texture_warp.py`), but modules are rendered at a module-local origin (`stage_kit_modules.py`) and one
-sprite is pasted at every cell (`scene_assemble.py`), with `texture_map.variant()` keyed on the module's
-own world column. So every `wall_band` in a scene shows identical stones and no pattern can cross a cell
-join. **Reusable sprite and true cross-tile continuity are mutually exclusive** — arm A cannot deliver
-continuity, arm B can, and only a bake-off with a playable product already in hand can price that
-trade-off honestly.
+**Why the pivot:** world-absolute texture coordinates do not prevent repetition when pieces render at a module-local origin and one sprite is reused in every cell. Arm B renders each cell at its real world position; arm A′ tests matched variant sets. A playable product lets the bake-off price continuity against reusable sprites and latency.
 
 ### Decisions taken 2026-07-29 (Lucas)
 
@@ -33,7 +27,6 @@ trade-off honestly.
 |---|---|---|
 | D1 | MVP ships knowingly-ugly pixels (arm A: repeated stones, joins don't flow) | PLAYABLE needs no in-browser renderer and no bake round-trip; look is judged in BAKEOFF, not before |
 | D2 | **Full 8+1 views in the MVP** (not 4+1) | cheap under a deterministic renderer: cardinal = one view-table entry (projection + backface-cull axis) + the module's existing custom-projection flags. The "new art regime" price was an NB-paints-sheets cost and does not apply |
-| D3 | Merge the arm_a renderer engine to `develop` | done (2026-07-29, tag `pre-arm-a`); style-verdict gate moot since the S4t/enclosure lane is parked |
 | D4 | Quality lane = **offline Python bake**; any browser renderer is preview-only | kills the "bad-quality-3D" risk: shipped pixels are always supersampled + AO + ink from the offline renderer |
 | D5 | Aesthetic target = **Feather-3D / Tiny Glade**, not literal Hades | Hades is hand-painted at artist cost. Style rule to hold: non-photometric shading (flat per-face ramp, no gradients/speculars) + linework always on |
 | D6 | Art cost is paid **once at texture scale** (~40 materials), never per tile | ~40 painted materials is AI-able or commissionable; 500 stitched tiles is not. Same logic for props: mesh once, render 9 views |
@@ -45,128 +38,26 @@ trade-off honestly.
 |---|---|---|
 | D8 | **No painter in the MVP — scenes are authored as text DSL**, baked by CLI, imported into Foundry | The in-Foundry painter is not assumed to be the way scenes get built. `loop/painter-mvp-1` is **PARKED, not closed** (work preserved at `3987979`); P7a leaves the critical path. This *changes the PLAYABLE user action* — see the milestone below — and removes the largest remaining module task. Revisit the painter only after the play loop has been felt, when it is a convenience question rather than an architecture one |
 | D9 | Rotation = **instant in-place swap, all 9 views preloaded** | No rebuild pause on rotate: every family's sprites load up front, a rotate re-textures + repositions each tile in place, and walls/vision are re-derived per view. Cardinal views stay in the same rotation cycle as dimetric (not a separate mode). Prices D7's guard immediately — memory = map area × 3 sprite families — so `chunk`/`px_per_voxel` stop being theoretical the moment maps grow |
-| D10 | **Walls are THIN — 1 ft, on a cell EDGE, not a 5 ft cell-filling block** | Deferred to after the PARITY ladder (Lucas, 2026-07-31), but decided now so nothing is built assuming otherwise. A wall stops being "this cell is solid" and becomes "this cell edge carries a wall", which touches the DSL's meaning, massing, the kit's `wall_band` geometry, tile placement, and the Foundry wall segment. Corner rule Lucas gave: at a junction, render each wall's **large face**; the thin end faces are not rendered. Sequencing note: everything on the ladder survives this **except the wall-sprite placement checkpoint (CP-4)**, which is placement work on geometry that is about to change — so CP-4 stays deliberately shallow (prove the mechanism on ONE wall, do not tune) and the real wall pass happens after |
+| D10 | **Walls are THIN — 1 ft, on a cell EDGE, not a 5 ft cell-filling block** | After PARITY: change DSL, massing, kit geometry, tile placement and wall segments. At junctions render each wall's large face, never its thin end faces |
 
-## How this gets used — the workflow is the spec (read before planning any task)
+## Workflow and parity
 
-Failure pattern this project keeps hitting (Lucas, 2026-07-29): agents make progress but leave **loose
-ends — results that don't connect to the next step**. Three rules exist to prevent it, and they bind every
-task below:
+Milestones are user actions. Every visual catch becomes a code invariant. Lucas judges PLAYABLE usability and BAKEOFF style; ask about design premises early, use tests for what tests can decide. Reuse feel-rig v16.2. Load /foundry before module code and iso-visual before visual work; verify behavior live and geometry numerically.
 
-1. **Milestones are user actions, never artifacts.** A milestone is "Lucas paints a room and walks a token",
-   never "the renderer interface exists". An interface is frozen *by being used end to end*, not before —
-   which is why the old SEAM milestone was folded into PLAYABLE rather than kept as its own gate. Any task
-   that cannot name the user action it serves is a loose end by definition.
-2. **Every eye-catch becomes a code invariant.** When Lucas catches something by looking (orange mask over
-   air, hairlines, phantom plates), the fix is not just the fix — it's an invariant test so it can never
-   come back to him. Precedent that this works: ROUND 4's `render ∪ mask == silhouette` test made that whole
-   bug class unshippable. This is the mechanism that turns 19 review rounds into 3.
-3. **The user's touchpoints are budgeted and enumerated.** Lucas appears exactly twice below (PLAYABLE
-   usability gate, BAKEOFF style verdict). Anything that would add a third touchpoint needs a code oracle
-   first. Agents must never route a judgement to him that a test could make. *Amendment 2026-07-31:*
-   this budgets **judgements**, not **premises**. D8/D9 are design forks no test could settle — whether
-   scenes are painted in Foundry at all, and how rotation should feel — and asking cost far less than
-   building P7a under an unchosen premise would have. Ask about premises early; never ask about
-   anything a test can decide.
+Python scene_assemble.assemble() is the ground truth: compare each module sprite's rect, position, identity and presence. One checkpoint at a time: smallest fixture (one cell → l-room → cabin), green oracle → side-by-side Python/Foundry board → Lucas approval. Never present a red board; each catch joins the parity tests.
 
-Agent self-knowledge to plan around, not wish away: **Claude is not a Foundry expert and has a weak visual
-eye.** Therefore — load `/foundry` before touching module code; never assert Foundry behavior, verify it
-against the live instance (`verify:full` e2e + the `isoroll.dumpZOrderJSON()` oracle); never assert geometry
-from looking at an image (`core/skills/iso-visual.md` hard rule). And prototype interactions in a throwaway
-rig before coding them in the module — `design/feel-rig/` is what made the frozen painter grammar cheap, and
-that grammar is already bought: **reuse rig v16.2, do not re-derive it.**
+Frame contract: scale by `a * gridSize / pxPerVoxel`, `a = cos(rotation + skewY)`; anchor on `originPx` at the footprint's screen-top corner; map `Y = u, X = -v`. `cells: [l,d]` transposes: l is world height, d world width. Wall definitions are bounding boxes: derive centerline along dir, apply the same turn, and assert axis alignment plus sampled points on wall tiles. A shared derivation can hide a shared error; retain independent checks and the human style gate.
 
-## PARITY LADDER — how the rest of PLAYABLE gets built (2026-07-31)
+Open divergence: the TypeScript massing.ts twin still strip-merges render-lane floors; its old Python goldens conceal it. Open height mismatch: kit wall_h=3 versus layout wall_h=2; align rendering or make the manifest's boundHeight describe the actual sprite.
 
-Lucas, after the first live cabin import: *"visuals is a hard thing for you Opus… we cannot rely on your
-visual/spatial reasoning without guardrails."* He is right, and the evidence is in this repo's own rule
-(`core/skills/iso-visual.md`: **model eyes never assert geometry**) which the previous session broke — a
-screenshot was read as "the cabin composes" while the tiles were mis-sized, the walls mis-placed, the roofs
-at floor level and the z-order wrong. All five causes were readable in code. None needed eyes.
+| Checkpoint | Fixture | Pending behavior | Oracle |
+|---|---|---|---|
+| Elevation | cabin | Import native document.elevation rather than an unread baseElevation flag | platform/roof rects match Python |
+| Walls | cabin | Verify vision, fog and movement; remove arbitrary createdTiles[0] frame dependency | blocking matches layout; walls survive frame-tile movement |
+| Z-order | cabin | Activate DepthSorter; include unsliced tiles in dump | no violations; token occludes/is occluded correctly |
+| Rotation | cabin | Instant in-place swap, all nine views | parity green in every view |
 
-**The guardrail: the Python assembler is ground truth, and the module must agree with it numerically.**
-`scene_assemble.assemble()` already computes the exact rect every sprite occupies. The module can report the
-rect every sprite actually got. Diffing those per tile catches wrong size, wrong position, wrong sprite and
-missing tile — and would have caught 3 of the 5 bugs above before Foundry was ever opened.
-
-**Working agreement (Lucas, 2026-07-31):**
-1. **One checkpoint at a time.** Oracle green → board → stop → he approves → next. No chaining.
-2. **Fixture ladder**: 1 cell → l-room → cabin. Each fix is proven on the smallest fixture that can show
-   it. A single tile has one thing that can be wrong; the cabin has eighty-six.
-3. **Board, not a hunt**: each checkpoint ships a side-by-side (Python reference | Foundry actual) plus the
-   parity numbers. He glances and says go / no-go; he is never asked to find the bug.
-4. **He never looks at red.** A checkpoint reaches him only with its oracle already green. His eye is for
-   what numbers cannot judge — never for finding broken plumbing.
-5. **Every catch of his becomes a parity assertion**, in the same commit as the fix. Nothing he has already
-   caught may come back.
-
-**The frame contract, settled by CP-2 (2026-07-31).** A baked sprite lands in Foundry by three
-rules, and the first live cabin import broke all three at once:
-
-1. **Scale by density, not by box fit.** `a * gridSize / pxPerVoxel`, where `a = cos(rotation +
-   skewY) ≈ 0.894` is what a world px spends of screen width. The module used to fit the texture to
-   `max(docW, docH, boundHeight)`, so tall pieces inflated past their cell — and the tile document
-   was being sized from the sprite, which confused the piece's VOLUME with its picture.
-2. **Anchor on `originPx`, at the footprint's screen-top corner.** The module used to put the
-   texture's centre on the volume box's centre; the bake measures every sprite from the box's
-   `(u0, v0, z0)` corner. The taller the sprite, the further apart those are — 149 px for a 2-high
-   wall, which is what the pinned CP-2 gap was.
-3. **The manifest grid is a quarter turn off the module's.** isoroll-content projects `x = u - v`,
-   the module's stage projects `x = a(X + Y)`; equal pictures require `Y = u, X = -v`. Importing
-   `(u,v)` straight into `(x,y)` laid every scene out a quarter turn wrong, which no per-piece nudge
-   can undo. The bake cell is now carried as `flags.isoroll.cell`, since the position no longer
-   spells it out.
-
-Anything comparing a projected image (the bake, a screenshot) to world units and omitting `a` is
-off by √5/2 = 1.118. CP-1's harness did exactly that and still reported sizes GREEN, because the
-importer sized tiles with the same wrong number — a false green worth remembering: **two sides of a
-comparison that share a derivation cannot check that derivation.**
-
-**A tile covers `cells`, not a cell (CP-3).** The manifest carries `cells: [l, d]` and the importer
-sizes the tile document from it. The turn transposes the footprint with everything else: `l` along
-the manifest's `u` is world HEIGHT, `d` is world WIDTH. Every render-lane box is 1×1 again after
-the floor fix below, so this is a contract with no current user — keep it: a merged render lane is
-the obvious optimisation (128 Foundry tiles for one room), and this is the field it needs.
-
-**What the numbers could not see (Lucas, board, 2026-08-01).** Parity was green on a picture with
-nine tenths of its floor missing, because BOTH sides agreed on it. `_floor_boxes` ignored the
-`merge` flag, so floors strip-merged even in the render lane — and arm A pastes ONE one-cell sprite
-per box, so a 10-cell strip drew one cell. Two more of his catches, both kit geometry: a window sat
-at z 0..1 (on the floor) where the guide renderer had always drawn z 1..2, and the door/window slab
-hugged v=0 — the FAR edge of its cell — so backface culling showed its face most of a cell deep
-inside the wall. All three are now pinned by `test/test_kit_modules.py`. **The eyeball gate is not
-ceremony: an oracle built from one derivation cannot see an error in that derivation.**
-
-*Open, for whoever next touches `isoroll-module/src/assemble/`:* the TS twin's `massing.ts` still
-strip-merges floors in the render lane, so it and the Python have diverged. Its own goldens were
-rendered by the old Python, so nothing goes red — the twin just quietly stopped being a twin.
-
-| CP | Fixture | What it fixes | Oracle that proves it |
-|----|---------|---------------|------------------------|
-**A manifest wall is a BOX, not a line (CP-4, 2026-08-01).** `walls[]` states each run's bounding
-rect — `(u0,v0)` to `(u0+l, v0+d)` — because that is what a massing box is. Read as a segment it
-puts every wall on its box's DIAGONAL (a 45° line through a 1×1 wall cell). A Foundry wall is the
-box's centreline along its own `dir` axis, then through the same quarter turn as the tiles
-(`import/bake-frame.ts`, now the single statement of that turn).
-
-The oracle deliberately does not restate that formula — it checks walls against the tile placement
-CP-3 already proved: every segment is axis-aligned in world space, and sampled points along it land
-on wall TILES. Both halves were needed and both were mutation-tested: sampling alone cannot see the
-diagonal (a 12×1 run's diagonal never leaves its own wall cells), and axis-alignment alone cannot
-see a missing turn.
-| 5 | cabin | **Elevation** — `baseElevation` is a flag the renderer never reads; position comes from native `document.elevation`, which the importer never sets. This is why roofs sit on the floor. | platform + roof rects match the Python render |
-| 6 | cabin | **Wall behaviour** — segments are placed and mutation-tested at CP-4, but nothing asserts what they DO: vision, fog, movement. Also still odd: every wall is anchored to an arbitrary `createdTiles[0]`, so the scene's walls hang off one tile's frame. | token vision blocked where the layout says; wall survives its frame tile moving |
-| 7 | cabin | **Z-order** — `DepthSorter.activate()` is an empty body; the live sort is per-slice and unsliced tiles never appear in the dump. | `zOrderViolations()` empty; token occludes and is occluded correctly |
-| 8 | cabin | **Rotation** (D9) — instant in-place swap. | parity green in all 9 views |
-
-Then D10 (thin walls), then the PLAYABLE gate.
-
-**Kit height ≠ layout height (found at CP-2, unowned).** `kit.json` bakes `wall_h: 3.0` while
-`one-cell.txt` (and `cabin.txt`) declare `wall_h: 2`, so a wall SPRITE is a voxel taller than the
-`boundHeight` its own manifest entry carries. Parity does not see it — both sides use the same
-sprite — but the volume box, occlusion and depth sort all read `boundHeight`, so CP-7 will. Either
-the kit renders at the layout's wall height, or the manifest reports the sprite's height and the
-box follows it.
+Then D10 thin walls, then PLAYABLE.
 
 ## PLAYABLE — ugly, complete, in Foundry (zero generation, absorbs the old SEAM milestone)
 
@@ -194,14 +85,6 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
 - Before that gate can be called, agents must have verified the chain themselves: `verify:full` e2e green
   against live Foundry, `dumpZOrderJSON()` stable across all 9 view switches, wall count round-tripping
   from the layout. Lucas's gate is for *feel*, never for finding broken plumbing.
-- Chain status 2026-07-30: `verify:full` **green** (127 unit + 9 e2e, 0 failed) and wall count
-  **round-trips** (51 cells, every view). `dumpZOrderJSON()` across 9 view switches is **not yet
-  exercised** — that needs view switching to exist first (task above). Two traps found and removed on
-  the way, both worth knowing about: the e2e golden gate had been reporting a false ~10% mismatch that
-  was entirely the GAME PAUSED banner over the capture (fixed in `test/e2e/golden.mjs`), and the
-  manifest's `imageOffset` was never the module's quantity (see the entry above). Foundry is started
-  with `--world=isoroll-test`; without the world the e2e login selector never appears.
-
 ## BAKEOFF — content arms compared behind the frozen seam
 
 - [ ] arm A: as-is (baseline, already baked by PLAYABLE).
@@ -232,20 +115,11 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
       crop material patches → make tileable, extract prop inventory, use as the eyeball target. Never
       extract tiles from them (kill-log).
 
-## Parked / rerouted by this replan
+## Parked
 
-| Was | Where it went |
-|---|---|
-| P0–P9 program (SCENE-CREATION) | retired → milestones above; the spec keeps only goal/seam/contract/kill-log |
-| S1–S8 lane table (ROADMAP-content-gen.md) | file deleted, absorbed here; per-lane fates below |
-| S1 `anchored-kit-marks` | stays PARKED (was already) — marks only ever mattered for NB-paints-sheets |
-| S4 enclosure masks / S4t / S4b dimensional vocabulary | **PARKED, container-specific to arm A.** Work committed intact (`92b6c50`) so the lane resumes whole if arm A wins BAKEOFF |
-| S5 NB round on 27 sheets | superseded by arm C (~20–40 textures instead of 27 sheets + cross-view QC) |
-| S6 slice/stitch vocabulary + seam alpha ramps + per-pair ground transitions | dissolves under arm B; revisit only if arm A wins |
-| S7 painter close + P7b (9 views, world-normal lighting bug) | folded into PLAYABLE |
-| S8 normal maps | folded into RICHNESS |
-| S0-E4/E5/E6a/E6b/E6c NB tile batches | parked with the NB-sheet regime; the S0 8+1 decision itself survives as D2 |
-| Cross-view sprite QC (IoU, cross-view dims) | dissolves under arm B (a render is consistent by construction); arm A keeps it while it is the baseline |
+- S1 anchored-kit-marks and S0-E4/E5/E6a/E6b/E6c batches wait with the NB-sheet regime; the 8+1 view decision survives as D2.
+- S4 enclosure masks, S4t and S4b dimensional vocabulary are container-specific to arm A; work is preserved at 92b6c50 and resumes only if arm A wins BAKEOFF.
+- S6 slice/stitch, seam alpha ramps and ground transitions return only if arm A wins. Cross-view sprite checks stay with the arm A baseline; rendered arm B is consistent by construction.
 
 ## Research finding — Wang tiles apply, and they qualify a kill-log row (2026-07-30, Lucas asked)
 
@@ -289,25 +163,17 @@ Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
 
 ## Backlog
 
+- **[animater] Assess Animater** — compatibility with Isoroll projection, elevation, occlusion and asset requirements; refs/REFS.md (backlog).
+- **[modder-patterns] Assess Universal Modder** — transferable discovery, asset production, live-game verification and field-note patterns against our workflow; refs/REFS.md (backlog). Respect geometry-to-sprite exports and the frozen pipeline.
+- **[object-brush] Compare the demonstrated object-brush controls** with the frozen painter grammar; identify compatible improvements for Lucas to choose; refs/REFS.md (backlog).
+- **[unimate] Assess UniMate** — availability, license, rig inputs, hardware, contact quality and baked-animation export requirements; refs/REFS.md (backlog). Check the geometry-based bake for eight directional views plus top.
+
+- **Assess CapCut and Drift separately for promotional/devlog edits and table-session capture** — scope these uses before testing; neither changes sprite generation. References in refs/REFS.md; shared comparison in ../../core/ROADMAP.md (INBOX 18 Sep / 14 Oct).
 - **Assess Beakman level-creation process** (INBOX 2026-07-23, ref in refs/REFS.md) — watch the
   Barrow-and-Blade reel, decide what transfers. Small scoping pass, not a build.
-- **Assess PixelLab as a tool** (Lucas 2026-07-30, refs in refs/REFS.md) — two separable questions,
-  do not conflate them: (1) its **tileset structure** (main / transition / lower tile, transition
-  size, export to Wang / dual-grid-15 / 3x3) is a working reference for our painter grammar and for
-  arm A′'s variant set — read it as design evidence, not as an asset source; (2) its **generation
-  tools** (`Create isometric tile`, `Create 8-directional sprite`, `Rotate`) are pixel-art scale
-  (16/32px) and therefore off-target for our Feather-3D look, and any 8-direction *generated* view
-  hits the frozen rule "anything that must rotate passes through geometry" — evaluate only against
-  that gate, for props/characters, never for scene cells.
-- **Assess Sprite Sheet Creator** (INBOX 2026-07-31, Lucas: *"tenho que olhar isso!"*; ref in
-  refs/REFS.md) — open-source prompt→sprite-sheet tool with an isometric RPG mode. Same split as
-  PixelLab, and answer it the same way: its **sheet layout and animation-state vocabulary**
-  (walk/attack/idle × 8 directions, how a sheet is packed and indexed) is design evidence we can use
-  against our own manifest; its **generation** is pixel-art scale and prompt-driven, so it fails the
-  frozen "anything that must rotate passes through geometry" rule for anything shipped. Scoping pass,
-  not a build.
-- ~~**Content strategy review**~~ (INBOX 2026-07-20) — **RESOLVED by this replan** (2026-07-29): the
-  structure audit is the seam + doc restructure; the stitching re-check is arm B vs arm A in BAKEOFF.
+- **Assess PixelLab** (Lucas 2026-07-30; refs/REFS.md) — compare main/transition/lower tiles and Wang/dual-grid-15/3×3 exports with painter grammar and arm A′. Separately assess its pixel-art generation tools against the frozen geometry rule; generated rotating views cannot ship as scene cells, props or characters.
+- **Assess Sprite Sheet Creator** (INBOX 2026-07-31, Lucas: “tenho que olhar isso!”; refs/REFS.md) — compare sheet layout and walk/attack/idle × eight-direction indexing with our manifest. Its prompt-generated pixel art fails the frozen geometry rule for shipped rotating assets; layout evidence remains useful. Scoping only.
+- **Assess Craft RPGs as an AI VTT / RPG platform** (INBOX 2026-09-29, ref in refs/REFS.md) — check UI/UX patterns (battle maps with 5ft grid, party tokens, and AI Game Master dialogues) as design inspiration for isoroll module and content; confirmed proprietary SaaS (not open source, does not replace our offline isometric pipeline).
 - **Brightness QC post-batch** — opaque-mean < 10 → flag (PIL, cheap). Would have caught the 32 black
   frames of 2026-05-27 immediately.
 - **`getdata` deprecated (Pillow 14)** — `sheet_grid.py:63`, `sheet_qc.py:34`, and the test suite.
@@ -323,6 +189,6 @@ Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
 
 ## Verification
 
-`make verify-fast` green (142 tests at the replan). Geometry by code, never by model eyes; style by Lucas's
+`make verify-fast`. Geometry by code, never by model eyes; style by Lucas's
 eyeball on a board before any step that produced images advances — both rules in `core/skills/iso-visual.md`.
 Gitflow: `main` ← `develop` ← `feature/*`; every image-producing step ends on a board.
