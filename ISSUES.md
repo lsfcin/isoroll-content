@@ -30,10 +30,10 @@
 | Header fields naming code that is not there | 0 |
 | Truncated routing descriptions | 2 |
 | Constraints trapped in a CONTEXT.md head | 1 |
-| Local branches holding unpromoted work | 1 |
+| Local branches holding unpromoted work | 2 |
 | Work that exists on this disk and nowhere else | 0 |
 | Local branches already merged into their base | 0 |
-| Remote branches already merged into their base | 1 |
+| Remote branches already merged into their base | 0 |
 
 *A check with no findings is the `0` in that table and nothing more. Only a check with something to show gets a section below.*
 
@@ -82,7 +82,7 @@
 - CONTEXT.md: retired token 'seam' survives (line 15).
 - CONTEXT.md: retired token 'slug' survives (line 118).
 - CONTEXT.md: retired token 'tier' survives (line 118).
-- ROADMAP.md: retired token 'seam' survives (line 3).
+- ROADMAP.md: retired token 'seam' survives (line 8).
 - SCENE-CREATION.md: retired token 'seam' survives (line 2).
 - SETUP-verify.md: retired token 'probe' survives (line 3).
 - SETUP.md: retired token 'probe' survives (line 11).
@@ -201,12 +201,7 @@
 
 *promote when the work is green, or say which reason applies — /roundup Phase 5*
 
+- . — feature/inbox-triage-20261016 is 1 ahead of main
 - . — salvage/setup-symlink-fix is 1 ahead of main
-
-### Remote branches already merged into their base
-
-*safe to delete, and outward-facing — `git -C <repo> push origin --delete <branch>`, Lucas*
-
-- . — 1 merged into main: git -C . push origin --delete feature/inbox-triage-20261016
 
 <!-- entropy:end -->

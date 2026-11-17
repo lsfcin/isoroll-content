@@ -1,6 +1,6 @@
 # isoroll-content Roadmap
 > **The only live-state file for scene creation.** What's next lives here and nowhere else.
-> Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, seam, contract, kill-log.
+> Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, contract, kill-log.
 > Frozen decision records: [`design/`](design/CONTEXT.md).
 > Superseded strategy trees were deleted 2026-08-19 under the `.md` cap; git holds them. Consult the
 > kill-log in [`SCENE-CREATION.md`](SCENE-CREATION.md) before resurrecting anything.
@@ -110,7 +110,7 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
       **same** camera/light/palette as the scene. Multiview by geometry, never by generation.
 - [ ] Lighting/atmosphere pass: baked AO, ink linework, edge highlight, colour grade, clutter density —
       this is where the perceived style budget actually lives (D5).
-- [ ] [spritefusion-normals] Normal maps as a module option (S8, only if lighting needs it): include Sprite Fusion sprite-normals; compare with baked normals and check animation/facing consistency. Ref: refs/REFS.md; runtime assessment in ../isoroll-module/ROADMAP.md. Inferred normals do not verify geometry.
+- [ ] [spritefusion-normals] Planned (Lucas, 2026-11-16): the bake knows geometry, so emit per-sprite normal+depth maps for a moving light; check which channels it needs; Sprite Fusion normals as baseline. [style-tests] Same bake: brush shader; low-res 3D upscaled to pixel art. Runtime: ../isoroll-module/ROADMAP.md.
 - [ ] Scene generators (HunyuanWorld / NB scene images) as **art bible, not asset**: harvest palette,
       crop material patches → make tileable, extract prop inventory, use as the eyeball target. Never
       extract tiles from them (kill-log).

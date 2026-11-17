@@ -67,3 +67,6 @@
 - [NVIDIA MotionBricks](https://github.com/NVIDIA/MotionBricks) — [src: web:instagram.com post DfQfOlqjPXD via theaifield] open-source real-time 3D character animation framework; assess transferability for character rigging and animation preview — assessment in ../ROADMAP.md [nvidia-motionbricks].
 - [Qwen-Image-2.1-Turbo-GGUF](https://huggingface.co/AtomicChat/Qwen-Image-2.1-Turbo-Uncensored-GGUF) — [src: web:instagram.com reel Debla6vTCkU via nedz_reclassified] text encoder quantizado GGUF (3.3-8.7GB) para geração rápida em GPU local; requer pipeline Turbo e validação de nós ComfyUI — assessment em ../ROADMAP.md [qwen-turbo-comfy].
 - [T3-Video](https://lucassf.pages.dev/wos/t3-video) — Instagram/simplifyinai: native 4K research; paper speedups do not establish local hardware feasibility; [post](https://lucassf.pages.dev/wos/t3-video-post); task: ../ROADMAP.md [t3-video].
+- [Undershine lighting](https://lucassf.pages.dev/isoroll/undershine-light-post) — Second per-pixel map (wall, depth) so a fire lights each wall. [spritefusion-normals].
+- [Brush-shader snowboard](https://lucassf.pages.dev/isoroll/brush-snowboard-post) — three.js painterly shader; reproduce in the offline bake. [style-tests].
+- [Low-poly as pixel art](https://lucassf.pages.dev/isoroll/lowpoly-pixel-post) — 32x32 textures, 360 px render, upscaled. [style-tests].
