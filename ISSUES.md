@@ -201,7 +201,7 @@
 
 *promote when the work is green, or say which reason applies — /roundup Phase 5*
 
-- . — feature/inbox-triage-20261016 is 1 ahead of main
+- . — feature/inbox-triage-20261016 is 2 ahead of main
 - . — salvage/setup-symlink-fix is 1 ahead of main
 
 <!-- entropy:end -->
