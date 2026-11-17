@@ -110,7 +110,7 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
       **same** camera/light/palette as the scene. Multiview by geometry, never by generation.
 - [ ] Lighting/atmosphere pass: baked AO, ink linework, edge highlight, colour grade, clutter density —
       this is where the perceived style budget actually lives (D5).
-- [ ] Normal maps as a module option (S8 lane, unchanged rationale) — only if the lighting pass wants it.
+- [ ] [spritefusion-normals] Normal maps as a module option (S8, only if lighting needs it): include Sprite Fusion sprite-normals; compare with baked normals and check animation/facing consistency. Ref: refs/REFS.md; runtime assessment in ../isoroll-module/ROADMAP.md. Inferred normals do not verify geometry.
 - [ ] Scene generators (HunyuanWorld / NB scene images) as **art bible, not asset**: harvest palette,
       crop material patches → make tileable, extract prop inventory, use as the eyeball target. Never
       extract tiles from them (kill-log).
@@ -163,6 +163,27 @@ Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
 
 ## Backlog
 
+- [ ] [t3-video] Assess T3-Video hardware requirements, licence, runtime and usefulness for visual assets and teaching before selecting a trial. Preserve the frozen geometry-to-sprite contract. Ref: refs/REFS.md [t3-video] (Instagram lead).
+
+- [ ] [soundbox] Assess Soundbox for offline sound effects and ambience assets, checking machine compatibility, model licenses and export workflow. Ref: refs/REFS.md [soundbox].
+- [ ] [idol] Assess Gaussian-splat offline prop views against the frozen contract: hidden surfaces, transparency, scale, renderer, hardware and licences. Splats are not meshes or verified collision geometry. Ref: refs/REFS.md [idol].
+
+- [ ] [scenario-3d-os] Avaliar 3D OS (Scenario) e suas 80 skills de agentes para acelerar o pipeline de geração offline de assets e sprites 3D/isométricos. Ref: refs/REFS.md [scenario-3d-os].
+
+- [ ] [isoroll-environment-life] Compare one bounded environmental-life example with our geometry, sprite, animation and playback constraints before Lucas judges the achievable style. Ref: refs/REFS.md [isoroll-environment-life].
+
+- [ ] [gpu-unlock] Assess whether any supported compute-bound workload transfers to our actual GPU and pipeline, keeping hardware, precision, power and whole-task results distinct. Ref: refs/REFS.md [gpu-unlock].
+
+- [ ] [anatomy] Assess Anatomy on one bounded isometric/temporal example, separating editable browser geometry from verified scene semantics, offline sprites and Foundry playback. Ref: refs/REFS.md [anatomy].
+
+- [ ] [rated-tools] Assess Higgsfield media export, rights, retention and reproducibility for illustrations; it does not establish the sprite/geometry contract. Ref: refs/REFS.md [rated-tools].
+
+- [ ] [web-motion] Assess web-motion preview/playback fit, preserving deterministic geometry and the offline sprite pipeline. Ref: refs/REFS.md [web-motion].
+
+- [ ] [pixelfx-sheets] Avaliar o exportador de sprite sheets e o vocabulário de acting (wind-up, freeze on contact, recovery) do patch-gg/pixelfx para a pipeline de animações do isoroll (ref em refs/REFS.md).
+- [ ] [nvidia-motionbricks] Avaliar transferibilidade do NVIDIA MotionBricks para rig e animação de personagens na pipeline offline (ref em refs/REFS.md).
+- [ ] [qwen-turbo-comfy] Avaliar compatibilidade e consumo de VRAM do encoder GGUF do Qwen-Image-2.1-Turbo na lane utilitária do ComfyUI vs SDXL/NanoBanana (ref em refs/REFS.md).
+
 - **[animater] Assess Animater** — compatibility with Isoroll projection, elevation, occlusion and asset requirements; refs/REFS.md (backlog).
 - **[modder-patterns] Assess Universal Modder** — transferable discovery, asset production, live-game verification and field-note patterns against our workflow; refs/REFS.md (backlog). Respect geometry-to-sprite exports and the frozen pipeline.
 - **[object-brush] Compare the demonstrated object-brush controls** with the frozen painter grammar; identify compatible improvements for Lucas to choose; refs/REFS.md (backlog).
@@ -172,8 +193,8 @@ Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
 - **Assess Beakman level-creation process** (INBOX 2026-07-23, ref in refs/REFS.md) — watch the
   Barrow-and-Blade reel, decide what transfers. Small scoping pass, not a build.
 - **Assess PixelLab** (Lucas 2026-07-30; refs/REFS.md) — compare main/transition/lower tiles and Wang/dual-grid-15/3×3 exports with painter grammar and arm A′. Separately assess its pixel-art generation tools against the frozen geometry rule; generated rotating views cannot ship as scene cells, props or characters.
-- **Assess Sprite Sheet Creator** (INBOX 2026-07-31, Lucas: “tenho que olhar isso!”; refs/REFS.md) — compare sheet layout and walk/attack/idle × eight-direction indexing with our manifest. Its prompt-generated pixel art fails the frozen geometry rule for shipped rotating assets; layout evidence remains useful. Scoping only.
-- **Assess Craft RPGs as an AI VTT / RPG platform** (INBOX 2026-09-29, ref in refs/REFS.md) — check UI/UX patterns (battle maps with 5ft grid, party tokens, and AI Game Master dialogues) as design inspiration for isoroll module and content; confirmed proprietary SaaS (not open source, does not replace our offline isometric pipeline).
+- **Assess Sprite Sheet Creator** (Lucas, 31 Jul; refs/REFS.md) — compare layout and walk/attack/idle × eight-direction indexing with our manifest. Generated rotating views fail the frozen geometry rule; assess layout only.
+- **Assess Craft RPGs** (29 Sep; refs/REFS.md) — assess 5ft maps, party tokens and AI Game Master dialogues for module/content design. Proprietary hosted service; preserves our offline pipeline.
 - **Brightness QC post-batch** — opaque-mean < 10 → flag (PIL, cheap). Would have caught the 32 black
   frames of 2026-05-27 immediately.
 - **`getdata` deprecated (Pillow 14)** — `sheet_grid.py:63`, `sheet_qc.py:34`, and the test suite.

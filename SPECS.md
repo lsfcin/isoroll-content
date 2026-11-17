@@ -6,8 +6,8 @@ without rediscovering the same constraints.
 <!-- routing:start -->
 ## Routing
 
-| Shard | Description | Governs |
-|-------|-------------|---------|
+| Part | Description | Governs |
+|------|-------------|---------|
 | [`SPECS-debt.md`](SPECS-debt.md) | What the runtime assumes, the pattern to prefer, and the debt not yet paid. | src/ |
 | [`SPECS-layout.md`](SPECS-layout.md) | What lives where, which CLI entry points exist, and how src/cli/ is arranged. | src/ |
 | [`SPECS-manifests.md`](SPECS-manifests.md) | The benchmark and asset manifests, and how a tile, variant and file are named. | benchmarks/, assets/ |

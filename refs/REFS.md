@@ -1,10 +1,15 @@
 # References
 > Tier-1 capture: one line per ref. Promote to `<slug>.yaml` when a ref earns real study.
 
+- [soundbox — Soundbox](https://lucassf.pages.dev/isoroll/soundbox) — [src: web:instagram.com reel DfBSFBwCikQ, gittrend.io; github:HamSanders/soundbox] Project advertises local audio generation and agent integration. Assessment: ../ROADMAP.md [soundbox].
+- [spritefusion-normals — Sprite Fusion](https://lucassf.pages.dev/isoroll/sprite-normals) — [src: web:instagram.com reel Det3bCRPqpP, sprite.fusion; github:Hugo-Dz/spritefusion-sprite-normals] Candidate sprite-lighting tool; inferred normals are not verified geometry. Assessment: ../ROADMAP.md [spritefusion-normals].
+
 ## 3D-generation models
+- [idol — Idol](https://lucassf.pages.dev/isoroll/idol) — [src: web:instagram.com reel DfOD1PGDhLt, aiwithbibek; github:speridlabs/idol-sdk] Single-image Gaussian-splat generation; inferred hidden surfaces remain unverified. Offline prop-view assessment: ../ROADMAP.md [idol].
 - [Hunyuan3D 2.1](https://github.com/tencent-hunyuan/hunyuan3d-2.1) — image→3D generation
 - [HunyuanWorld 1.0](https://github.com/Tencent-Hunyuan/HunyuanWorld-1.0) — scene/world generation
 - [HY-World 2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0/tree/main) — world generation, v2
+- [Scenario 3D OS](https://github.com/scenario-labs) — [src: web:instagram.com via Partnerinai] suite de 80 skills de agentes para geração e manipulação de assets 3D (modelagem, rigging, texturas, export); assessment: ../ROADMAP.md [scenario-3d-os].
 
 ## Visual inspiration
 - [bodam.sketch — 3D flower shop sketch (Feather 3D)](https://www.instagram.com/reel/DZNl9VJz7XO/) — target visual level/type for isoroll content
@@ -52,3 +57,13 @@
 - [Object brush — Canvas of Kings / Might of Merchants](https://www.instagram.com/reel/DeHQ3vrKB26/?utm_source=ig_web_copy_link&stkn=NTc4MTIwNjQ2YQ==) — [src: web:instagram.com] Demonstration shows density, erase, auto-height, collision and grid controls; compare the experience with our frozen painter grammar. Assessment: ../ROADMAP.md [object-brush].
 
 - [UniMate — theartificialintelligens](https://www.instagram.com/p/DeGM6u4AZ9r/?utm_source=ig_web_copy_link) — [src: web:instagram.com] Seven slides present “One Unified Model to Animate Diverse Skeletons”; availability, license, rig inputs and performance unverified; source notes difficult contact/foot grounding. Assessment: ../ROADMAP.md [unimate].
+
+- [V] [Motion, anime.js and web UI candidates](https://motion.dev/) — [src: web:instagram.com] Browser animation; Bklit/Kokonut identities inferred, not sprite geometry; [capture](https://www.instagram.com/reel/DfGjKw7uAl7/); assessment: ../ROADMAP.md [web-motion].
+- [C] [Hype-versus-reality carousel and official tool checks](https://help.blotato.com/start-with-an-ai-agent/llm/automations.md) — [src: web:instagram.com] Creator opinions; bars are estimates, not printed scores or benchmarks; [capture](https://www.instagram.com/p/DeZjFVZALGO/); assessment: ../ROADMAP.md [rated-tools].
+- [C] [Anatomy isometric animation](https://github.com/wheresryan22/anatomy) — [src: web:instagram.com] Browser isometric animation; checker still owns geometric truth; [capture](https://www.instagram.com/reel/Del82x1DVA1/); assessment: ../ROADMAP.md [anatomy].
+- [C] [Workload-specific GPU throughput](https://github.com/Zagitta/GPU-UNLOCK) — [src: web:instagram.com] Workload-specific matrix result; no universal or RTX3050 speedup established; [capture](https://www.instagram.com/reel/DfAy1NHseqU/); assessment: ../ROADMAP.md [gpu-unlock].
+- [V] [AFK Journey environmental animation](https://www.instagram.com/p/DeTHW7JAVjj/) — [src: web:instagram.com] Environmental animation inspiration; sampled frames do not verify loops; assessment: ../ROADMAP.md [isoroll-environment-life].
+- [PixelFX](https://github.com/patch-gg/pixelfx) — [src: web:instagram.com reel DfW9S0wjlTI via gittrend.io] 244 procedural pixel art VFX/animations in JS/canvas with acting/timing and spritesheet exporter; assess acting state vocabulary and skill — assessment in ../ROADMAP.md [pixelfx-sheets].
+- [NVIDIA MotionBricks](https://github.com/NVIDIA/MotionBricks) — [src: web:instagram.com post DfQfOlqjPXD via theaifield] open-source real-time 3D character animation framework; assess transferability for character rigging and animation preview — assessment in ../ROADMAP.md [nvidia-motionbricks].
+- [Qwen-Image-2.1-Turbo-GGUF](https://huggingface.co/AtomicChat/Qwen-Image-2.1-Turbo-Uncensored-GGUF) — [src: web:instagram.com reel Debla6vTCkU via nedz_reclassified] text encoder quantizado GGUF (3.3-8.7GB) para geração rápida em GPU local; requer pipeline Turbo e validação de nós ComfyUI — assessment em ../ROADMAP.md [qwen-turbo-comfy].
+- [T3-Video](https://lucassf.pages.dev/wos/t3-video) — Instagram/simplifyinai: native 4K research; paper speedups do not establish local hardware feasibility; [post](https://lucassf.pages.dev/wos/t3-video-post); task: ../ROADMAP.md [t3-video].

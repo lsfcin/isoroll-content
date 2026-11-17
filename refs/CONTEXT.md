@@ -6,5 +6,5 @@
 
 | File | Description |
 |------|-------------|
-| [`REFS.md`](REFS.md) | References |
+| [`REFS.md`](REFS.md) | Tier-1 capture: one line per ref. Promote to `<slug>.yaml` when a ref earns real study. |
 <!-- routing:end -->
