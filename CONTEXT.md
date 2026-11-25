@@ -122,7 +122,7 @@ isoroll-content/
 | File | Description |
 |------|-------------|
 | [`ISSUES.md`](ISSUES.md) | What is currently untrue that we know about in this repo: hand-written issues first, every measured number inside its own generated block. |
-| [`ROADMAP.md`](ROADMAP.md) | **The only live-state file for scene creation.** What's next lives here and nowhere else. Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, contract, kill-log. Frozen decision records: [`design/`](design/CONTEXT.md). Superseded strategy trees were deleted 2026-08-19 under the `.md` cap; git holds them. Consult the kill-log in… |
+| [`ROADMAP.md`](ROADMAP.md) | Live scene-creation plan. Spec and kill-log: [SCENE-CREATION.md](SCENE-CREATION.md); frozen decisions: [design/](design/CONTEXT.md). Read the kill-log before reviving retired work; git holds superseded strategies. |
 | [`SCENE-CREATION.md`](SCENE-CREATION.md) | Single source of truth for isoroll scene creation: goal, architecture, seam, contract, kill-log. **Status-free by rule** — no phases, no task state, no "current focus". What's next lives only in [ROADMAP.md](ROADMAP.md). The superseded 2026-H1 strategy tree was deleted 2026-08-19 under the `.md` cap — git holds it, and the one recipe anything still pointed… |
 | [`SETUP-comfy.md`](SETUP-comfy.md) | Install it, point COMFY_DIR at it, and fetch the models and extensions it needs. |
 | [`SETUP-local.md`](SETUP-local.md) | Python deps, the low-VRAM SDXL settings for a 3050, and the Blender lane. |
