@@ -1,9 +1,5 @@
 # isoroll-content Roadmap
-> **The only live-state file for scene creation.** What's next lives here and nowhere else.
-> Spec (status-free): [SCENE-CREATION.md](SCENE-CREATION.md) — goal, contract, kill-log.
-> Frozen decision records: [`design/`](design/CONTEXT.md).
-> Superseded strategy trees were deleted 2026-08-19 under the `.md` cap; git holds them. Consult the
-> kill-log in [`SCENE-CREATION.md`](SCENE-CREATION.md) before resurrecting anything.
+> Live scene-creation plan. Spec and kill-log: [SCENE-CREATION.md](SCENE-CREATION.md); frozen decisions: [design/](design/CONTEXT.md). Read the kill-log before reviving retired work; git holds superseded strategies.
 
 ## Strategy — MVP-first behind a frozen seam (replan 2026-07-29, Lucas + inline)
 
@@ -87,6 +83,8 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
   from the layout. Lucas's gate is for *feel*, never for finding broken plumbing.
 ## BAKEOFF — content arms compared behind the frozen seam
 
+- [ ] [vertex-paint] At BAKEOFF, compare per-instance mortar/efflorescence/grime masks with Wang variants and world-position baking on one repeated wall. Check cross-cell seams, nine-view consistency and variant memory; keep the frozen export contract. Ref: [refs/REFS.md](refs/REFS.md) [vertex-paint].
+
 - [ ] arm A: as-is (baseline, already baked by PLAYABLE).
 - [ ] arm A′: **Wang/corner-tiled arm A** — arm A with a corner-matched variant SET per piece instead
       of one sprite. Added 2026-07-30 after the Wang-tile research below: this is the option that
@@ -110,7 +108,7 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
       **same** camera/light/palette as the scene. Multiview by geometry, never by generation.
 - [ ] Lighting/atmosphere pass: baked AO, ink linework, edge highlight, colour grade, clutter density —
       this is where the perceived style budget actually lives (D5).
-- [ ] [spritefusion-normals] Planned (Lucas, 2026-11-16): the bake knows geometry, so emit per-sprite normal+depth maps for a moving light; check which channels it needs; Sprite Fusion normals as baseline. [style-tests] Same bake: brush shader; low-res 3D upscaled to pixel art. Runtime: ../isoroll-module/ROADMAP.md.
+- [ ] [spritefusion-normals] Planned (Lucas, 2026-11-16): emit normal+depth maps from known bake geometry for a moving light. Compare Sprite Fusion and Pixel Art Lighter's editable normals/light masks; check channels, alpha and facing across nine views. Inferred maps are candidates, not geometric truth. [style-tests] Same bake: brush shader; low-res 3D upscaled to pixel art. Refs: [refs/REFS.md](refs/REFS.md); runtime: ../isoroll-module/ROADMAP.md.
 - [ ] Scene generators (HunyuanWorld / NB scene images) as **art bible, not asset**: harvest palette,
       crop material patches → make tileable, extract prop inventory, use as the eyeball target. Never
       extract tiles from them (kill-log).
@@ -123,33 +121,11 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
 
 ## Research finding — Wang tiles apply, and they qualify a kill-log row (2026-07-30, Lucas asked)
 
-**Wang tiles** (square tiles with coloured EDGES, laid so touching edges match) are the standard way
-to get boundless, non-periodic pattern out of a *finite, reusable* tile set. **Corner tiles** (Lagae &
-Dutré 2006) colour the CORNERS instead and fix the *corner problem* — edge-coloured tiles leave
-diagonal neighbours unconstrained, so continuity breaks near tile corners; corner tiles also halve
-texture memory and are easier to tile. Sources in [refs/REFS.md](refs/REFS.md).
+Finite Wang sets match edge colours; corner tiles also constrain diagonal neighbours, fixing corner seams, halving texture memory and simplifying tiling (Lagae & Dutré 2006). Floors need this diagonal constraint; the painter grammar's dual-grid is the same idea, including its blob-47 → ~16 reduction. Sources: [refs/REFS.md](refs/REFS.md).
 
-**What this means for us — the honest version:** the kill-log's "reusable sprite + true cross-tile
-continuity are mutually exclusive → IMPOSSIBLE" is true for a **one-sprite-per-piece** set, which is
-what arm A is today. It is **not** true for a *set*: that is precisely the problem Wang/corner tiling
-solves, and it has been solved for our exact case — Derouet-Jourdan et al. build a Wang tile set for
-**stochastic stone/brick wall patterns** with procedural hash-based placement, boundless, with
-explicit control over "no cross" and "no long lines". Our `wall_band` is that problem. The kill-log
-row is amended accordingly in SCENE-CREATION.md rather than left overstated.
+The kill-log's impossibility applies to one sprite per piece, not variant sets; SCENE-CREATION.md already qualifies it. Derouet-Jourdan et al. cover our stone/brick `wall_band`: boundless, hash-placed stochastic patterns with "no cross" and "no long lines" controls.
 
-Why it is a real contender and not just theory:
-- **Painter latency.** A Wang/corner variant is picked from neighbour colours at paint time — O(1),
-  no re-render. Arm B has to re-render the affected region on every stroke. This is the one axis
-  where arm A′ can beat arm B outright, and it is an MVP-visible axis.
-- **Cost stays at texture scale (D6).** Variants are *rendered*, not painted — bake multiplier, not
-  artist time. Same order as the blob-47 → dual-grid ~16 reduction already in the painter grammar.
-- **Corner, not edge, for us.** Floors are a 2D field where diagonal neighbours are visible, so the
-  corner problem would show. Corner tiles are also what the "dual-grid" technique already in
-  SCENE-CREATION.md § Painter grammar *is*.
-
-Limits to state up front: Wang tiling gives **structural** continuity (courses line up, no seam), not
-**global registration** (one mural spanning many cells) — murals stay decals. And a variant set must
-be baked per projection family (×3), so D7's unique-pixel guard applies harder.
+A′ selects a neighbour-matched variant in O(1), without a paint-stroke re-render; B re-renders the affected region. This is A′'s painter-latency advantage, not a reason to restore the parked painter. Variants are rendered rather than painted, preserving D6's texture-scale art cost. Wang tiling gives structural continuity, not a globally registered mural: murals stay decals. Bake variants per projection family (×3), pricing D7's unique-pixel memory guard.
 
 Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
 - [ ] Decide the matching unit for a 3D cell: our "edge" is a vertical seam between wall-band faces
@@ -162,6 +138,9 @@ Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
       reaches arm B's continuity, which is what turns this from an argument into a result.
 
 ## Backlog
+
+- [ ] [ludo-directional] Seriously assess Ludo's concept → 3D → rig → directional-sheet method for characters: licences/usage rights, exports/API, public code and reproducible implementation or reverse engineering of the demonstrated workflow. Compare eight views, animation indexing, scale and alpha with our geometry-based bake; top view remains to verify. Ref: [refs/REFS.md](refs/REFS.md) [ludo-directional].
+- [ ] [diorama] Assess Diorama's palette/dither/ink, joint animation and per-entity frame checks on one offline-bake example. Separate transferable techniques from its browser runtime; preserve nine-view geometry and export requirements. Ref: [refs/REFS.md](refs/REFS.md) [diorama]; platform comparison: ../isoroll-module/ROADMAP.md [isoroll-2].
 
 - [ ] [t3-video] Assess T3-Video hardware requirements, licence, runtime and usefulness for visual assets and teaching before selecting a trial. Preserve the frozen geometry-to-sprite contract. Ref: refs/REFS.md [t3-video] (Instagram lead).
 

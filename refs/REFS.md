@@ -9,7 +9,8 @@
 - [Hunyuan3D 2.1](https://github.com/tencent-hunyuan/hunyuan3d-2.1) — image→3D generation
 - [HunyuanWorld 1.0](https://github.com/Tencent-Hunyuan/HunyuanWorld-1.0) — scene/world generation
 - [HY-World 2.0](https://github.com/Tencent-Hunyuan/HY-World-2.0/tree/main) — world generation, v2
-- [Scenario 3D OS](https://github.com/scenario-labs) — [src: web:instagram.com via Partnerinai] suite de 80 skills de agentes para geração e manipulação de assets 3D (modelagem, rigging, texturas, export); assessment: ../ROADMAP.md [scenario-3d-os].
+- [Scenario 3D OS](https://github.com/scenario-labs/skills) — [src: web:instagram.com via Partnerinai, botsgone.wild] Demo advertises 3D generation, rigging and expert tools; generation needs a Scenario account. [Additional capture](https://www.instagram.com/reel/DfsjQP3SWbi/). Assessment: [ROADMAP](../ROADMAP.md) [scenario-3d-os]; texpace stress test: ../../spacemantics/ROADMAP.md [scenario-texpace].
+- [ludo-directional — Ludo Directional Sprites](https://ludo.ai/docs/directional-sprites) — [src: web:ludo.ai; instagram.com/ludo.ai] One 3D model supplies directional animation sheets; the [reel](https://www.instagram.com/reel/Dfr7j4KKtXJ/) claims six moves × eight directions. Rights, export and method assessment: [ROADMAP](../ROADMAP.md) [ludo-directional].
 
 ## Visual inspiration
 - [bodam.sketch — 3D flower shop sketch (Feather 3D)](https://www.instagram.com/reel/DZNl9VJz7XO/) — target visual level/type for isoroll content
@@ -21,6 +22,8 @@
 - [Banana Pro Director + Cinema World Builder](https://www.instagram.com/reel/Dax-38bjV8R/) — two Claude skills by "Joey": the first builds character sheets, outfit references, scene layouts and image prompts **explicitly tuned for nano banana** (our primary generator, see CONTEXT.md); the second turns those images into video prompts with camera/lens/shot-style baked in. The character-sheet + scene-layout half maps onto the kit-assembly pipeline; the video half does not apply. ⚠ DM-bait post — the skills are not linked, only named. Found via the reel's speech track, its caption says nothing
 
 ## Technique — tiles & lighting
+- [vertex-paint — per-instance material blending](https://www.instagram.com/reel/DgInYB7xLL9/) — [src: web:instagram.com] Demo stores mortar, efflorescence and grime masks in placed-wall vertex colours to vary reused meshes/materials; assess offline-bake fit in [ROADMAP](../ROADMAP.md) [vertex-paint].
+- [Pixel Art Lighter](https://www.moonfell-rpg.com/pixel-lighter) — [src: web:moonfell-rpg.com; instagram.com/moonfell_rpg] Editable normal maps and light masks with lighting preview; [reel](https://www.instagram.com/reel/Dfa3hBGvH9q/). Compare against geometry-derived maps in [ROADMAP](../ROADMAP.md) [spritefusion-normals].
 - [Beno Raistrick — seamlessly tileable painted textures](https://www.instagram.com/reel/Daz5qSRMvV-/) — how to make hand-painted textures tile without seams (krita/blender/unreal). Directly on the P5 kit-paint problem: NB paints tile-sized pieces and tileability is the failure mode. Author says a full tutorial is coming
 - [normal maps on 2D sprites](https://www.instagram.com/reel/DZLABeVx3qk/) — flat pixel-art sprite + normal map = dynamic per-pixel lighting and moving shadows, no 3D geometry. Candidate for giving isoroll scenes real light without leaving 2D; Lucas flagged it as a possibility under consideration
 
@@ -46,6 +49,7 @@
   `brain/goals/rpg-isoroll.md` [capcut-um-take].
 
 ## Process — level/scene creation
+- [diorama — procedural Three.js scenes](https://github.com/sloemo01/diorama) — [src: github:sloemo01/diorama; instagram.com] Palette, dither, ink, joint animation and per-entity frame checks; [reel](https://www.instagram.com/reel/DfEdYDOiIoq/). Offline assessment: [ROADMAP](../ROADMAP.md) [diorama]; runtime comparison: ../../isoroll-module/ROADMAP.md [isoroll-2].
 - [Beakman Studios — level-creation process (Barrow and Blade)](https://www.instagram.com/reel/DXpDJCACt2V/) — how an indie roguelike settled its level-creation workflow; Lucas: "útil pro isoroll content" (INBOX 2026-07-23). Assessment task tracked in ROADMAP Backlog — extract anything transferable to the kit-assembly / scene-stitching pipeline.
 
 - [Drift](https://www.instagram.com/reel/DeI3Zulji05/?utm_source=ig_web_copy_link) — [src: web:instagram.com, gittrend.io] desktop video-editor demonstration; author's claims to test. Assessment in code/isoroll-content/ROADMAP.md; full extraction in outputs/virada/inbox-2026-10-06-links.json.
