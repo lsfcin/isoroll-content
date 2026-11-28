@@ -1,21 +1,20 @@
 # isoroll-content Roadmap
 > Live scene-creation plan. Spec and kill-log: [SCENE-CREATION.md](SCENE-CREATION.md); frozen decisions: [design/](design/CONTEXT.md). Read the kill-log before reviving retired work; git holds superseded strategies.
 
-## Strategy — MVP-first behind a frozen seam (replan 2026-07-29, Lucas + inline)
+## Agora
 
-```
-DSL v2  →  [ RENDERER ]  →  cell sprites + manifest (WallDefs, boundHeight, imageOffset)  →  Foundry
-              ^^^^^^^^
-   swappable arms:  A kit-sprite (exists)  |  B scene-cell world-uv render  |  C NB-painted textures
-```
+- [art-direction] — choose how a player brings their own art to the table.
 
-The **contract is the structure; the pixels are swappable**. Freeze the seam, ship something playable in
-Foundry with the ugliest legitimate pixels, then compare content arms behind the seam as an A/B — never
-as an architecture decision. This replaces the P0–P9 program and the S1–S8 lane table (both retired
-below): those made the content strategy a prerequisite for a playable product, which is what stalled
-the project on per-module enclosure masks for four review rounds.
+## Art direction
 
-**Why the pivot:** world-absolute texture coordinates do not prevent repetition when pieces render at a module-local origin and one sprite is reused in every cell. Arm B renders each cell at its real world position; arm A′ tests matched variant sets. A playable product lets the bake-off price continuity against reusable sprites and latency.
+- [ ] [art-direction] Compare three playable treatments in the same Observatório das Marés encounter. Lucas played it on desktop and phone and liked its fluidity and low-poly look. He wants to explore drawn characters, painted places and illustrated effects before choosing the campaign look. Hades, Spider-Verse and Arcane are references for movement, line and paint. Desktop/mobile results and launch instructions: `../../outputs/isoroll-travessia/README.md` (local workspace). Platform comparison: `../isoroll-module/ROADMAP.md` [isoroll-2]. [src: agent 2026-11-28]
+  - Start with one image a player made using a free image generator. Give the player the portrait back beside the playable result. Compare direct 2D art with directional sprites, the existing live low-poly 3D, and a hybrid rig with painted textures, ink or stepped shading plus a hand-drawn effect. The demo's lightweight mode bakes the same sculpture into sprites. It gives a playback baseline; the direct 2D trial needs artwork of its own.
+  - Use the same walk behind a pillar, turn through eight bearings plus top, and cast one short spell. Check face, costume, silhouette, hidden-side consistency, foot contact and effect occlusion. Show the three takes in motion at actual phone size. Lucas judges likeness, drawing/paint and impact.
+  - Price the *second* asset. Have a player add a character and the narrator try a creature or scenery prop. Record hands-on minutes, free-tool limits, manual repairs, download size and frame times on the same phone and PC. For sprites count views × actions × frames; for a rig try a second animation (e.g. Mixamo on a compatible humanoid) and record retargeting work. Let different asset types take different paths if the trials justify it. Bring the tradeoffs to Lucas before adopting a renderer.
+
+## Foundry production baseline (2026-07-29)
+
+The Foundry baseline exports cell sprites and a manifest from one layout. PLAYABLE validates mechanics; BAKEOFF compares kits, world-position rendering and painted textures. Module-local textures repeat at joins.
 
 ### Decisions taken 2026-07-29 (Lucas)
 
@@ -55,51 +54,25 @@ Open divergence: the TypeScript massing.ts twin still strip-merges render-lane f
 
 Then D10 thin walls, then PLAYABLE.
 
-## PLAYABLE — ugly, complete, in Foundry (zero generation, absorbs the old SEAM milestone)
+## PLAYABLE — walk the cabin in Foundry
 
-Single user-visible outcome. The seam gets frozen by carrying the cabin all the way into Foundry.
+- [ ] D9: preload nine views, swap tile textures and positions in place, and derive walls and vision per view. Dimetric uses cell remapping; cardinal uses the custom projection flags.
+- [ ] CP-6: verify cabin vision, fog and movement. The live import test `test/e2e/import-cabin.spec.mjs` round-trips tile/wall counts at 51 wall cells in every view. CP-4 covers segment geometry.
+- [ ] Activate `DepthSorter` and implement eight-direction token selection in `object-transform.ts`.
+- [ ] Gate (Lucas, D8): write a layout, bake with one command, import, walk and rotate. First run `verify:full` live, check `dumpZOrderJSON()` across all views and compare wall counts with the layout. Lucas judges the interaction.
+## BAKEOFF — content variants behind the export contract
 
-**The user action, restated under D8 (2026-07-31):** Lucas *authors a layout as text DSL*, bakes it with
-one command, imports it into Foundry, walks a token, and rotates through all 9 views with walls, vision,
-fog and z-order correct. It is no longer "paints a room in live Foundry" — painting is not assumed to be
-how scenes get built, so a milestone defined on it would be testing an unchosen premise.
-
-- [ ] module: **view switching = instant in-place swap, 9 preloaded** (D9) — rotate re-textures and
-      repositions each tile without a rebuild pause; walls/vision re-derived per view.
-- [~] module: manifest → walls/vision/fog (`createWallsFromDefs`) on the cabin. **Import half done and
-      verified live** (2026-07-30): `test/e2e/import-cabin.spec.mjs` imports the cabin manifest for all
-      9 views against a running Foundry — tile and wall counts round-trip, and wall CELLS are constant
-      at 51 across every view (the number isoroll-content asserts independently). Segment geometry
-      is settled at CP-4; what nothing asserts yet is vision and fog behaviour on those walls — CP-6.
-      Dimetric = cell remap; cardinal = projection preset via the existing `customRotation`/
-      `customSkewX`/`customSkewY`/`customRatio` flags.
-- [ ] module: activate `DepthSorter` (exists, not wired — module CONTEXT.md § Known Limitations).
-- [ ] module: 8-direction token sprite selection (placeholder in `object-transform.ts`).
-- ☐ **Gate (Lucas), touchpoint 1 of 2:** author a layout as DSL, bake it, import it, walk a token, rotate
-      through all 9 views (D8). Walls, vision, fog and z-order correct. **Look is explicitly not judged
-      here.**
-- Before that gate can be called, agents must have verified the chain themselves: `verify:full` e2e green
-  against live Foundry, `dumpZOrderJSON()` stable across all 9 view switches, wall count round-tripping
-  from the layout. Lucas's gate is for *feel*, never for finding broken plumbing.
-## BAKEOFF — content arms compared behind the frozen seam
-
-- [ ] [vertex-paint] At BAKEOFF, compare per-instance mortar/efflorescence/grime masks with Wang variants and world-position baking on one repeated wall. Check cross-cell seams, nine-view consistency and variant memory; keep the frozen export contract. Ref: [refs/REFS.md](refs/REFS.md) [vertex-paint].
+- [ ] [vertex-paint] At BAKEOFF, compare per-instance mortar/efflorescence/grime masks with Wang variants and world-position baking on one repeated wall. Check cross-cell joins, nine-view consistency and variant memory; keep the frozen export contract. Ref: [refs/REFS.md](refs/REFS.md) [vertex-paint].
 
 - [ ] arm A: as-is (baseline, already baked by PLAYABLE).
-- [ ] arm A′: **Wang/corner-tiled arm A** — arm A with a corner-matched variant SET per piece instead
-      of one sprite. Added 2026-07-30 after the Wang-tile research below: this is the option that
-      keeps arm A's reusable sprite (and its painter latency: pick a variant by neighbour colours, no
-      re-render on a paint stroke) while making patterns cross cell joins. Cost is a bake multiplier
-      (~16 variants per piece per material per family), not artist time — D6 still holds. Scope it
-      against arm B *before* building it: if arm B's re-render latency turns out acceptable, A′ is
-      redundant.
+- [ ] A′: corner-matched sets (~16 variants per piece/material/family) keep neighbour-based lookup and continuous joins. Compare B's edit latency before investing in variant baking.
 - [ ] arm B: scene-cell world-uv render — each cell rendered at its **real world position**, cropped by
       its own face mask. Continuity exact by construction. Invariant test: crop-and-recompose ==
       full-scene render, pixel-identical.
 - [ ] arm C: NB-restyled textures (~3 first: wall stone, floor wood, roof shingle) dropped into whichever
-      arm wins geometry. Code gate before eyeball: half-shift wrap-seam energy test per texture.
+      arm wins geometry. Code gate before eyeball: half-shift wrap-edge energy test per texture.
 - [ ] Pre-registered decision rule (touchpoint 2 of 2): Lucas style score 1–5 **and** a code continuity check (cross-cell
-      seam energy). Winner becomes the default arm; losers get a kill-log line.
+      edge energy). Winner becomes the default arm; losers get a kill-log line.
 - ☐ **Gate (Lucas):** three arms boarded side by side on the identical cabin geometry.
 
 ## RICHNESS — after a winner exists
@@ -117,24 +90,24 @@ how scenes get built, so a milestone defined on it would be testing an unchosen 
 
 - S1 anchored-kit-marks and S0-E4/E5/E6a/E6b/E6c batches wait with the NB-sheet regime; the 8+1 view decision survives as D2.
 - S4 enclosure masks, S4t and S4b dimensional vocabulary are container-specific to arm A; work is preserved at 92b6c50 and resumes only if arm A wins BAKEOFF.
-- S6 slice/stitch, seam alpha ramps and ground transitions return only if arm A wins. Cross-view sprite checks stay with the arm A baseline; rendered arm B is consistent by construction.
+- S6 slice/stitch, edge alpha ramps and ground transitions return only if arm A wins. Cross-view sprite checks stay with the arm A baseline; rendered arm B is consistent by construction.
 
 ## Research finding — Wang tiles apply, and they qualify a kill-log row (2026-07-30, Lucas asked)
 
-Finite Wang sets match edge colours; corner tiles also constrain diagonal neighbours, fixing corner seams, halving texture memory and simplifying tiling (Lagae & Dutré 2006). Floors need this diagonal constraint; the painter grammar's dual-grid is the same idea, including its blob-47 → ~16 reduction. Sources: [refs/REFS.md](refs/REFS.md).
+Finite Wang sets match edge colours; corner tiles also constrain diagonal neighbours, fixing corner joins, halving texture memory and simplifying tiling (Lagae & Dutré 2006). Floors need this diagonal constraint; the painter grammar's dual-grid is the same idea, including its blob-47 → ~16 reduction. Sources: [refs/REFS.md](refs/REFS.md).
 
 The kill-log's impossibility applies to one sprite per piece, not variant sets; SCENE-CREATION.md already qualifies it. Derouet-Jourdan et al. cover our stone/brick `wall_band`: boundless, hash-placed stochastic patterns with "no cross" and "no long lines" controls.
 
 A′ selects a neighbour-matched variant in O(1), without a paint-stroke re-render; B re-renders the affected region. This is A′'s painter-latency advantage, not a reason to restore the parked painter. Variants are rendered rather than painted, preserving D6's texture-scale art cost. Wang tiling gives structural continuity, not a globally registered mural: murals stay decals. Bake variants per projection family (×3), pricing D7's unique-pixel memory guard.
 
 Open work (not scheduled — BAKEOFF-time, listed so it is not re-derived):
-- [ ] Decide the matching unit for a 3D cell: our "edge" is a vertical seam between wall-band faces
+- [ ] Decide the matching unit for a 3D cell: our "edge" is a vertical edge between wall-band faces
       (1×3 voxels), not a flat square side. Corner colours would live on the module's face corners.
 - [ ] The bake must be able to *produce* a variant that meets a given boundary colour. Two candidate
       routes: Cohen-2003-style graphcut from a source texture, or the Derouet-Jourdan route of
       generating the brick STRUCTURE procedurally and painting bricks — the latter fits our linework
       look and D6 better.
-- [ ] Reuse the BAKEOFF cross-cell seam-energy oracle as the falsifier: it can *measure* whether A′
+- [ ] Reuse the BAKEOFF cross-cell edge-energy oracle as the falsifier: it can *measure* whether A′
       reaches arm B's continuity, which is what turns this from an argument into a result.
 
 ## Backlog
